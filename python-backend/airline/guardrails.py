@@ -26,11 +26,12 @@ guardrail_agent = Agent(
     name="Relevance Guardrail",
     instructions=(
         "Determine if the user's message is highly unrelated to a normal customer service "
-        "conversation with an airline (flights, bookings, baggage, check-in, flight status, policies, loyalty programs, etc.). "
-        "Important: You are ONLY evaluating the most recent user message, not any of the previous messages from the chat history"
+        "conversation with an airline (flights, bookings, baggage, check-in, flight status, policies, loyalty programs, etc.) "
+        "OR investment-related topics (trading bots, stocks, investments, financial questions, etc.). "
+        "Important: You are ONLY evaluating the most recent user message, not any of the previous messages from the chat history. "
         "It is OK for the customer to send messages such as 'Hi' or 'OK' or any other messages that are at all conversational, "
-        "but if the response is non-conversational, it must be somewhat related to airline travel. "
-        "Return is_relevant=True if it is, else False, plus a brief reasoning."
+        "but if the response is non-conversational, it must be somewhat related to airline travel OR investments. "
+        "Return is_relevant=True if it is related to either topic area, else False, plus a brief reasoning."
     ),
     output_type=RelevanceOutput,
 )
@@ -40,7 +41,7 @@ guardrail_agent = Agent(
 async def relevance_guardrail(
     context: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]
 ) -> GuardrailFunctionOutput:
-    """Guardrail to check if input is relevant to airline topics."""
+    """Guardrail to check if input is relevant to airline or investment topics."""
     result = await Runner.run(
         guardrail_agent,
         input,

@@ -6,6 +6,16 @@ import string
 from agents import Agent, RunContextWrapper, handoff
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
+# Try importing FileSearchTool - adjust import path if needed
+try:
+    from agents.tools import FileSearchTool
+except ImportError:
+    try:
+        from agents import FileSearchTool
+    except ImportError:
+        # Fallback: will use string-based tool configuration if needed
+        FileSearchTool = None
+
 from .context import AirlineAgentChatContext
 from .demo_data import apply_itinerary_defaults
 from .guardrails import jailbreak_guardrail, relevance_guardrail
@@ -155,6 +165,24 @@ faq_agent = Agent[AirlineAgentChatContext](
 )
 
 
+investments_faq_agent = Agent[AirlineAgentChatContext](
+    name="Investments FAQ Agent",
+    model=MODEL,
+    handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
+    instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
+    You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.
+    If you are speaking to a customer, you were likely transferred from the triage agent.
+    Use the following routine to support the customer:
+    1. Identify the last question asked by the customer about investments, trading bots, or related topics.
+    2. Use the file_search tool to search the knowledge base for the answer. Do not rely on your own knowledge - only use information from the knowledge base.
+    3. If you find relevant information, respond to the customer with the answer from the knowledge base.
+    4. If no relevant information is found in the knowledge base, politely inform the customer that you don't have that information available.
+    5. When done, return to the Triage Agent.""",
+    tools=[FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"],
+    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+)
+
+
 triage_agent = Agent[AirlineAgentChatContext](
     name="Triage Agent",
     model=MODEL,
@@ -163,7 +191,8 @@ triage_agent = Agent[AirlineAgentChatContext](
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. Route the customer to the best agent: "
         "Flight Information for status/alternates, Booking and Cancellation for booking changes, Seat and Special Services for seating needs, "
-        "FAQ for policy questions, and Refunds and Compensation for disruption support."
+        "FAQ for policy questions, Investments FAQ Agent for investment-related questions (trading bots, stocks, investments, etc.), "
+        "and Refunds and Compensation for disruption support."
         "First, if the message mentions Paris/New York/Austin and context is missing, call get_trip_details to populate flight/confirmation."
         "If the request is clear, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call."
         "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."
@@ -204,9 +233,11 @@ triage_agent.handoffs = [
     handoff(agent=booking_cancellation_agent, on_handoff=on_booking_handoff),
     handoff(agent=seat_special_services_agent, on_handoff=on_seat_booking_handoff),
     faq_agent,
+    investments_faq_agent,
     refunds_compensation_agent,
 ]
 faq_agent.handoffs.append(triage_agent)
+investments_faq_agent.handoffs.append(triage_agent)
 seat_special_services_agent.handoffs.extend([refunds_compensation_agent, triage_agent])
 flight_information_agent.handoffs.extend(
     [

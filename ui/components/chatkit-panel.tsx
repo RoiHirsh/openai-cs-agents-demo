@@ -87,16 +87,16 @@ export function ChatKitPanel({
 
   return (
     <div className="flex flex-col h-full flex-1 bg-white shadow-sm border border-gray-200 border-t-0 rounded-xl">
-      <div className="bg-blue-600 text-white h-12 px-4 flex items-center rounded-t-xl">
+      <div className="bg-blue-600 text-white h-12 px-4 flex items-center rounded-t-xl flex-shrink-0">
         <h2 className="font-semibold text-sm sm:text-base lg:text-lg">
           Customer View
         </h2>
       </div>
-      <div className="flex-1 overflow-hidden pb-1.5">
+      <div className="flex-1 flex flex-col min-h-0 relative">
         <ChatKit
           control={chatkit.control}
-          className="block h-full w-full"
-          style={{ height: "100%", width: "100%" }}
+          className="flex-1 w-full"
+          style={{ height: "100%", width: "100%", minHeight: 0 }}
         />
       </div>
     </div>

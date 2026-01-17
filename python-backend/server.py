@@ -42,6 +42,7 @@ from airline.agents import (
     booking_cancellation_agent,
     faq_agent,
     flight_information_agent,
+    investments_faq_agent,
     refunds_compensation_agent,
     seat_special_services_agent,
     triage_agent,
@@ -72,6 +73,7 @@ def _get_agent_by_name(name: str):
     agents = {
         triage_agent.name: triage_agent,
         faq_agent.name: faq_agent,
+        investments_faq_agent.name: investments_faq_agent,
         seat_special_services_agent.name: seat_special_services_agent,
         flight_information_agent.name: flight_information_agent,
         booking_cancellation_agent.name: booking_cancellation_agent,
@@ -109,6 +111,7 @@ def _build_agents_list() -> List[Dict[str, Any]]:
     return [
         make_agent_dict(triage_agent),
         make_agent_dict(faq_agent),
+        make_agent_dict(investments_faq_agent),
         make_agent_dict(seat_special_services_agent),
         make_agent_dict(flight_information_agent),
         make_agent_dict(booking_cancellation_agent),
@@ -412,7 +415,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             state.guardrails = checks
-            refusal = "Sorry, I can only answer questions related to airline travel."
+            refusal = "Sorry, I can only answer questions related to airline travel or investments."
             state.input_items.append({"role": "assistant", "content": refusal})
             yield ThreadItemDoneEvent(
                 item=AssistantMessageItem(

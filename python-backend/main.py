@@ -18,6 +18,7 @@ from airline.agents import (
     flight_information_agent,
     investments_faq_agent,
     refunds_compensation_agent,
+    scheduling_agent,
     seat_special_services_agent,
     triage_agent,
 )
@@ -116,6 +117,7 @@ __all__ = [
     "investments_faq_agent",
     "public_context",
     "refunds_compensation_agent",
+    "scheduling_agent",
     "seat_special_services_agent",
     "triage_agent",
 ]

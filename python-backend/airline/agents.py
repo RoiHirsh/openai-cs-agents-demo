@@ -183,6 +183,32 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
 )
 
 
+def scheduling_instructions(
+    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+) -> str:
+    return (
+        f"{RECOMMENDED_PROMPT_PREFIX}\n"
+        "You are the Scheduling Agent. You handle call scheduling requests when a customer wants to speak on the phone.\n"
+        "1. When a customer requests a call or asks 'can someone call me?', suggest a call time following this priority:\n"
+        "   - First, offer a call in the next 20 minutes if it seems feasible\n"
+        "   - If that's not possible or the customer declines, offer a call in the next 2-4 hours\n"
+        "2. Keep your messages short and natural (WhatsApp style). Only suggest one option per message.\n"
+        "3. Do not mention timezones, UTC, or technical scheduling details to the customer.\n"
+        "4. When scheduling is complete or the customer declines, return to the Triage Agent.\n"
+        "5. If the customer says 'no call' or 'stop calling', acknowledge and return to Triage Agent."
+    )
+
+
+scheduling_agent = Agent[AirlineAgentChatContext](
+    name="Scheduling Agent",
+    model=MODEL,
+    handoff_description="Handles call scheduling requests and suggests available call times.",
+    instructions=scheduling_instructions,
+    tools=[],
+    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+)
+
+
 triage_agent = Agent[AirlineAgentChatContext](
     name="Triage Agent",
     model=MODEL,
@@ -235,6 +261,7 @@ triage_agent.handoffs = [
     faq_agent,
     investments_faq_agent,
     refunds_compensation_agent,
+    scheduling_agent,
 ]
 faq_agent.handoffs.append(triage_agent)
 investments_faq_agent.handoffs.append(triage_agent)
@@ -253,3 +280,4 @@ booking_cancellation_agent.handoffs.extend(
     ]
 )
 refunds_compensation_agent.handoffs.extend([faq_agent, triage_agent])
+scheduling_agent.handoffs.append(triage_agent)

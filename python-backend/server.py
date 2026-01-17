@@ -44,6 +44,7 @@ from airline.agents import (
     flight_information_agent,
     investments_faq_agent,
     refunds_compensation_agent,
+    scheduling_agent,
     seat_special_services_agent,
     triage_agent,
 )
@@ -78,6 +79,7 @@ def _get_agent_by_name(name: str):
         flight_information_agent.name: flight_information_agent,
         booking_cancellation_agent.name: booking_cancellation_agent,
         refunds_compensation_agent.name: refunds_compensation_agent,
+        scheduling_agent.name: scheduling_agent,
     }
     return agents.get(name, triage_agent)
 
@@ -116,6 +118,7 @@ def _build_agents_list() -> List[Dict[str, Any]]:
         make_agent_dict(flight_information_agent),
         make_agent_dict(booking_cancellation_agent),
         make_agent_dict(refunds_compensation_agent),
+        make_agent_dict(scheduling_agent),
     ]
 
 

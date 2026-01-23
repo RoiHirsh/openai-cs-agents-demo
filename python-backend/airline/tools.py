@@ -33,6 +33,7 @@ from .demo_data import active_itinerary, apply_itinerary_defaults, get_itinerary
 )
 async def faq_lookup_tool(question: str) -> str:
     """Lookup answers to frequently asked questions."""
+    print(f"   [TOOL EXEC] faq_lookup_tool(question='{question[:50]}{'...' if len(question) > 50 else ''}')")
     q = question.lower()
     if "bag" in q or "baggage" in q:
         return (
@@ -69,6 +70,7 @@ async def get_trip_details(
     If the user mentions Paris, New York, or Austin, hydrate the context with the disrupted mock itinerary.
     Otherwise, hydrate the on-time mock itinerary. Returns the detected flight and confirmation.
     """
+    print(f"   [TOOL EXEC] get_trip_details(message='{message[:50]}{'...' if len(message) > 50 else ''}')")
     text = message.lower()
     keywords = ["paris", "new york", "austin"]
     scenario_key = "disrupted" if any(k in text for k in keywords) else "on_time"
@@ -96,6 +98,7 @@ async def update_seat(
     context: RunContextWrapper[AirlineAgentChatContext], confirmation_number: str, new_seat: str
 ) -> str:
     """Update the seat for a given confirmation number."""
+    print(f"   [TOOL EXEC] update_seat(confirmation_number='{confirmation_number}', new_seat='{new_seat}')")
     apply_itinerary_defaults(context.context.state)
     context.context.state.confirmation_number = confirmation_number
     context.context.state.seat_number = new_seat
@@ -111,6 +114,7 @@ async def flight_status_tool(
     context: RunContextWrapper[AirlineAgentChatContext], flight_number: str
 ) -> str:
     """Lookup the status for a flight using mock itineraries."""
+    print(f"   [TOOL EXEC] flight_status_tool(flight_number='{flight_number}')")
     await context.context.stream(ProgressUpdateEvent(text=f"Checking status for {flight_number}..."))
     ctx_state = context.context.state
     ctx_state.flight_number = flight_number
@@ -188,6 +192,7 @@ async def get_matching_flights(
     destination: str | None = None,
 ) -> str:
     """Return mock matching flights for a disrupted itinerary."""
+    print(f"   [TOOL EXEC] get_matching_flights(origin='{origin}', destination='{destination}')")
     await context.context.stream(ProgressUpdateEvent(text="Scanning for matching flights..."))
     ctx_state = context.context.state
     scenario_key, itinerary = active_itinerary(ctx_state)
@@ -226,6 +231,7 @@ async def book_new_flight(
     context: RunContextWrapper[AirlineAgentChatContext], flight_number: str | None = None
 ) -> str:
     """Book a replacement flight using mock inventory and update context."""
+    print(f"   [TOOL EXEC] book_new_flight(flight_number='{flight_number}')")
     await context.context.stream(ProgressUpdateEvent(text="Booking replacement flight..."))
     ctx_state = context.context.state
     scenario_key, itinerary = active_itinerary(ctx_state)
@@ -298,6 +304,7 @@ async def assign_special_service_seat(
     context: RunContextWrapper[AirlineAgentChatContext], seat_request: str = "front row for medical needs"
 ) -> str:
     """Assign a special service seat and record the request."""
+    print(f"   [TOOL EXEC] assign_special_service_seat(seat_request='{seat_request}')")
     ctx_state = context.context.state
     apply_itinerary_defaults(ctx_state)
     preferred_seat = "1A" if "front" in seat_request.lower() else "2A"
@@ -321,6 +328,7 @@ async def issue_compensation(
     context: RunContextWrapper[AirlineAgentChatContext], reason: str = "Delay causing missed connection"
 ) -> str:
     """Open a compensation case and attach vouchers."""
+    print(f"   [TOOL EXEC] issue_compensation(reason='{reason}')")
     await context.context.stream(ProgressUpdateEvent(text="Opening compensation case..."))
     ctx_state = context.context.state
     scenario_key, itinerary = active_itinerary(ctx_state)
@@ -348,6 +356,7 @@ async def display_seat_map(
     context: RunContextWrapper[AirlineAgentChatContext]
 ) -> str:
     """Trigger the UI to show an interactive seat map to the customer."""
+    print(f"   [TOOL EXEC] display_seat_map()")
     # The returned string will be interpreted by the UI to open the seat selector.
     return "DISPLAY_SEAT_MAP"
 
@@ -360,6 +369,7 @@ async def cancel_flight(
     context: RunContextWrapper[AirlineAgentChatContext]
 ) -> str:
     """Cancel the flight in the context."""
+    print(f"   [TOOL EXEC] cancel_flight()")
     apply_itinerary_defaults(context.context.state)
     fn = context.context.state.flight_number
     assert fn is not None, "Flight number is required"
@@ -381,8 +391,10 @@ async def check_call_availability() -> str:
     Returns JSON with: day, customer_service status, and service_opens/service_closes information.
     No calls on Sundays.
     """
+    print(f"   [TOOL EXEC] check_call_availability()")
     # Use timezone.utc which is always available
     now_utc = datetime.now(timezone.utc)
+    print(f"      Current UTC time: {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     
     # Get timezone-aware times for Israel and Guatemala
     israel_tz = None
@@ -391,98 +403,134 @@ async def check_call_availability() -> str:
         try:
             israel_tz = ZoneInfo("Asia/Jerusalem")
             guatemala_tz = ZoneInfo("America/Guatemala")
-        except Exception:
+            print(f"      Timezones loaded: Israel={israel_tz}, Guatemala={guatemala_tz}")
+        except Exception as e:
             # Fallback if timezones not available
             israel_tz = None
             guatemala_tz = None
+            print(f"      Timezone loading failed, using fallback: {e}")
+    else:
+        print(f"      ZoneInfo not available, using fallback calculations")
     
     # Get current day of week (0 = Monday, 6 = Sunday)
     day_of_week = now_utc.weekday()
     day_name = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][day_of_week]
+    print(f"      Current day: {day_name} (day_of_week={day_of_week})")
     
     # Check if it's Sunday - no service
     if day_of_week == 6:  # Sunday
+        print(f"      [SUNDAY DETECTED] Service closed on Sundays")
         # Calculate next Monday 11:00 Israel time
         days_until_monday = 1
         if israel_tz:
             # Get next Monday's date in Israel timezone
             now_israel = now_utc.astimezone(israel_tz)
+            print(f"      Current Israel time: {now_israel.strftime('%Y-%m-%d %H:%M:%S %Z')}")
             next_monday_date = now_israel.date() + timedelta(days=days_until_monday)
             next_monday_israel = datetime.combine(next_monday_date, time(11, 0), tzinfo=israel_tz)
             next_monday_utc = next_monday_israel.astimezone(timezone.utc)
+            print(f"      Next Monday 11:00 Israel = {next_monday_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         else:
             # Fallback: assume 11:00 Israel = 09:00 UTC
             next_monday_date = (now_utc + timedelta(days=days_until_monday)).date()
             next_monday_utc = datetime.combine(next_monday_date, time(9, 0), tzinfo=timezone.utc)
+            print(f"      [FALLBACK] Next Monday 09:00 UTC = {next_monday_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         hours_until_open = (next_monday_utc - now_utc).total_seconds() / 3600
-        return json.dumps({
+        result = json.dumps({
             "day": day_name.lower(),
             "customer_service": "currently_closed",
             "service_opens": f"service will resume on {next_monday_utc.strftime('%A, %B %d')} at 09:00 UTC, {int(hours_until_open)} hours from now"
         })
+        print(f"      Result: {result}")
+        return result
     
     # Calculate window boundaries
     # Window: 11:00 Israel time to 20:00 Guatemala time
+    print(f"      Calculating service window: 11:00 Israel -> 20:00 Guatemala")
     if israel_tz and guatemala_tz:
         # Get today's date in Israel timezone
         now_israel = now_utc.astimezone(israel_tz)
         today_israel = now_israel.date()
+        print(f"      Today in Israel timezone: {today_israel}")
         
         # Window start: 11:00 Israel time today
         window_start_israel = datetime.combine(today_israel, time(11, 0), tzinfo=israel_tz)
         window_start_utc = window_start_israel.astimezone(timezone.utc)
+        print(f"      Window start: 11:00 Israel = {window_start_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         # Window end: 20:00 Guatemala time today (or next day if it wraps)
         now_guatemala = now_utc.astimezone(guatemala_tz)
         today_guatemala = now_guatemala.date()
+        print(f"      Today in Guatemala timezone: {today_guatemala}")
         window_end_guatemala = datetime.combine(today_guatemala, time(20, 0), tzinfo=guatemala_tz)
         window_end_utc = window_end_guatemala.astimezone(timezone.utc)
+        print(f"      Window end: 20:00 Guatemala = {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         # If window end is before window start, it means it wraps to next day
         if window_end_utc < window_start_utc:
             window_end_utc += timedelta(days=1)
+            print(f"      [WINDOW WRAPS] Adjusted end to next day: {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     else:
         # Fallback calculation
         # Approximate: 11:00 Israel (UTC+2) = 09:00 UTC, 20:00 Guatemala (UTC-6) = 02:00 UTC next day
+        print(f"      [FALLBACK MODE] Using approximate timezone offsets")
         today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
         window_start_utc = today_utc + timedelta(hours=9)  # 09:00 UTC
         window_end_utc = today_utc + timedelta(days=1, hours=2)  # 02:00 UTC next day
+        print(f"      Window start (fallback): {window_start_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        print(f"      Window end (fallback): {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
         # If we're past window_end, move to next day
         if now_utc > window_end_utc:
             window_start_utc += timedelta(days=1)
             window_end_utc += timedelta(days=1)
+            print(f"      [PAST WINDOW] Moved to next day")
     
     # Check if we're within the window
+    print(f"      Checking if current time is within window...")
+    print(f"         Window: {window_start_utc.strftime('%H:%M UTC')} to {window_end_utc.strftime('%H:%M UTC')}")
+    print(f"         Current: {now_utc.strftime('%H:%M UTC')}")
+    
     if window_start_utc <= now_utc <= window_end_utc:
         # Service is open
+        print(f"      [SERVICE OPEN] Current time is within service window")
         hours_until_close = (window_end_utc - now_utc).total_seconds() / 3600
-        return json.dumps({
+        result = json.dumps({
             "day": day_name.lower(),
             "customer_service": "open",
             "service_closes": f"service will close in the next {int(hours_until_close)} hours"
         })
+        print(f"      Result: {result}")
+        return result
     else:
         # Service is closed
         if now_utc < window_start_utc:
             # Before opening today
+            print(f"      [SERVICE CLOSED] Before opening today")
             hours_until_open = (window_start_utc - now_utc).total_seconds() / 3600
             open_time_str = window_start_utc.strftime("%A, %B %d") if hours_until_open > 24 else window_start_utc.strftime("%H:%M UTC")
-            return json.dumps({
+            result = json.dumps({
                 "day": day_name.lower(),
                 "customer_service": "currently_closed",
                 "service_opens": f"service will resume at {open_time_str}, {int(hours_until_open)} hours from now"
             })
+            print(f"      Hours until open: {int(hours_until_open)}")
+            print(f"      Result: {result}")
+            return result
         else:
             # After closing - next window is tomorrow
+            print(f"      [SERVICE CLOSED] After closing today, next window is tomorrow")
             next_window_start = window_start_utc + timedelta(days=1)
             hours_until_open = (next_window_start - now_utc).total_seconds() / 3600
-            return json.dumps({
+            result = json.dumps({
                 "day": day_name.lower(),
                 "customer_service": "currently_closed",
                 "service_opens": f"service will resume on {next_window_start.strftime('%A, %B %d')} at 09:00 UTC, {int(hours_until_open)} hours from now"
             })
+            print(f"      Hours until next window: {int(hours_until_open)}")
+            print(f"      Result: {result}")
+            return result
 
 
 @function_tool(
@@ -506,6 +554,7 @@ async def book_calendly_call(
     Returns:
         Booking confirmation with link or details
     """
+    print(f"   [TOOL EXEC] book_calendly_call(email='{customer_email}', date='{preferred_date}', time='{preferred_time}')")
     # Get MCP configuration from environment variables
     # Set these in your .env file:
     # ZAPIER_MCP_URL=https://mcp.zapier.com/api/mcp/mcp

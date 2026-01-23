@@ -241,6 +241,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             now_ms = time.time() * 1000
             if isinstance(item, MessageOutputItem):
                 text = self._truncate(ItemHelpers.text_message_output(item))
+                
+                # Print agent message to terminal
+                print(f"\n[AGENT MESSAGE]")
+                print(f"   Agent: {item.agent.name}")
+                print(f"   Message: {text[:200]}{'...' if len(text) > 200 else ''}")
+                print()
+                
                 events.append(
                     AgentEvent(
                         id=uuid4().hex,
@@ -251,6 +258,16 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             elif isinstance(item, HandoffOutputItem):
+                from_agent = item.source_agent
+                to_agent = item.target_agent
+                
+                # Print handoff information to terminal
+                print(f"\n{'='*60}")
+                print(f"[AGENT HANDOFF]")
+                print(f"   From: {from_agent.name}")
+                print(f"   To:   {to_agent.name}")
+                print(f"{'='*60}\n")
+                
                 events.append(
                     AgentEvent(
                         id=uuid4().hex,
@@ -261,9 +278,6 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                         timestamp=now_ms,
                     )
                 )
-
-                from_agent = item.source_agent
-                to_agent = item.target_agent
                 ho = next(
                     (
                         h
@@ -295,21 +309,37 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             elif isinstance(item, ToolCallItem):
                 tool_name = getattr(item.raw_item, "name", None)
                 raw_args = getattr(item.raw_item, "arguments", None)
+                parsed_args = _parse_tool_args(raw_args)
+                
+                # Print tool call information to terminal
+                print(f"\n{'-'*60}")
+                print(f"[TOOL CALL]")
+                print(f"   Agent: {item.agent.name}")
+                print(f"   Tool:  {tool_name}")
+                if parsed_args:
+                    print(f"   Args:  {self._truncate(str(parsed_args), limit=500)}")
+                print(f"{'-'*60}\n")
+                
                 ev = AgentEvent(
                     id=uuid4().hex,
                     type="tool_call",
                     agent=item.agent.name,
                     content=self._truncate(tool_name or ""),
-                    metadata={"tool_args": self._truncate(_parse_tool_args(raw_args))},
+                    metadata={"tool_args": self._truncate(parsed_args)},
                     timestamp=now_ms,
                 )
                 events.append(ev)
             elif isinstance(item, ToolCallOutputItem):
+                # Print tool output information to terminal
+                output_str = str(item.output)
+                print(f"   [TOOL RESULT] {self._truncate(output_str, limit=300)}")
+                print()
+                
                 ev = AgentEvent(
                     id=uuid4().hex,
                     type="tool_output",
                     agent=item.agent.name,
-                    content=self._truncate(str(item.output)),
+                    content=self._truncate(output_str),
                     metadata={"tool_result": self._truncate(item.output)},
                     timestamp=now_ms,
                 )
@@ -342,8 +372,15 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         yield ClientEffectEvent(name="runner_bind_thread", data={"thread_id": thread.id, "ts": time.time()})
 
         try:
+            current_agent = _get_agent_by_name(state.current_agent_name)
+            print(f"\n{'#'*60}")
+            print(f"[AGENT ACTIVE] {current_agent.name}")
+            if user_text:
+                print(f"   User Message: {user_text[:100]}{'...' if len(user_text) > 100 else ''}")
+            print(f"{'#'*60}\n")
+            
             result = Runner.run_streamed(
-                _get_agent_by_name(state.current_agent_name),
+                current_agent,
                 state.input_items,
                 context=chat_context,
             )

@@ -1,0 +1,5 @@
+# Progress Log
+
+This file tracks the completion of tasks from tasks.md. Each entry should be a short sentence summarizing what task was tackled and how it was completed.
+
+---

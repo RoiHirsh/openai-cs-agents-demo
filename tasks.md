@@ -24,7 +24,7 @@ This file contains a list of tasks to be completed. Each task is marked with a c
 
 ### Task 1: The Investments FAQ agent comments
 
-- [ ] **Status: NOT DONE**
+- [x] **Status: DONE**
 
 **Requirements:**
 The ai agent shouldn't appear so much as an agent but as a human. This means, among others:
@@ -35,7 +35,7 @@ The ai agent shouldn't appear so much as an agent but as a human. This means, am
 
 ### Task 2: The Scheduling agent comments
 
-- [ ] **Status: NOT DONE**
+- [x] **Status: DONE**
 
 **Requirements:**
 The scheduling agent should get a handoff to it whenever we are dealing with a user in trying to set him on call with a representative

@@ -54,7 +54,7 @@ According to this response from the tool function the scheduling agent should pr
 
 ### Task 3: Guardrails comments
 
-- [ ] **Status: NOT DONE**
+- [x] **Status: DONE**
 
 **Requirements:**
 Change the instructions from allowing only airline questions so that it allows only questions related to our financing trading bot services and other related questions such as onboarding, account info, broker setups etc. instead of benign focused on airline industry it will switch to finance trading bots and similarly dont allow answering question on unrelated topics
@@ -63,7 +63,7 @@ Change the instructions from allowing only airline questions so that it allows o
 
 ### Task 4: General comments
 
-- [ ] **Status: NOT DONE**
+- [x] **Status: DONE**
 
 **Requirements:**
 Upon conversation start, instead of showing 'Hi! I'm your airline assistant. How can I help today?' and the three clickable options 'change my seat', 'flight status' and 'missed connection' you will show the following message and buttons instead:

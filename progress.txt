@@ -7,3 +7,7 @@ This file tracks the completion of tasks from tasks.md. Each entry should be a s
 Task 1: Updated the Investments FAQ agent instructions in `python-backend/airline/agents.py` to make it respond as a human expert rather than an AI agent - removed references to knowledge bases, sources, and phrases like "the info provided says", while keeping the file_search tool functionality working silently in the background.
 
 Task 2: Created `check_call_availability` tool in `python-backend/airline/tools.py` that checks day of week (no calls on Sunday), calculates availability window (11:00 Israel time to 20:00 Guatemala time converted to UTC), and returns JSON with service status. Updated Scheduling Agent instructions to use this tool and follow priority flow: 20 minutes → 2-4 hours → Calendly MCP fallback.
+
+Task 3: Updated the relevance guardrail instructions in `python-backend/airline/guardrails.py` to focus on financing trading bot services and related topics (onboarding, account info, broker setups, trading strategies, etc.) instead of airline topics, and to block unrelated topics including airline travel questions.
+
+Task 4: Updated the initial conversation greeting and buttons in `ui/components/chatkit-panel.tsx` to show Perry's introduction message from Lucentive Club and replaced the three airline-related buttons with two buttons ("Chat" and "Call") that send "chat" and "call" messages respectively.

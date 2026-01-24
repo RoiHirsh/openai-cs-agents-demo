@@ -25,13 +25,16 @@ guardrail_agent = Agent(
     model=GUARDRAIL_MODEL,
     name="Relevance Guardrail",
     instructions=(
-        "Determine if the user's message is highly unrelated to a normal customer service "
-        "conversation with an airline (flights, bookings, baggage, check-in, flight status, policies, loyalty programs, etc.) "
-        "OR investment-related topics (trading bots, stocks, investments, financial questions, etc.). "
+        "Determine if the user's message is highly unrelated to financing trading bot services and related topics. "
+        "Relevant topics include: trading bots, automated trading, financial trading services, onboarding processes, "
+        "account information, broker setups, broker connections, trading strategies, risk management, portfolio management, "
+        "copy trading, trading platforms, account registration, broker selection, and other finance/trading-related questions. "
         "Important: You are ONLY evaluating the most recent user message, not any of the previous messages from the chat history. "
         "It is OK for the customer to send messages such as 'Hi' or 'OK' or any other messages that are at all conversational, "
-        "but if the response is non-conversational, it must be somewhat related to airline travel OR investments. "
-        "Return is_relevant=True if it is related to either topic area, else False, plus a brief reasoning."
+        "but if the response is non-conversational, it must be somewhat related to financing trading bot services or related topics. "
+        "Do NOT allow questions about unrelated topics such as airline travel, general customer service for other industries, "
+        "or topics completely unrelated to trading bots and financial services. "
+        "Return is_relevant=True if it is related to financing trading bot services or related topics, else False, plus a brief reasoning."
     ),
     output_type=RelevanceOutput,
 )
@@ -41,7 +44,7 @@ guardrail_agent = Agent(
 async def relevance_guardrail(
     context: RunContextWrapper[None], agent: Agent, input: str | list[TResponseInputItem]
 ) -> GuardrailFunctionOutput:
-    """Guardrail to check if input is relevant to airline or investment topics."""
+    """Guardrail to check if input is relevant to financing trading bot services and related topics."""
     result = await Runner.run(
         guardrail_agent,
         input,

@@ -47,18 +47,10 @@ export function ChatKitPanel({
     },
     initialThread: initialThreadId ?? null,
     startScreen: {
-      greeting: "Hi! I'm your airline assistant. How can I help today?",
+      greeting: "Hi!\nMy name is Perry, Senior Portfolio Manager at Lucentive Club.\n\nI'm confident that very soon you'll realize you've come to the right place.\nLet's start with a short conversation.\n\nDo you prefer a call or would you rather we chat here?",
       prompts: [
-        { label: "Change my seat", prompt: "Can you move me to seat 14C?" },
-        {
-          label: "Flight status",
-          prompt: "What's the status of flight FLT-123?",
-        },
-        {
-          label: "Missed connection",
-          prompt:
-            "My flight from Paris to New York was delayed and I missed my connection to Austin. Also, my checked bag is missing and I need to spend the night in New York. Can you help me?",
-        },
+        { label: "Chat", prompt: "chat" },
+        { label: "Call", prompt: "call" },
       ],
     },
     threadItemActions: {

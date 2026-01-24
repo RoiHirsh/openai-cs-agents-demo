@@ -357,6 +357,18 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         user_text = ""
         if input_user_message is not None:
             user_text = _user_message_to_text(input_user_message)
+            
+            # Add Perry's initial greeting if this is the first user message
+            if not state.input_items:
+                initial_greeting = (
+                    "Hi!\n"
+                    "My name is Perry, Senior Portfolio Manager at Lucentive Club.\n\n"
+                    "I'm confident that very soon you'll realize you've come to the right place.\n"
+                    "Let's start with a short conversation.\n\n"
+                    "Do you prefer a call or would you rather we chat here?"
+                )
+                state.input_items.append({"role": "assistant", "content": initial_greeting})
+            
             state.input_items.append({"content": user_text, "role": "user"})
 
         previous_context = public_context(state.context)
@@ -455,7 +467,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             state.guardrails = checks
-            refusal = "Sorry, I can only answer questions related to airline travel or investments."
+            refusal = "Sorry, I can only answer questions related to financing trading bot services and related topics."
             state.input_items.append({"role": "assistant", "content": refusal})
             yield ThreadItemDoneEvent(
                 item=AssistantMessageItem(

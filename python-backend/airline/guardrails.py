@@ -28,13 +28,18 @@ guardrail_agent = Agent(
         "Determine if the user's message is highly unrelated to financing trading bot services and related topics. "
         "Relevant topics include: trading bots, automated trading, financial trading services, onboarding processes, "
         "account information, broker setups, broker connections, trading strategies, risk management, portfolio management, "
-        "copy trading, trading platforms, account registration, broker selection, and other finance/trading-related questions. "
-        "Important: You are ONLY evaluating the most recent user message, not any of the previous messages from the chat history. "
+        "copy trading, trading platforms, account registration, broker selection, scheduling calls or meetings, "
+        "and other finance/trading-related questions. "
+        "Important: When evaluating the most recent user message, consider the conversation context. "
+        "Short conversational responses like 'call', 'chat', 'yes', 'no', 'ok', 'hi', or similar are acceptable "
+        "if they are responses to questions asked in the conversation context. "
+        "For example, if the assistant asked 'Do you prefer a call or would you rather we chat here?', "
+        "then responses like 'call' or 'chat' are valid and should be allowed. "
         "It is OK for the customer to send messages such as 'Hi' or 'OK' or any other messages that are at all conversational, "
         "but if the response is non-conversational, it must be somewhat related to financing trading bot services or related topics. "
         "Do NOT allow questions about unrelated topics such as airline travel, general customer service for other industries, "
         "or topics completely unrelated to trading bots and financial services. "
-        "Return is_relevant=True if it is related to financing trading bot services or related topics, else False, plus a brief reasoning."
+        "Return is_relevant=True if it is related to financing trading bot services or related topics, or if it's a valid conversational response in context, else False, plus a brief reasoning."
     ),
     output_type=RelevanceOutput,
 )

@@ -1,10 +1,15 @@
 from __future__ import annotations as _annotations
 
+import os
 import random
 import string
 
+from dotenv import load_dotenv
 from agents import Agent, RunContextWrapper, handoff
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
+
+# Load environment variables
+load_dotenv()
 
 # Try importing FileSearchTool - adjust import path if needed
 try:
@@ -31,7 +36,7 @@ from .tools import (
     issue_compensation,
     update_seat,
     check_call_availability,
-    book_calendly_call,
+    get_calendly_booking_link,
 )
 
 MODEL = "gpt-5.2"
@@ -175,14 +180,17 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
     You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.
     If you are speaking to a customer, you were likely transferred from the triage agent.
     
+    CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.
+    
     Important: You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.
     
     Use the following routine to support the customer:
-    1. Identify the last question asked by the customer about investments, trading bots, or related topics.
-    2. Use the file_search tool to find the relevant information (use it silently in the background - do not mention it to the customer).
-    3. Respond to the customer naturally and conversationally with the answer. Answer as if you know this information personally - do not mention sources, knowledge bases, or that you "looked up" anything. Never say phrases like "the info provided says", "according to the knowledge base", or "based on the documentation".
-    4. If you cannot find relevant information, politely inform the customer that you don't have that information available right now.
-    5. When done, return to the Triage Agent.""",
+    1. First, check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.
+    2. If a question was asked, identify the specific question about investments, trading bots, or related topics.
+    3. Use the file_search tool to find the relevant information (use it silently in the background - do not mention it to the customer).
+    4. Respond to the customer naturally and conversationally with the answer. Answer as if you know this information personally - do not mention sources, knowledge bases, or that you "looked up" anything. Never say phrases like "the info provided says", "according to the knowledge base", or "based on the documentation".
+    5. If you cannot find relevant information, politely inform the customer that you don't have that information available right now.
+    6. When done, return to the Triage Agent.""",
     tools=[FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
@@ -207,11 +215,11 @@ def scheduling_instructions(
         "   - Use the availability information from check_call_availability() to determine if this is feasible\n"
         "   - Present this option: 'How about we schedule a call in 2-4 hours? I can have someone reach out then.'\n"
         "\n"
-        "3. FALLBACK - Calendly booking:\n"
-        "   - If neither 20 minutes nor 2-4 hours is possible (outside availability window, customer declines, or service closed), use the book_calendly_call tool to book a call for a later date\n"
-        "   - Use the availability window information from check_call_availability() to suggest appropriate times\n"
-        "   - Call book_calendly_call() with customer email (if available) and preferred date/time\n"
-        "   - Present the booking link or confirmation to the customer: 'Let me help you schedule a call for later. I'll send you a booking link.'\n"
+        "3. FALLBACK - Calendly booking link:\n"
+        "   - If neither 20 minutes nor 2-4 hours is possible (outside availability window, customer declines, or service closed), use the get_calendly_booking_link() tool to get the booking link\n"
+        "   - Call get_calendly_booking_link() to retrieve the Calendly booking URL\n"
+        "   - Present the booking link to the customer: 'Let me help you schedule a call for later. Here's our booking page where you can select a time that works for you.'\n"
+        "   - Share the link naturally and let the customer know they can choose their preferred time\n"
         "\n"
         "IMPORTANT RULES:\n"
         "- Always call check_call_availability() FIRST to understand current service status\n"
@@ -220,7 +228,8 @@ def scheduling_instructions(
         "- Do not mention timezones, UTC, or technical scheduling details to the customer\n"
         "- Do not book calls on Sundays (the tool will indicate if it's Sunday)\n"
         "- When scheduling is complete or the customer declines, return to the Triage Agent\n"
-        "- If the customer says 'no call' or 'stop calling', acknowledge and return to Triage Agent"
+        "- If the customer says 'no call' or 'stop calling', acknowledge and return to Triage Agent\n"
+        "- If the customer asks specific questions about investments, trading bots, stocks, or other topics unrelated to scheduling, hand off to the Triage Agent so they can be routed to the appropriate specialist. Do NOT attempt to answer these questions yourself."
     )
 
 
@@ -229,7 +238,7 @@ scheduling_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
-    tools=[check_call_availability, book_calendly_call],
+    tools=[check_call_availability, get_calendly_booking_link],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
@@ -240,12 +249,19 @@ triage_agent = Agent[AirlineAgentChatContext](
     handoff_description="Delegates requests to the right specialist agent (flight info, booking, seats, FAQ, baggage, compensation).",
     instructions=(
         f"{RECOMMENDED_PROMPT_PREFIX} "
-        "You are a helpful triaging agent. Route the customer to the best agent: "
-        "Flight Information for status/alternates, Booking and Cancellation for booking changes, Seat and Special Services for seating needs, "
-        "FAQ for policy questions, Investments FAQ Agent for investment-related questions (trading bots, stocks, investments, etc.), "
-        "and Refunds and Compensation for disruption support."
-        "First, if the message mentions Paris/New York/Austin and context is missing, call get_trip_details to populate flight/confirmation."
-        "If the request is clear, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call."
+        "You are a helpful triaging agent. Your role is to understand what the customer needs and route them to the appropriate specialist agent.\n\n"
+        "IMPORTANT: Only hand off to a specialist agent when the customer has asked a SPECIFIC QUESTION or made a SPECIFIC REQUEST. Do NOT hand off for simple preference selections like 'chat' or 'call' - these are just indicating how they want to communicate.\n\n"
+        "When to hand off:\n"
+        "- Investments FAQ Agent: When customer asks specific questions about trading bots, stocks, investments, fees, profit splits, setup process, etc.\n"
+        "- Scheduling Agent: When customer explicitly requests a call or wants to schedule a phone conversation\n"
+        "- FAQ Agent: For general policy questions\n"
+        "- Other agents: For their specific domains (flight info, booking, seats, refunds, etc.)\n\n"
+        "When NOT to hand off:\n"
+        "- If customer just says 'chat' or 'call' - acknowledge their preference and continue the conversation naturally\n"
+        "- If customer hasn't asked a question yet - engage them in conversation first\n"
+        "- If the message is unclear - ask for clarification before routing\n\n"
+        "First, if the message mentions Paris/New York/Austin and context is missing, call get_trip_details to populate flight/confirmation.\n"
+        "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
         "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."
     ),
     tools=[get_trip_details],

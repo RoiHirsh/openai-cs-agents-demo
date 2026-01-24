@@ -561,6 +561,25 @@ async def check_call_availability() -> str:
 
 
 @function_tool(
+    name_override="get_calendly_booking_link",
+    description_override="Get the Calendly booking link for scheduling a call when immediate callbacks are not available."
+)
+async def get_calendly_booking_link() -> str:
+    """
+    Returns the Calendly booking URL for customers to schedule calls.
+    Use this when neither 20 minutes nor 2-4 hours callback options are available.
+    
+    Returns:
+        A message with the Calendly booking link
+    """
+    calendly_url = "https://calendly.com/lucentiveclub-support/30min"
+    return (
+        f"You can schedule a call at your convenience using our booking page: {calendly_url}\n"
+        "Simply select a time that works for you, and we'll call you at the scheduled time."
+    )
+
+
+@function_tool(
     name_override="book_calendly_call",
     description_override="Book a Calendly appointment for a customer call using the Zapier MCP integration. Returns a booking link or confirmation."
 )

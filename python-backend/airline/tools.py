@@ -8,13 +8,20 @@ from copy import deepcopy
 from datetime import datetime, timedelta, time, timezone
 
 try:
-    from zoneinfo import ZoneInfo
-except ImportError:
-    # Fallback for Python < 3.9
+    import pytz
+    PYTZ_AVAILABLE = True
+    print(f"[TOOLS MODULE] pytz imported successfully, version: {pytz.__version__}")
+except ImportError as e:
+    PYTZ_AVAILABLE = False
+    print(f"[TOOLS MODULE] pytz import failed: {e}")
     try:
-        from backports.zoneinfo import ZoneInfo
+        from zoneinfo import ZoneInfo
     except ImportError:
-        ZoneInfo = None
+        # Fallback for Python < 3.9
+        try:
+            from backports.zoneinfo import ZoneInfo
+        except ImportError:
+            ZoneInfo = None
 
 try:
     import httpx
@@ -399,18 +406,29 @@ async def check_call_availability() -> str:
     # Get timezone-aware times for Israel and Guatemala
     israel_tz = None
     guatemala_tz = None
-    if ZoneInfo is not None:
+    
+    if PYTZ_AVAILABLE:
+        print(f"      [USING PYTZ] Attempting to load timezones with pytz...")
+        try:
+            israel_tz = pytz.timezone("Asia/Jerusalem")
+            guatemala_tz = pytz.timezone("America/Guatemala")
+            print(f"      Timezones loaded: Israel={israel_tz}, Guatemala={guatemala_tz}")
+        except Exception as e:
+            israel_tz = None
+            guatemala_tz = None
+            print(f"      Timezone loading failed, using fallback: {e}")
+    elif ZoneInfo is not None:
+        print(f"      [USING ZONEINFO] Attempting to load timezones with zoneinfo...")
         try:
             israel_tz = ZoneInfo("Asia/Jerusalem")
             guatemala_tz = ZoneInfo("America/Guatemala")
             print(f"      Timezones loaded: Israel={israel_tz}, Guatemala={guatemala_tz}")
         except Exception as e:
-            # Fallback if timezones not available
             israel_tz = None
             guatemala_tz = None
             print(f"      Timezone loading failed, using fallback: {e}")
     else:
-        print(f"      ZoneInfo not available, using fallback calculations")
+        print(f"      No timezone library available, using fallback calculations")
     
     # Get current day of week (0 = Monday, 6 = Sunday)
     day_of_week = now_utc.weekday()
@@ -427,7 +445,10 @@ async def check_call_availability() -> str:
             now_israel = now_utc.astimezone(israel_tz)
             print(f"      Current Israel time: {now_israel.strftime('%Y-%m-%d %H:%M:%S %Z')}")
             next_monday_date = now_israel.date() + timedelta(days=days_until_monday)
-            next_monday_israel = datetime.combine(next_monday_date, time(11, 0), tzinfo=israel_tz)
+            if PYTZ_AVAILABLE:
+                next_monday_israel = israel_tz.localize(datetime.combine(next_monday_date, time(11, 0)))
+            else:
+                next_monday_israel = datetime.combine(next_monday_date, time(11, 0), tzinfo=israel_tz)
             next_monday_utc = next_monday_israel.astimezone(timezone.utc)
             print(f"      Next Monday 11:00 Israel = {next_monday_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         else:
@@ -455,7 +476,10 @@ async def check_call_availability() -> str:
         print(f"      Today in Israel timezone: {today_israel}")
         
         # Window start: 11:00 Israel time today
-        window_start_israel = datetime.combine(today_israel, time(11, 0), tzinfo=israel_tz)
+        if PYTZ_AVAILABLE:
+            window_start_israel = israel_tz.localize(datetime.combine(today_israel, time(11, 0)))
+        else:
+            window_start_israel = datetime.combine(today_israel, time(11, 0), tzinfo=israel_tz)
         window_start_utc = window_start_israel.astimezone(timezone.utc)
         print(f"      Window start: 11:00 Israel = {window_start_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         
@@ -463,7 +487,10 @@ async def check_call_availability() -> str:
         now_guatemala = now_utc.astimezone(guatemala_tz)
         today_guatemala = now_guatemala.date()
         print(f"      Today in Guatemala timezone: {today_guatemala}")
-        window_end_guatemala = datetime.combine(today_guatemala, time(20, 0), tzinfo=guatemala_tz)
+        if PYTZ_AVAILABLE:
+            window_end_guatemala = guatemala_tz.localize(datetime.combine(today_guatemala, time(20, 0)))
+        else:
+            window_end_guatemala = datetime.combine(today_guatemala, time(20, 0), tzinfo=guatemala_tz)
         window_end_utc = window_end_guatemala.astimezone(timezone.utc)
         print(f"      Window end: 20:00 Guatemala = {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
         

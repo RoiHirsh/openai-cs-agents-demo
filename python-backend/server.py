@@ -38,11 +38,13 @@ from chatkit.types import (
 from chatkit.store import NotFoundError
 
 from airline.context import AirlineAgentChatContext, AirlineAgentContext, create_initial_context, public_context
+from airline.context_cache import get_lead_info_cache, set_lead_info, restore_lead_info_to_context
 from airline.agents import (
     booking_cancellation_agent,
     faq_agent,
     flight_information_agent,
     investments_faq_agent,
+    onboarding_agent,
     refunds_compensation_agent,
     scheduling_agent,
     seat_special_services_agent,
@@ -80,6 +82,7 @@ def _get_agent_by_name(name: str):
         booking_cancellation_agent.name: booking_cancellation_agent,
         refunds_compensation_agent.name: refunds_compensation_agent,
         scheduling_agent.name: scheduling_agent,
+        onboarding_agent.name: onboarding_agent,
     }
     return agents.get(name, triage_agent)
 
@@ -119,6 +122,7 @@ def _build_agents_list() -> List[Dict[str, Any]]:
         make_agent_dict(booking_cancellation_agent),
         make_agent_dict(refunds_compensation_agent),
         make_agent_dict(scheduling_agent),
+        make_agent_dict(onboarding_agent),
     ]
 
 
@@ -159,11 +163,31 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         self._listeners: Dict[str, list[asyncio.Queue]] = {}
         self._last_event_index: Dict[str, int] = {}
         self._last_snapshot: Dict[str, str] = {}
+        # Store lead info persistently per thread to restore if context is reset
+        # Also sync with module-level cache for handoff callbacks
+        self._lead_info_cache: Dict[str, dict] = get_lead_info_cache()
 
     def _state_for_thread(self, thread_id: str) -> ConversationState:
         if thread_id not in self._state:
             self._state[thread_id] = ConversationState()
-        return self._state[thread_id]
+        state = self._state[thread_id]
+        
+        # CRITICAL: Restore lead info from cache if context was reset
+        # This ensures lead info persists even if the context is recreated
+        if thread_id in self._lead_info_cache:
+            cached_lead_info = self._lead_info_cache[thread_id]
+            if cached_lead_info.get("first_name") and not state.context.first_name:
+                state.context.first_name = cached_lead_info["first_name"]
+            if cached_lead_info.get("email") and not state.context.email:
+                state.context.email = cached_lead_info["email"]
+            if cached_lead_info.get("phone") and not state.context.phone:
+                state.context.phone = cached_lead_info["phone"]
+            if cached_lead_info.get("country") and not state.context.country:
+                state.context.country = cached_lead_info["country"]
+            if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
+                state.context.new_lead = cached_lead_info["new_lead"]
+        
+        return state
 
     async def _ensure_thread(
         self, thread_id: Optional[str], context: dict[str, Any]
@@ -171,10 +195,11 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         if thread_id:
             try:
                 thread = await self.store.load_thread(thread_id, context)
-                # Update lead info if provided
+                state = self._state_for_thread(thread.id)  # This will restore from cache
+                
+                # Update lead info if provided in context (takes precedence)
                 lead_info = context.get("lead_info")
                 if lead_info:
-                    state = self._state_for_thread(thread.id)
                     if lead_info.get("first_name"):
                         state.context.first_name = lead_info.get("first_name")
                     if lead_info.get("email"):
@@ -185,6 +210,21 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                         state.context.country = lead_info.get("country")
                     if lead_info.get("new_lead") is not None:
                         state.context.new_lead = lead_info.get("new_lead", False)
+                    # Cache lead info for this thread to restore if context is reset
+                    lead_info_dict = {
+                        "first_name": state.context.first_name,
+                        "email": state.context.email,
+                        "phone": state.context.phone,
+                        "country": state.context.country,
+                        "new_lead": state.context.new_lead,
+                    }
+                    self._lead_info_cache[thread.id] = lead_info_dict
+                    set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
+                    print(f"[DEBUG] Updated lead info for thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+                else:
+                    # Even if no lead_info in context, restore from cache if available
+                    restore_lead_info_to_context(thread.id, state.context)
+                    print(f"[DEBUG] Loaded existing thread {thread.id} - restored from cache: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
                 return thread
             except NotFoundError:
                 pass
@@ -204,6 +244,17 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 state.context.country = lead_info.get("country")
             if lead_info.get("new_lead") is not None:
                 state.context.new_lead = lead_info.get("new_lead", False)
+            # Cache lead info for this thread to restore if context is reset
+            lead_info_dict = {
+                "first_name": state.context.first_name,
+                "email": state.context.email,
+                "phone": state.context.phone,
+                "country": state.context.country,
+                "new_lead": state.context.new_lead,
+            }
+            self._lead_info_cache[new_thread.id] = lead_info_dict
+            set_lead_info(new_thread.id, lead_info_dict)  # Also update module-level cache
+            print(f"[DEBUG] Set lead info for new thread {new_thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
         return new_thread
 
     async def ensure_thread(self, thread_id: Optional[str], context: dict[str, Any]) -> ThreadMetadata:
@@ -382,6 +433,86 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         context: dict[str, Any],
     ) -> AsyncIterator[ThreadStreamEvent]:
         state = self._state_for_thread(thread.id)
+        
+        # Preserve existing lead info before updating (in case it gets overwritten)
+        preserved_first_name = state.context.first_name
+        preserved_email = state.context.email
+        preserved_phone = state.context.phone
+        preserved_country = state.context.country
+        preserved_new_lead = state.context.new_lead
+        
+        # Update lead info from context if provided (in case it wasn't set during bootstrap)
+        lead_info = context.get("lead_info")
+        if lead_info:
+            if lead_info.get("first_name"):
+                state.context.first_name = lead_info.get("first_name")
+            if lead_info.get("email"):
+                state.context.email = lead_info.get("email")
+            if lead_info.get("phone"):
+                state.context.phone = lead_info.get("phone")
+            if lead_info.get("country"):
+                state.context.country = lead_info.get("country")
+            if lead_info.get("new_lead") is not None:
+                state.context.new_lead = lead_info.get("new_lead", False)
+            # Update cache when lead info is provided
+            lead_info_dict = {
+                "first_name": state.context.first_name,
+                "email": state.context.email,
+                "phone": state.context.phone,
+                "country": state.context.country,
+                "new_lead": state.context.new_lead,
+            }
+            self._lead_info_cache[thread.id] = lead_info_dict
+            set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
+        else:
+            # If no lead_info in context, restore from cache (set during bootstrap)
+            if thread.id in self._lead_info_cache:
+                cached_lead_info = self._lead_info_cache[thread.id]
+                # Only restore if cached values are actually valid (not None/empty)
+                if cached_lead_info.get("first_name") and not state.context.first_name:
+                    state.context.first_name = cached_lead_info["first_name"]
+                if cached_lead_info.get("email") and not state.context.email:
+                    state.context.email = cached_lead_info["email"]
+                if cached_lead_info.get("phone") and not state.context.phone:
+                    state.context.phone = cached_lead_info["phone"]
+                if cached_lead_info.get("country") and not state.context.country:
+                    state.context.country = cached_lead_info["country"]
+                if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
+                    state.context.new_lead = cached_lead_info["new_lead"]
+                print(f"[DEBUG] Restored lead info from cache for thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+            
+            # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
+            # This handles the case where ChatKit creates a new thread or cached thread has null values
+            if (not state.context.first_name and not state.context.country and 
+                len(self._lead_info_cache) > 0):
+                # Find the most recent cache entry that has valid lead info
+                for cached_thread_id, cached_lead_info in reversed(list(self._lead_info_cache.items())):
+                    if cached_lead_info.get("first_name") or cached_lead_info.get("country"):
+                        # Found a cache entry with valid data - copy it
+                        state.context.first_name = cached_lead_info.get("first_name")
+                        state.context.email = cached_lead_info.get("email")
+                        state.context.phone = cached_lead_info.get("phone")
+                        state.context.country = cached_lead_info.get("country")
+                        state.context.new_lead = cached_lead_info.get("new_lead", False)
+                        # Cache for this thread too so it persists
+                        self._lead_info_cache[thread.id] = cached_lead_info.copy()
+                        set_lead_info(thread.id, cached_lead_info.copy())
+                        print(f"[DEBUG] Copied valid lead info from thread {cached_thread_id} to thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}")
+                        break
+                # Fallback to preserved values if cache doesn't exist
+                if preserved_first_name and not state.context.first_name:
+                    state.context.first_name = preserved_first_name
+                if preserved_email and not state.context.email:
+                    state.context.email = preserved_email
+                if preserved_phone and not state.context.phone:
+                    state.context.phone = preserved_phone
+                if preserved_country and not state.context.country:
+                    state.context.country = preserved_country
+                if preserved_new_lead is True and state.context.new_lead is False:
+                    state.context.new_lead = True
+        
+        print(f"[DEBUG] Before Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+        
         user_text = ""
         if input_user_message is not None:
             user_text = _user_message_to_text(input_user_message)
@@ -409,13 +540,39 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             
             state.input_items.append({"content": user_text, "role": "user"})
 
+        # CRITICAL: Restore context from cache BEFORE creating chat_context
+        # This ensures context is populated even if it was reset
+        restore_lead_info_to_context(thread.id, state.context)
+        
+        # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
+        if (not state.context.first_name and not state.context.country and 
+            len(self._lead_info_cache) > 0):
+            # Find the most recent cache entry that has valid lead info
+            for cached_thread_id, cached_lead_info in reversed(list(self._lead_info_cache.items())):
+                if cached_lead_info.get("first_name") or cached_lead_info.get("country"):
+                    # Found a cache entry with valid data - copy it
+                    state.context.first_name = cached_lead_info.get("first_name")
+                    state.context.email = cached_lead_info.get("email")
+                    state.context.phone = cached_lead_info.get("phone")
+                    state.context.country = cached_lead_info.get("country")
+                    state.context.new_lead = cached_lead_info.get("new_lead", False)
+                    # Cache for this thread too so it persists
+                    self._lead_info_cache[thread.id] = cached_lead_info.copy()
+                    set_lead_info(thread.id, cached_lead_info.copy())
+                    print(f"[DEBUG] Before Runner - Copied valid lead info from thread {cached_thread_id} to thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}")
+                    break
+        
         previous_context = public_context(state.context)
+        
         chat_context = AirlineAgentChatContext(
             thread=thread,
             store=self.store,
             request_context=context,
-            state=state.context,
+            state=state.context,  # Same object reference - all fields persist automatically
         )
+        
+        # No need to set values on chat_context.state - it's the same object as state.context
+        # The lead info should already be in state.context from lines 424-480 above
         streamed_items_seen = 0
 
         # Tell the client which thread to bind runner updates to before streaming starts.
@@ -531,6 +688,58 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             input_text=user_text,
             guardrail_results=result.input_guardrail_results,
         )
+
+        # Ensure context state is preserved - chat_context.state should be the same object as state.context
+        # Explicitly sync to ensure any modifications during handoffs are preserved
+        # The Runner might create a new context during handoffs, so we need to ensure our state.context
+        # is updated with any changes from chat_context.state
+        if chat_context.state is not state.context:
+            # If they're different objects (shouldn't happen, but be safe), sync the state
+            print(f"[WARNING] chat_context.state is not the same object as state.context - syncing...")
+            # Copy all fields from chat_context.state to state.context
+            for field_name in state.context.model_fields.keys():
+                if hasattr(chat_context.state, field_name):
+                    new_value = getattr(chat_context.state, field_name)
+                    # Only update if the new value is not None/empty, or if it's explicitly set
+                    current_value = getattr(state.context, field_name)
+                    if new_value is not None or current_value is None:
+                        setattr(state.context, field_name, new_value)
+        else:
+            # They're the same object, so modifications should already be reflected
+            # But explicitly ensure state.context is set to be safe
+            state.context = chat_context.state
+        
+        # CRITICAL: After handoffs, ensure lead info is never lost
+        # Restore from cache if any critical fields are missing
+        if thread.id in self._lead_info_cache:
+            cached_lead_info = self._lead_info_cache[thread.id]
+            # Restore if missing (use cache as source of truth for lead info)
+            if cached_lead_info.get("country") and (not state.context.country or state.context.country == "Unknown"):
+                state.context.country = cached_lead_info["country"]
+            if cached_lead_info.get("first_name") and not state.context.first_name:
+                state.context.first_name = cached_lead_info["first_name"]
+            if cached_lead_info.get("email") and not state.context.email:
+                state.context.email = cached_lead_info["email"]
+            if cached_lead_info.get("phone") and not state.context.phone:
+                state.context.phone = cached_lead_info["phone"]
+            if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
+                state.context.new_lead = cached_lead_info["new_lead"]
+        
+        # Update cache with current context values to keep it in sync
+        # This ensures cache always has the latest values
+        if state.context.first_name or state.context.country or state.context.email or state.context.phone:
+            lead_info_dict = {
+                "first_name": state.context.first_name,
+                "email": state.context.email,
+                "phone": state.context.phone,
+                "country": state.context.country,
+                "new_lead": state.context.new_lead,
+            }
+            self._lead_info_cache[thread.id] = lead_info_dict
+            set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
+        
+        # Debug: Print context state to verify it's preserved
+        print(f"[DEBUG] After Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}, email={state.context.email}")
 
         new_context = public_context(state.context)
         changes = {k: new_context[k] for k in new_context if previous_context.get(k) != new_context[k]}

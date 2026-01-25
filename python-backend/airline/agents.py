@@ -22,6 +22,7 @@ except ImportError:
         FileSearchTool = None
 
 from .context import AirlineAgentChatContext
+from .context_cache import restore_lead_info_to_context
 from .demo_data import apply_itinerary_defaults
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
@@ -243,27 +244,218 @@ scheduling_agent = Agent[AirlineAgentChatContext](
 )
 
 
-triage_agent = Agent[AirlineAgentChatContext](
-    name="Triage Agent",
+def onboarding_instructions(
+    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+) -> str:
+    ctx = run_context.context.state
+    country = ctx.country or "Unknown"
+    first_name = ctx.first_name or "there"
+    
+    # Get current onboarding state
+    onboarding_state = ctx.onboarding_state or {}
+    completed_steps = onboarding_state.get("completed_steps", [])
+    trading_experience = onboarding_state.get("trading_experience")
+    previous_broker = onboarding_state.get("previous_broker")
+    trading_type = onboarding_state.get("trading_type")
+    budget_confirmed = onboarding_state.get("budget_confirmed")
+    budget_amount = onboarding_state.get("budget_amount")
+    demo_offered = onboarding_state.get("demo_offered")
+    instructions_provided = onboarding_state.get("instructions_provided")
+    
+    # Country-to-bot mapping (embedded in prompt)
+    country_bot_mapping = """
+    COUNTRY-TO-BOT MAPPING:
+    - Australia: Crypto bot only. Available broker: ByBit
+    - Canada: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available broker: PU Prime*
+    - Any Other Country: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available brokers: Vantage, PU Prime*, Ox Securities, ByBit
+    
+    Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
+    """
+    
+    # Broker setup links (embedded in prompt)
+    broker_links = """
+    BROKER SETUP LINKS:
+    
+    Vantage:
+    - Account creation: [Link 1: Account creation]
+    - Copy trading setup: [Link 2: Copy trading setup]
+    - Additional instructions: [Link 3: Additional instructions]
+    
+    PU Prime:
+    - Account creation: [Link 1: Account creation]
+    - Copy trading setup: [Link 2: Copy trading setup]
+    - Additional instructions: [Link 3: Additional instructions]
+    
+    Ox Securities:
+    - Account creation: [Link 1: Account creation]
+    - Copy trading setup: [Link 2: Copy trading setup]
+    - Additional instructions: [Link 3: Additional instructions]
+    
+    ByBit:
+    - Account creation: [Link 1: Account creation]
+    - Copy trading setup: [Link 2: Copy trading setup]
+    - Additional instructions: [Link 3: Additional instructions]
+    """
+    
+    # Determine current step based on completed steps
+    current_step = None
+    if "trading_experience" not in completed_steps:
+        current_step = "trading_experience"
+    elif "bot_recommendation" not in completed_steps:
+        current_step = "bot_recommendation"
+    elif "budget_check" not in completed_steps:
+        current_step = "budget_check"
+    elif "instructions" not in completed_steps:
+        current_step = "instructions"
+    else:
+        current_step = "complete"
+    
+    instructions = f"""{RECOMMENDED_PROMPT_PREFIX}
+    You are the Onboarding Agent. Your role is to guide new leads through the onboarding process step by step.
+    
+    Lead Information (ALREADY PROVIDED - DO NOT ASK FOR THIS):
+    - Name: {first_name}
+    - Country: {country}
+    
+    CRITICAL: The lead's country is already known ({country}). DO NOT ask the user for their country. 
+    Use the provided country information directly to recommend appropriate bots and brokers.
+    If the country shows "Unknown", you may ask for it. Otherwise, use the provided country value.
+    
+    {country_bot_mapping}
+    
+    {broker_links}
+    
+    CURRENT ONBOARDING STATE:
+    - Completed steps: {completed_steps}
+    - Trading experience: {trading_experience}
+    - Previous broker: {previous_broker}
+    - Trading type: {trading_type}
+    - Budget confirmed: {budget_confirmed}
+    - Budget amount: {budget_amount}
+    - Demo offered: {demo_offered}
+    - Instructions provided: {instructions_provided}
+    - Current step to work on: {current_step}
+    
+    ONBOARDING FLOW - Ask ONE question at a time:
+    
+    STEP 1: Trading Experience
+    - If "trading_experience" is NOT in completed_steps, ask: "Do you have prior trading experience?"
+    - If YES: Ask which broker they used and what type of trading (stocks, forex, crypto, etc.)
+    - After getting the answer, you must track this in your memory and note that trading_experience step is complete
+    - Remember: previous_broker and trading_type if they provided it
+    
+    STEP 2: Country-Based Bot Recommendation
+    - If "bot_recommendation" is NOT in completed_steps, recommend appropriate AI trading bot(s) based on their country ({country})
+    - Use the country-to-bot mapping above to determine which bots are available
+    - Explain which bots are available for their country in a friendly, conversational way
+    - After explaining, note that bot_recommendation step is complete
+    
+    STEP 3: Budget Check
+    - If "budget_check" is NOT in completed_steps, ask about their investment budget
+    - If budget < $500: Offer demo account for 10 days, note that demo_offered=True
+    - If budget >= $500: Confirm the amount and move to step 4
+    - Remember: budget_confirmed=True, budget_amount, and demo_offered (if applicable)
+    - After getting the answer, note that budget_check step is complete
+    
+    STEP 4: Instructions Phase
+    - If "instructions" is NOT in completed_steps:
+      - If they have an existing broker (previous_broker is set): Explain copy trading setup with existing broker, share relevant links from broker_links above
+      - If they need a new broker: Recommend broker based on country ({country}), explain account creation, share setup links from broker_links above
+      - Provide step-by-step instructions for trading copy setup
+    - After providing instructions, note that instructions step is complete and onboarding is finished
+    
+    IMPORTANT RULES:
+    - Ask ONLY ONE question per message - wait for the user's response before proceeding to the next step
+    - Check the current onboarding state above to resume from where you left off
+    - Be conversational and friendly, but stay focused on the onboarding flow
+    - Track progress mentally - you know which steps are completed based on the state above
+    - NEVER ask for information that is already provided in the "Lead Information" section above
+    - Use the provided country ({country}) directly - do not ask the user to confirm or provide it unless it shows "Unknown"
+    - If user requests a call: Hand off to Scheduling Agent
+    - If user asks FAQ questions: Hand off to Investments FAQ Agent
+    - When onboarding is complete (all 4 steps done): Hand off back to Triage Agent
+    - Never skip steps - complete them in order: trading_experience → bot_recommendation → budget_check → instructions
+    - If the user interrupts the flow with questions, answer briefly and return to the current step
+    """
+    
+    return instructions
+
+
+onboarding_agent = Agent[AirlineAgentChatContext](
+    name="Onboarding Agent",
     model=MODEL,
-    handoff_description="Delegates requests to the right specialist agent (flight info, booking, seats, FAQ, baggage, compensation).",
-    instructions=(
+    handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
+    instructions=onboarding_instructions,
+    tools=[],  # No tools needed - all data embedded in prompt
+    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+)
+
+
+def triage_instructions(
+    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+) -> str:
+    ctx = run_context.context.state
+    new_lead = ctx.new_lead or False
+    onboarding_state = ctx.onboarding_state or {}
+    completed_steps = onboarding_state.get("completed_steps", [])
+    onboarding_complete = "instructions" in completed_steps
+    
+    # Debug print to verify state values
+    print(f"[DEBUG] Triage Agent - new_lead={new_lead}, first_name={ctx.first_name}, country={ctx.country}, onboarding_complete={onboarding_complete}")
+    
+    # Determine if we should route to onboarding
+    # Note: Don't route if user has made a specific request (call/FAQ)
+    # This will be handled by the agent's natural language understanding
+    should_route_to_onboarding = (
+        new_lead and 
+        not onboarding_complete
+    )
+    
+    onboarding_instruction = ""
+    if should_route_to_onboarding:
+        onboarding_instruction = (
+            "\n\n"
+            "PRIORITY ROUTING - NEW LEAD ONBOARDING:\n"
+            "- This is a new lead (new_lead=True) who hasn't completed onboarding yet.\n"
+            "- If the user hasn't made a specific request (call or FAQ question), route them to the Onboarding Agent.\n"
+            "- The Onboarding Agent will guide them through the onboarding process step by step.\n"
+            "- Specific requests (call, FAQ) take priority over onboarding - handle those first.\n"
+        )
+    
+    return (
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. Your role is to understand what the customer needs and route them to the appropriate specialist agent.\n\n"
         "IMPORTANT: Only hand off to a specialist agent when the customer has asked a SPECIFIC QUESTION or made a SPECIFIC REQUEST.\n\n"
-        "When to hand off:\n"
-        "- Investments FAQ Agent: When customer asks specific questions about trading bots, stocks, investments, fees, profit splits, setup process, etc.\n"
-        "- Scheduling Agent: When customer says 'call' or explicitly requests a call or wants to schedule a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
-        "- FAQ Agent: For general policy questions\n"
-        "- Other agents: For their specific domains (flight info, booking, seats, refunds, etc.)\n\n"
+        "ROUTING PRIORITY (in order):\n"
+        "1. Specific requests take priority:\n"
+        "   - Scheduling Agent: When customer says 'call' or explicitly requests a call or wants to schedule a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
+        "   - Investments FAQ Agent: When customer asks specific questions about trading bots, stocks, investments, fees, profit splits, setup process, etc.\n"
+        "   - FAQ Agent: For general policy questions\n"
+        "2. New lead onboarding (if no specific request):\n"
+        "   - Onboarding Agent: If this is a new lead (new_lead=True) who hasn't completed onboarding and hasn't made a specific request, route them to the Onboarding Agent.\n"
+        "   - CRITICAL: When a new lead (new_lead=True) responds with 'chat' to the initial greeting, this is NOT a specific request - it's their preference choice. Route them to the Onboarding Agent immediately.\n"
+        "3. Other agents: For their specific domains (flight info, booking, seats, refunds, etc.)\n\n"
+        f"{onboarding_instruction}"
         "When NOT to hand off:\n"
-        "- If customer just says 'chat' - acknowledge their preference and continue the conversation naturally\n"
-        "- If customer hasn't asked a question yet - engage them in conversation first\n"
+        "- If customer hasn't asked a question yet and they're not a new lead - engage them in conversation first\n"
         "- If the message is unclear - ask for clarification before routing\n\n"
+        "SPECIAL CASE - 'chat' response from new leads:\n"
+        "- When a new lead (new_lead=True) says 'chat', this means they prefer to chat rather than have a call.\n"
+        "- This is NOT a specific request that requires a specialist - it's just their preference.\n"
+        "- You MUST route them to the Onboarding Agent immediately so they can begin the onboarding process.\n"
+        "- Do NOT just acknowledge and continue - you MUST hand off to Onboarding Agent.\n"
+        "- Only if they're NOT a new lead or have completed onboarding should you acknowledge and continue naturally.\n\n"
         "First, if the message mentions Paris/New York/Austin and context is missing, call get_trip_details to populate flight/confirmation.\n"
         "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
         "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."
-    ),
+    )
+
+
+triage_agent = Agent[AirlineAgentChatContext](
+    name="Triage Agent",
+    model=MODEL,
+    handoff_description="Delegates requests to the right specialist agent (flight info, booking, seats, FAQ, baggage, compensation, onboarding).",
+    instructions=triage_instructions,
     tools=[get_trip_details],
     handoffs=[],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
@@ -294,6 +486,28 @@ async def on_booking_handoff(
         context.context.state.flight_number = f"FLT-{random.randint(100, 999)}"
 
 
+async def on_onboarding_handoff(context: RunContextWrapper[AirlineAgentChatContext]) -> None:
+    """Ensure lead info is preserved when handing off to the onboarding agent."""
+    ctx_state = context.context.state
+    # Get thread ID from the context
+    thread_id = None
+    if hasattr(context.context, 'thread') and context.context.thread:
+        thread_id = context.context.thread.id
+    
+    # CRITICAL: Restore lead info from cache if context was reset during handoff
+    if thread_id:
+        restore_lead_info_to_context(thread_id, ctx_state)
+        print(f"[DEBUG] Onboarding handoff - Restored context for thread {thread_id}")
+    
+    print(f"[DEBUG] Onboarding handoff - Context state: first_name={ctx_state.first_name}, country={ctx_state.country}, new_lead={ctx_state.new_lead}, email={ctx_state.email}")
+    
+    # Validate that critical context is present
+    if not ctx_state.country or ctx_state.country == "Unknown":
+        print(f"[WARNING] Country is missing or Unknown during onboarding handoff!")
+    if not ctx_state.first_name:
+        print(f"[WARNING] First name is missing during onboarding handoff!")
+
+
 # Set up handoff relationships
 triage_agent.handoffs = [
     flight_information_agent,
@@ -303,6 +517,7 @@ triage_agent.handoffs = [
     investments_faq_agent,
     refunds_compensation_agent,
     scheduling_agent,
+    handoff(agent=onboarding_agent, on_handoff=on_onboarding_handoff),
 ]
 faq_agent.handoffs.append(triage_agent)
 investments_faq_agent.handoffs.append(triage_agent)
@@ -321,4 +536,6 @@ booking_cancellation_agent.handoffs.extend(
     ]
 )
 refunds_compensation_agent.handoffs.extend([faq_agent, triage_agent])
-scheduling_agent.handoffs.append(triage_agent)
+scheduling_agent.handoffs.append(onboarding_agent)
+investments_faq_agent.handoffs.append(onboarding_agent)
+onboarding_agent.handoffs.extend([scheduling_agent, investments_faq_agent, triage_agent])

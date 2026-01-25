@@ -114,3 +114,130 @@ Create a new popup modal that appears above the chat UI on page load. The modal 
    - This allows verification that the lead data is being properly set and used
 
 ---
+
+### Task 6: Update Context Model for Onboarding State
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Update the context model to support onboarding state tracking:
+
+1. **Add onboarding_state field to AirlineAgentContext** (`python-backend/airline/context.py`):
+   - Add field: `onboarding_state: dict | None = None`
+   - This will track progress through the onboarding flow
+   - Structure should support: `completed_steps`, `trading_experience`, `previous_broker`, `trading_type`, `budget_confirmed`, `budget_amount`, `demo_offered`, `instructions_provided`
+
+2. **Ensure the field is included in public_context** (if needed for UI display):
+   - Check if onboarding_state should be visible in the UI for debugging
+   - Update `public_context()` function if needed
+
+---
+
+### Task 7: Create Onboarding Agent
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Create a new Onboarding Agent that proactively guides new leads through the onboarding process:
+
+1. **Create Onboarding Agent** in `python-backend/airline/agents.py`:
+   - Agent name: "Onboarding Agent"
+   - Model: Use same MODEL as other agents (gpt-5.2)
+   - Handoff description: "Guides new leads through onboarding: trading experience, budget, broker setup."
+
+2. **Implement prompt-based instructions** (no tools needed - all data in prompt):
+   - Embed country-to-bot mapping directly in the prompt:
+     - Australia: Crypto bot only. Available broker: ByBit
+     - Canada: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available broker: PU Prime*
+     - Any Other Country: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available brokers: Vantage, PU Prime*, Ox Securities, ByBit
+     - Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
+   
+   - Embed broker setup links directly in the prompt (2-3 links per broker):
+     - Vantage: [Link 1: Account creation], [Link 2: Copy trading setup], [Link 3: Additional instructions]
+     - PU Prime: [Link 1: Account creation], [Link 2: Copy trading setup], [Link 3: Additional instructions]
+     - Ox Securities: [Link 1: Account creation], [Link 2: Copy trading setup], [Link 3: Additional instructions]
+     - ByBit: [Link 1: Account creation], [Link 2: Copy trading setup], [Link 3: Additional instructions]
+
+3. **Implement onboarding flow** (ask ONE question at a time):
+   - Step 1: Trading Experience
+     - Ask: "Do you have prior trading experience?"
+     - If YES: Ask which broker and what type of trading
+     - Update context.onboarding_state accordingly
+   
+   - Step 2: Country-Based Recommendation
+     - Use country-to-bot mapping based on context.country
+     - Recommend appropriate AI trading bot(s) for their country
+   
+   - Step 3: Budget Check
+     - Ask about investment budget
+     - If < $500: Offer demo account for 10 days
+     - If >= $500: Confirm and move to step 4
+   
+   - Step 4: Instructions Phase
+     - If existing broker: Explain copy trading setup with existing broker, share relevant links
+     - If new broker: Recommend broker based on country, explain account creation, share setup links
+     - Provide step-by-step instructions for trading copy setup
+
+4. **State management**:
+   - Check context.onboarding_state before asking questions
+   - Resume from last incomplete step if interrupted
+   - Update state after each answer
+   - Mark onboarding as complete when done
+
+5. **Handoff rules**:
+   - If user requests call: Hand off to Scheduling Agent
+   - If user asks FAQ questions: Hand off to Investments FAQ Agent
+   - When onboarding complete: Hand off back to Triage Agent
+
+6. **No tools needed** - all data embedded in prompt for simplicity
+
+---
+
+### Task 8: Update Triage Agent Routing Logic
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Modify the Triage Agent to route new leads to the Onboarding Agent:
+
+1. **Update Triage Agent instructions** in `python-backend/airline/agents.py`:
+   - Add routing logic to check `context.new_lead`
+   - If `new_lead=True` AND user hasn't completed onboarding AND no specific request (call/FAQ):
+     - Route to Onboarding Agent
+   - If user requests call: Route to Scheduling Agent (existing logic)
+   - If user asks FAQ questions: Route to Investments FAQ Agent (existing logic)
+   - Otherwise: Continue with appropriate agent
+
+2. **Add Onboarding Agent to Triage Agent's handoff list**:
+   - Include onboarding_agent in triage_agent.handoffs list
+
+3. **Ensure routing priority**:
+   - Specific requests (call, FAQ) take priority over onboarding
+   - Onboarding Agent is default handler for new leads without specific requests
+
+---
+
+### Task 9: Set Up Onboarding Agent Handoffs
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Configure handoff relationships for the Onboarding Agent:
+
+1. **Add handoffs FROM Onboarding Agent** in `python-backend/airline/agents.py`:
+   - Onboarding Agent can hand off to:
+     - Scheduling Agent (when user requests call)
+     - Investments FAQ Agent (when user asks FAQ questions)
+     - Triage Agent (when onboarding complete or user wants to exit onboarding)
+
+2. **Add handoffs TO Onboarding Agent**:
+   - Ensure Scheduling Agent can return to Onboarding Agent (if user was in onboarding)
+   - Ensure Investments FAQ Agent can return to Onboarding Agent (if user was in onboarding)
+   - Triage Agent can route to Onboarding Agent (already set up in Task 8)
+
+3. **Update agent imports** in `python-backend/server.py` and `python-backend/main.py`:
+   - Add onboarding_agent to imports
+   - Add to _get_agent_by_name() function
+   - Add to _build_agents_list() function
+
+---

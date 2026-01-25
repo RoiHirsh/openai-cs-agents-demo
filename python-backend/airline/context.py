@@ -26,6 +26,18 @@ class AirlineAgentContext(BaseModel):
     phone: str | None = None
     country: str | None = None
     new_lead: bool = False
+    # Onboarding state tracking
+    onboarding_state: dict | None = None
+    # Structure: {
+    #   "completed_steps": list[str],
+    #   "trading_experience": str | None,
+    #   "previous_broker": str | None,
+    #   "trading_type": str | None,
+    #   "budget_confirmed": bool | None,
+    #   "budget_amount": float | None,
+    #   "demo_offered": bool | None,
+    #   "instructions_provided": bool | None
+    # }
 
 
 class AirlineAgentChatContext(AgentContext[dict]):

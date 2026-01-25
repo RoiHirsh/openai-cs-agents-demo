@@ -18,6 +18,7 @@ from airline.agents import (
     faq_agent,
     flight_information_agent,
     investments_faq_agent,
+    onboarding_agent,
     refunds_compensation_agent,
     scheduling_agent,
     seat_special_services_agent,
@@ -39,7 +40,16 @@ os.environ.setdefault("OPENAI_TRACING_DISABLED", "1")
 # CORS configuration (adjust as needed for deployment)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://10.164.64.44:3000",
+        # Allow any localhost or local network IP (for development)
+        r"http://localhost:\d+",
+        r"http://127\.0\.0\.1:\d+",
+        r"http://10\.\d+\.\d+\.\d+:\d+",
+        r"http://192\.168\.\d+\.\d+:\d+",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -131,6 +141,7 @@ __all__ = [
     "faq_agent",
     "flight_information_agent",
     "investments_faq_agent",
+    "onboarding_agent",
     "public_context",
     "refunds_compensation_agent",
     "scheduling_agent",

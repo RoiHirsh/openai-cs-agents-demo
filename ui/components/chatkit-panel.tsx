@@ -3,6 +3,13 @@
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
 import React from "react";
 
+interface LeadInfo {
+  first_name: string;
+  email: string;
+  phone: string;
+  country: string;
+}
+
 type ChatKitPanelProps = {
   initialThreadId?: string | null;
   onThreadChange?: (threadId: string | null) => void;
@@ -10,6 +17,7 @@ type ChatKitPanelProps = {
   onRunnerUpdate?: () => void;
   onRunnerEventDelta?: (events: any[]) => void;
   onRunnerBindThread?: (threadId: string) => void;
+  leadInfo?: LeadInfo | null;
 };
 
 const CHATKIT_DOMAIN_KEY =
@@ -22,6 +30,7 @@ export function ChatKitPanel({
   onRunnerUpdate,
   onRunnerEventDelta,
   onRunnerBindThread,
+  leadInfo,
 }: ChatKitPanelProps) {
   const chatkit = useChatKit({
     api: {
@@ -47,7 +56,9 @@ export function ChatKitPanel({
     },
     initialThread: initialThreadId ?? null,
     startScreen: {
-      greeting: "Hi!\nMy name is Perry, Senior Portfolio Manager at Lucentive Club.\n\nI'm confident that very soon you'll realize you've come to the right place.\nLet's start with a short conversation.\n\nDo you prefer a call or would you rather we chat here?",
+      greeting: leadInfo?.first_name
+        ? `Hi ${leadInfo.first_name}!\nMy name is Perry, Senior Portfolio Manager at Lucentive Club.\n\nI'm confident that very soon you'll realize you've come to the right place.\nLet's start with a short conversation.\n\nDo you prefer a call or would you rather we chat here?`
+        : "Hi!\nMy name is Perry, Senior Portfolio Manager at Lucentive Club.\n\nI'm confident that very soon you'll realize you've come to the right place.\nLet's start with a short conversation.\n\nDo you prefer a call or would you rather we chat here?",
       prompts: [
         { label: "Chat", prompt: "chat" },
         { label: "Call", prompt: "call" },

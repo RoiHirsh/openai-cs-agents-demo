@@ -3,8 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { AgentPanel } from "@/components/agent-panel";
 import { ChatKitPanel } from "@/components/chatkit-panel";
+import { LeadInfoModal } from "@/components/lead-info-modal";
 import type { Agent, AgentEvent, GuardrailCheck } from "@/lib/types";
 import { fetchBootstrapState, fetchThreadState } from "@/lib/api";
+
+interface LeadInfo {
+  first_name: string;
+  email: string;
+  phone: string;
+  country: string;
+}
 
 export default function Home() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -14,6 +22,8 @@ export default function Home() {
   const [context, setContext] = useState<Record<string, any>>({});
   const [threadId, setThreadId] = useState<string | null>(null);
   const [initialThreadId, setInitialThreadId] = useState<string | null>(null);
+  const [leadInfo, setLeadInfo] = useState<LeadInfo | null>(null);
+  const [showLeadModal, setShowLeadModal] = useState(true);
 
   const normalizeEvents = useCallback((items: AgentEvent[]) => {
     if (!items.length) return items;
@@ -65,8 +75,16 @@ export default function Home() {
   }, [threadId, hydrateState]);
 
   useEffect(() => {
+    if (!leadInfo) return; // Wait for lead info before bootstrapping
+    
     (async () => {
-      const bootstrap = await fetchBootstrapState();
+      const bootstrap = await fetchBootstrapState({
+        first_name: leadInfo.first_name,
+        email: leadInfo.email,
+        phone: leadInfo.phone,
+        country: leadInfo.country,
+        new_lead: true,
+      });
       if (!bootstrap) return;
       setInitialThreadId(bootstrap.thread_id || null);
       setThreadId(bootstrap.thread_id || null);
@@ -92,7 +110,7 @@ export default function Home() {
         );
       }
     })();
-  }, []);
+  }, [leadInfo, normalizeEvents]);
 
   const handleThreadChange = useCallback((id: string | null) => {
     setThreadId(id);
@@ -106,8 +124,16 @@ export default function Home() {
     void hydrateState(threadId);
   }, [hydrateState, threadId]);
 
+  const handleLeadSubmit = useCallback((info: LeadInfo) => {
+    setLeadInfo(info);
+    setShowLeadModal(false);
+  }, []);
+
   return (
     <main className="flex h-screen gap-2 bg-gray-100 p-2">
+      {showLeadModal && (
+        <LeadInfoModal onSubmit={handleLeadSubmit} />
+      )}
       <AgentPanel
         agents={agents}
         currentAgent={currentAgent}
@@ -120,6 +146,7 @@ export default function Home() {
         onThreadChange={handleThreadChange}
         onResponseEnd={handleResponseEnd}
         onRunnerBindThread={handleBindThread}
+        leadInfo={leadInfo}
       />
     </main>
   );

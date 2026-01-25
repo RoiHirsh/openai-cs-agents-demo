@@ -20,6 +20,12 @@ class AirlineAgentContext(BaseModel):
     special_service_note: str | None = None
     origin: str | None = None
     destination: str | None = None
+    # Lead information fields
+    first_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    country: str | None = None
+    new_lead: bool = False
 
 
 class AirlineAgentChatContext(AgentContext[dict]):

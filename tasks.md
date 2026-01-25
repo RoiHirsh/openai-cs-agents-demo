@@ -84,3 +84,33 @@ Do you prefer a call or would you rather we chat here?
 - Button II: Call (clicking it will simply send a message with the text 'call')
 
 ---
+
+### Task 5: Lead Information Popup Modal
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Create a new popup modal that appears above the chat UI on page load. The modal should:
+
+1. **Randomize and setup new lead info each time the page loads:**
+   - Generate random data for: name, email, phone, and country
+   - Set a variable `new_lead=true` in the background
+   - Each page load should generate fresh lead data for testing purposes
+
+2. **Modal behavior:**
+   - Appears above the chat UI section on page load
+   - When clicking submit, the popup is removed
+   - The randomized lead data gets used by the chat system
+   - The chat should function normally otherwise (no other behavioral changes)
+
+3. **Welcome message personalization:**
+   - Use the lead's first name in the welcome message
+   - Change from "Hi!" to "Hi {firstname}!" in the welcome message
+   - Example: "Hi John, my name is Perry, Senior Portfolio Manager at Lucentive Club..."
+
+4. **Display new variables in conversation text section:**
+   - Show the new lead variables next to existing ones in the conversation text section
+   - Display: `first_name`, `country`, and `new_lead` variables
+   - This allows verification that the lead data is being properly set and used
+
+---

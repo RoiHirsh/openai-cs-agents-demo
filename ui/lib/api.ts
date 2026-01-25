@@ -10,9 +10,24 @@ export async function fetchThreadState(threadId: string) {
   }
 }
 
-export async function fetchBootstrapState() {
+export async function fetchBootstrapState(leadInfo?: {
+  first_name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  new_lead?: boolean;
+}) {
   try {
-    const res = await fetch(`/chatkit/bootstrap`);
+    const params = new URLSearchParams();
+    if (leadInfo) {
+      if (leadInfo.first_name) params.append("first_name", leadInfo.first_name);
+      if (leadInfo.email) params.append("email", leadInfo.email);
+      if (leadInfo.phone) params.append("phone", leadInfo.phone);
+      if (leadInfo.country) params.append("country", leadInfo.country);
+      if (leadInfo.new_lead !== undefined) params.append("new_lead", String(leadInfo.new_lead));
+    }
+    const url = `/chatkit/bootstrap${params.toString() ? `?${params.toString()}` : ""}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Bootstrap API error: ${res.status}`);
     return res.json();
   } catch (err) {

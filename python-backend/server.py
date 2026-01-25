@@ -170,12 +170,40 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
     ) -> ThreadMetadata:
         if thread_id:
             try:
-                return await self.store.load_thread(thread_id, context)
+                thread = await self.store.load_thread(thread_id, context)
+                # Update lead info if provided
+                lead_info = context.get("lead_info")
+                if lead_info:
+                    state = self._state_for_thread(thread.id)
+                    if lead_info.get("first_name"):
+                        state.context.first_name = lead_info.get("first_name")
+                    if lead_info.get("email"):
+                        state.context.email = lead_info.get("email")
+                    if lead_info.get("phone"):
+                        state.context.phone = lead_info.get("phone")
+                    if lead_info.get("country"):
+                        state.context.country = lead_info.get("country")
+                    if lead_info.get("new_lead") is not None:
+                        state.context.new_lead = lead_info.get("new_lead", False)
+                return thread
             except NotFoundError:
                 pass
         new_thread = ThreadMetadata(id=self.store.generate_thread_id(context), created_at=datetime.now())
         await self.store.save_thread(new_thread, context)
-        self._state_for_thread(new_thread.id)
+        state = self._state_for_thread(new_thread.id)
+        # Set lead info if provided
+        lead_info = context.get("lead_info")
+        if lead_info:
+            if lead_info.get("first_name"):
+                state.context.first_name = lead_info.get("first_name")
+            if lead_info.get("email"):
+                state.context.email = lead_info.get("email")
+            if lead_info.get("phone"):
+                state.context.phone = lead_info.get("phone")
+            if lead_info.get("country"):
+                state.context.country = lead_info.get("country")
+            if lead_info.get("new_lead") is not None:
+                state.context.new_lead = lead_info.get("new_lead", False)
         return new_thread
 
     async def ensure_thread(self, thread_id: Optional[str], context: dict[str, Any]) -> ThreadMetadata:
@@ -360,13 +388,23 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             
             # Add Perry's initial greeting if this is the first user message
             if not state.input_items:
-                initial_greeting = (
-                    "Hi!\n"
-                    "My name is Perry, Senior Portfolio Manager at Lucentive Club.\n\n"
-                    "I'm confident that very soon you'll realize you've come to the right place.\n"
-                    "Let's start with a short conversation.\n\n"
-                    "Do you prefer a call or would you rather we chat here?"
-                )
+                first_name = state.context.first_name
+                if first_name:
+                    initial_greeting = (
+                        f"Hi {first_name}!\n"
+                        "My name is Perry, Senior Portfolio Manager at Lucentive Club.\n\n"
+                        "I'm confident that very soon you'll realize you've come to the right place.\n"
+                        "Let's start with a short conversation.\n\n"
+                        "Do you prefer a call or would you rather we chat here?"
+                    )
+                else:
+                    initial_greeting = (
+                        "Hi!\n"
+                        "My name is Perry, Senior Portfolio Manager at Lucentive Club.\n\n"
+                        "I'm confident that very soon you'll realize you've come to the right place.\n"
+                        "Let's start with a short conversation.\n\n"
+                        "Do you prefer a call or would you rather we chat here?"
+                    )
                 state.input_items.append({"role": "assistant", "content": initial_greeting})
             
             state.input_items.append({"content": user_text, "role": "user"})

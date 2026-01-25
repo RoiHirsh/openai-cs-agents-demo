@@ -9,6 +9,7 @@ from chatkit.server import StreamingResult
 
 load_dotenv()
 from fastapi import Depends, FastAPI, Query, Request
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 
@@ -74,9 +75,24 @@ async def chatkit_state(
 
 @app.get("/chatkit/bootstrap")
 async def chatkit_bootstrap(
+    first_name: Optional[str] = Query(None),
+    email: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
+    new_lead: bool = Query(False),
     server: AirlineServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    return await server.snapshot(None, {"request": None})
+    context = {
+        "request": None,
+        "lead_info": {
+            "first_name": first_name,
+            "email": email,
+            "phone": phone,
+            "country": country,
+            "new_lead": new_lead,
+        } if any([first_name, email, phone, country]) else None,
+    }
+    return await server.snapshot(None, context)
 
 
 @app.get("/chatkit/state/stream")

@@ -25,6 +25,13 @@ from .tools import (
     get_calendly_booking_link,
 )
 
+# Import the new broker links tool from lucentive module
+try:
+    from lucentive.tools import get_broker_links
+except ImportError:
+    # Fallback if lucentive module not available
+    get_broker_links = None
+
 MODEL = "gpt-5.2"
 
 
@@ -127,29 +134,14 @@ def onboarding_instructions(
     Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
     """
     
-    # Broker setup links (embedded in prompt)
-    broker_links = """
+    # Broker setup links - use get_broker_links tool instead of hardcoded links
+    broker_links_note = """
     BROKER SETUP LINKS:
-    
-    Vantage:
-    - Account creation: [Link 1: Account creation]
-    - Copy trading setup: [Link 2: Copy trading setup]
-    - Additional instructions: [Link 3: Additional instructions]
-    
-    PU Prime:
-    - Account creation: [Link 1: Account creation]
-    - Copy trading setup: [Link 2: Copy trading setup]
-    - Additional instructions: [Link 3: Additional instructions]
-    
-    Ox Securities:
-    - Account creation: [Link 1: Account creation]
-    - Copy trading setup: [Link 2: Copy trading setup]
-    - Additional instructions: [Link 3: Additional instructions]
-    
-    ByBit:
-    - Account creation: [Link 1: Account creation]
-    - Copy trading setup: [Link 2: Copy trading setup]
-    - Additional instructions: [Link 3: Additional instructions]
+    - Use the get_broker_links tool to retrieve broker-specific links dynamically
+    - When user agrees to open account: call get_broker_links(broker="BrokerName", purpose="registration")
+    - When user is funded and ready to connect: call get_broker_links(broker="BrokerName", purpose="copy_trade", market="market_type")
+    - Supported brokers: Vantage, PU Prime, Bybit
+    - Market types for copy_trade: crypto, gold, silver, forex
     """
     
     # Determine current step based on completed steps
@@ -178,7 +170,7 @@ def onboarding_instructions(
     
     {country_bot_mapping}
     
-    {broker_links}
+    {broker_links_note}
     
     CURRENT ONBOARDING STATE:
     - Completed steps: {completed_steps}
@@ -214,8 +206,16 @@ def onboarding_instructions(
     
     STEP 4: Instructions Phase
     - If "instructions" is NOT in completed_steps:
-      - If they have an existing broker (previous_broker is set): Explain copy trading setup with existing broker, share relevant links from broker_links above
-      - If they need a new broker: Recommend broker based on country ({country}), explain account creation, share setup links from broker_links above
+      - If they have an existing broker (previous_broker is set): 
+        * Explain copy trading setup with existing broker
+        * Use get_broker_links tool to get copy-trade link: get_broker_links(broker=previous_broker, purpose="copy_trade", market=trading_type)
+        * Share the link(s) returned by the tool
+      - If they need a new broker: 
+        * Recommend broker based on country ({country})
+        * Use get_broker_links tool to get registration link: get_broker_links(broker="BrokerName", purpose="registration")
+        * Share the registration link returned by the tool
+        * Explain account creation process
+        * After they create account, use get_broker_links(broker="BrokerName", purpose="copy_trade", market="market_type") to get copy-trade link
       - Provide step-by-step instructions for trading copy setup
     - After providing instructions, note that instructions step is complete and onboarding is finished
     
@@ -255,7 +255,7 @@ onboarding_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[],  # No tools needed - all data embedded in prompt
+    tools=[tool for tool in [get_broker_links] if tool is not None],  # Add get_broker_links tool if available
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

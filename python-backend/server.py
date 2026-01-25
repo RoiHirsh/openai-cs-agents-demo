@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -309,14 +310,29 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 # Print agent message to terminal
                 print(f"\n[AGENT MESSAGE]")
                 print(f"   Agent: {item.agent.name}")
-                # Safely encode text for Windows console (cp1252) compatibility
+                # Safely encode text for Windows console compatibility
+                # Get console encoding or default to utf-8
+                console_encoding = sys.stdout.encoding or 'utf-8'
                 try:
-                    safe_text = text[:200] + ('...' if len(text) > 200 else '')
-                    print(f"   Message: {safe_text}")
-                except UnicodeEncodeError:
-                    # Fallback: encode with errors='replace' to handle Unicode characters
-                    safe_text = text[:200].encode('utf-8', errors='replace').decode('utf-8', errors='replace') + ('...' if len(text) > 200 else '')
-                    print(f"   Message: {safe_text}")
+                    # Truncate text first
+                    truncated = text[:200] + ('...' if len(text) > 200 else '')
+                    # Encode to console encoding with error handling
+                    safe_text = truncated.encode(console_encoding, errors='replace').decode(console_encoding, errors='replace')
+                    try:
+                        print(f"   Message: {safe_text}")
+                    except UnicodeEncodeError:
+                        # If print still fails, use ASCII fallback
+                        safe_text = truncated.encode('ascii', errors='replace').decode('ascii', errors='replace')
+                        print(f"   Message: {safe_text}")
+                except (UnicodeEncodeError, UnicodeDecodeError):
+                    # Ultimate fallback: replace all problematic characters with ASCII
+                    truncated = text[:200] + ('...' if len(text) > 200 else '')
+                    safe_text = truncated.encode('ascii', errors='replace').decode('ascii', errors='replace')
+                    try:
+                        print(f"   Message: {safe_text}")
+                    except UnicodeEncodeError:
+                        # Last resort: just print a message that encoding failed
+                        print(f"   Message: [Text contains unsupported characters - message truncated]")
                 print()
                 
                 events.append(

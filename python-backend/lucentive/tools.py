@@ -52,44 +52,42 @@ BROKER_VIDEOS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
     },
 }
 
-# Broker links database (for future use when asset_type="links" or "all")
-BROKER_LINKS: dict[BrokerId, list[AssetItem]] = {
-    "bybit": [
-        {"title": "Bybit Referral Program", "url": "https://bybit.com/en/invite?ref=BYQLKL"},
-        {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
-    ],
-    "vantage": [
-        {
-            "title": "Vantage Registration",
-            "url": "https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340",
-        },
-        {
-            "title": "Vantage Copy Trade (Crypto - Dave)",
-            "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-820189",
-        },
-        {
-            "title": "Vantage Copy Trade (Gold - Dave)",
-            "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-795666",
-        },
-        {
-            "title": "Vantage Copy Trade (Forex - Dave)",
-            "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-828839",
-        },
-    ],
-    "pu_prime": [
-        {
-            "title": "PU Prime Registration",
-            "url": "https://www.puprime.partners/forex-trading-account/?affid=7525953",
-        },
-        {
-            "title": "PU Prime Copy Trade (Silver - Adi)",
-            "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825967&campaignCode=1pHJLS6RBENRLbA7/b+Ayg==",
-        },
-        {
-            "title": "PU Prime Copy Trade (Gold - Adi No Swap)",
-            "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825948&campaignCode=1pHJLS6RBENRLbA7/b+Ayg==",
-        },
-    ],
+# Broker links database (purpose-specific referral/registration links)
+BROKER_LINKS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
+    "bybit": {
+        "registration": [
+            {"title": "Bybit Referral Program", "url": "https://bybit.com/en/invite?ref=BYQLKL"},
+        ],
+        "copy_trade_connect": [
+            {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
+        ],
+        "copy_trade_start": [],
+        "copy_trade_open_account": [],
+    },
+    "vantage": {
+        "registration": [
+            {"title": "Vantage Registration", "url": "https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340"},
+        ],
+        "copy_trade_connect": [
+            # Multiple copy trade links for different markets - agent can pick based on market if provided
+            {"title": "Vantage Copy Trade (Crypto - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-820189"},
+            {"title": "Vantage Copy Trade (Gold - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-795666"},
+            {"title": "Vantage Copy Trade (Forex - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-828839"},
+        ],
+        "copy_trade_start": [],
+        "copy_trade_open_account": [],
+    },
+    "pu_prime": {
+        "registration": [
+            {"title": "PU Prime Registration", "url": "https://www.puprime.partners/forex-trading-account/?affid=7525953"},
+        ],
+        "copy_trade_connect": [
+            {"title": "PU Prime Copy Trade (Silver - Adi)", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825967&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
+            {"title": "PU Prime Copy Trade (Gold - Adi No Swap)", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825948&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
+        ],
+        "copy_trade_start": [],
+        "copy_trade_open_account": [],
+    },
 }
 
 
@@ -105,9 +103,26 @@ def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
     return None
 
 
+def pick_copy_trade_link_by_market(links: list[AssetItem], market: Optional[str] = None) -> list[AssetItem]:
+    """Pick the best matching copy-trade link based on market preference."""
+    if not market or not links:
+        # Return first link if no market specified or no links
+        return links[:1] if links else []
+    
+    # Try to match market in title (e.g., "(Crypto", "(Gold", etc.)
+    market_lower = market.lower()
+    for link in links:
+        # Look for pattern like "(Crypto", "(Gold", etc.
+        if f"({market_lower}" in link["title"].lower():
+            return [link]
+    
+    # Fallback: return first link if no match
+    return links[:1] if links else []
+
+
 @function_tool(
     name_override="get_broker_assets",
-    description_override="Return broker tutorial videos (and optionally other assets) for a given broker and onboarding purpose."
+    description_override="Return broker referral/registration links and optional tutorial videos for a given broker and onboarding purpose. Always returns links (primary) and videos (optional helpers) together."
 )
 async def get_broker_assets(
     broker: str,
@@ -116,14 +131,18 @@ async def get_broker_assets(
     market: Optional[str] = None,
 ) -> str:
     """
-    Get broker assets (videos and/or links) for a given broker and purpose.
+    Get broker assets (links and videos) for a given broker and purpose.
+    Links are the primary assets (referral/registration URLs) that users need.
+    Videos are optional helper explainers that accompany the links when available.
     
     Args:
         broker: Broker name (Bybit, Vantage, PU Prime) - case-insensitive
         purpose: Which onboarding step - "registration", "copy_trade_start", 
                 "copy_trade_open_account", "copy_trade_connect"
-        asset_type: Type of assets requested - "videos" (default), "links", or "all"
-        market: Optional market type for future filtering - "crypto", "gold", "silver", "forex"
+        asset_type: Type of assets requested - "all" (default, returns links + videos), 
+                   "links" (links only), or "videos" (videos only)
+        market: Optional market type for copy_trade_connect links - "crypto", "gold", "silver", "forex"
+               Used to pick the best matching copy trade link when multiple options exist
     
     Returns:
         JSON string with structure:
@@ -131,7 +150,8 @@ async def get_broker_assets(
             "ok": true/false,
             "broker": "normalized_broker_name",
             "purpose": "purpose_value",
-            "assets": [{"title": "...", "url": "..."}, ...],
+            "links": [{"title": "...", "url": "..."}, ...],  // Primary: referral/registration URLs
+            "videos": [{"title": "...", "url": "..."}, ...],  // Optional: explainer videos
             "error": null or error message
         }
     """
@@ -144,7 +164,8 @@ async def get_broker_assets(
             "ok": False,
             "broker": broker,
             "purpose": purpose,
-            "assets": [],
+            "links": [],
+            "videos": [],
             "error": "UNSUPPORTED_BROKER"
         }
         print(f"      [ERROR] Unsupported broker: {broker}")
@@ -158,7 +179,8 @@ async def get_broker_assets(
             "ok": False,
             "broker": broker_id,
             "purpose": purpose,
-            "assets": [],
+            "links": [],
+            "videos": [],
             "error": "UNSUPPORTED_PURPOSE"
         }
         print(f"      [ERROR] Unsupported purpose: {purpose}")
@@ -167,8 +189,8 @@ async def get_broker_assets(
     # Cast to Purpose type for type checking
     purpose_typed: Purpose = purpose_lower  # type: ignore
     
-    # Determine asset type (default to "videos")
-    asset_type_str: AssetType = (asset_type or "videos").lower().strip()  # type: ignore
+    # Determine asset type (default to "all" to return both links and videos)
+    asset_type_str: AssetType = (asset_type or "all").lower().strip()  # type: ignore
     
     # Validate asset type
     valid_asset_types: set[str] = {"videos", "links", "all"}
@@ -177,39 +199,39 @@ async def get_broker_assets(
             "ok": False,
             "broker": broker_id,
             "purpose": purpose_typed,
-            "assets": [],
+            "links": [],
+            "videos": [],
             "error": "UNSUPPORTED_ASSET_TYPE"
         }
         print(f"      [ERROR] Unsupported asset_type: {asset_type_str}")
         return json.dumps(result)
     
-    # Get assets based on asset_type
-    assets: list[AssetItem] = []
+    # Get links for the given purpose
+    links: list[AssetItem] = []
+    if asset_type_str in ("links", "all"):
+        purpose_links = BROKER_LINKS[broker_id].get(purpose_typed, [])
+        
+        # For copy_trade_connect, if market is specified, try to pick best matching link
+        if purpose_typed == "copy_trade_connect" and market and len(purpose_links) > 1:
+            links = pick_copy_trade_link_by_market(purpose_links, market)
+        else:
+            # Return first link (or all if only one) - cap to 1 for most purposes
+            links = purpose_links[:1] if purpose_typed != "copy_trade_connect" else purpose_links[:3]
     
-    if asset_type_str == "videos":
-        # Return videos for the given purpose
+    # Get videos for the given purpose
+    videos: list[AssetItem] = []
+    if asset_type_str in ("videos", "all"):
         videos = BROKER_VIDEOS[broker_id].get(purpose_typed, [])
-        assets = videos[:3]  # Cap to 3
-    elif asset_type_str == "links":
-        # For now, links are not purpose-specific, return all links (capped to 3)
-        # Future: can add purpose-specific link mapping if needed
-        all_links = BROKER_LINKS[broker_id]
-        assets = all_links[:3]
-    else:  # asset_type_str == "all"
-        # Return both videos and links
-        videos = BROKER_VIDEOS[broker_id].get(purpose_typed, [])
-        all_links = BROKER_LINKS[broker_id]
-        # Combine and cap to 3 total
-        combined = videos + all_links
-        assets = combined[:3]
+        videos = videos[:3]  # Cap to 3 videos
     
     result = {
         "ok": True,
         "broker": broker_id,
         "purpose": purpose_typed,
-        "assets": assets,
+        "links": links,
+        "videos": videos,
         "error": None
     }
     
-    print(f"      [SUCCESS] Returning {len(assets)} asset(s) for {broker_id} (purpose={purpose_typed}, asset_type={asset_type_str})")
+    print(f"      [SUCCESS] Returning {len(links)} link(s) and {len(videos)} video(s) for {broker_id} (purpose={purpose_typed}, asset_type={asset_type_str})")
     return json.dumps(result)

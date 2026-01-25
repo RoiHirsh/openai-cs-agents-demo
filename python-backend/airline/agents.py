@@ -134,16 +134,20 @@ def onboarding_instructions(
     Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
     """
     
-    # Broker setup assets - use get_broker_assets tool to retrieve videos/links dynamically
+    # Broker setup assets - use get_broker_assets tool to retrieve links and videos
     broker_assets_note = """
     BROKER SETUP ASSETS:
-    - Use the get_broker_assets tool to retrieve broker-specific videos and links dynamically
+    - Use the get_broker_assets tool to retrieve broker-specific referral/registration links and optional explainer videos
+    - The tool returns JSON with two arrays: "links" (primary) and "videos" (optional helpers)
+    - ALWAYS send the link(s) first - these are the referral/registration URLs users need to use
+    - If videos are available, share them alongside the link as extra help/explanation
     - When user agrees to open account: call get_broker_assets(broker="BrokerName", purpose="registration")
     - When user needs to open copy trading account: call get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account")
-    - When user is funded and ready to connect: call get_broker_assets(broker="BrokerName", purpose="copy_trade_connect")
+    - When user is funded and ready to connect: call get_broker_assets(broker="BrokerName", purpose="copy_trade_connect", market="market_type" if known)
     - When user wants to start copy trading: call get_broker_assets(broker="BrokerName", purpose="copy_trade_start")
     - Supported brokers: Vantage, PU Prime, Bybit
-    - Default asset_type is "videos" (can also use "links" or "all" if needed)
+    - Example response format: {"ok": true, "links": [{"title": "...", "url": "..."}], "videos": [{"title": "...", "url": "..."}]}
+    - IMPORTANT: Send links and videos together in the same message, not separately
     """
     
     # Determine current step based on completed steps
@@ -210,15 +214,21 @@ def onboarding_instructions(
     - If "instructions" is NOT in completed_steps:
       - If they have an existing broker (previous_broker is set): 
         * Explain copy trading setup with existing broker
-        * Use get_broker_assets tool to get copy-trade connect video: get_broker_assets(broker=previous_broker, purpose="copy_trade_connect")
-        * Share the video(s) returned by the tool
+        * Use get_broker_assets tool: get_broker_assets(broker=previous_broker, purpose="copy_trade_connect", market=trading_type if known)
+        * ALWAYS send the link(s) first - this is the referral/copy-trade URL they need to use
+        * If videos are available, share them alongside the link as extra help
+        * Present both together in the same message: "Here's your copy trade link: [link]. Here's a helpful video: [video]"
       - If they need a new broker: 
         * Recommend broker based on country ({country})
-        * Use get_broker_assets tool to get registration video: get_broker_assets(broker="BrokerName", purpose="registration")
-        * Share the registration video returned by the tool
+        * Use get_broker_assets tool: get_broker_assets(broker="BrokerName", purpose="registration")
+        * ALWAYS send the registration link first - this is the referral URL they need to sign up
+        * If a registration video is available, share it alongside the link as extra help
+        * Present both together: "Here's your registration link: [link]. Here's a helpful video showing how to sign up: [video]"
         * Explain account creation process
-        * After they create account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account") to get account opening video
-        * After they fund account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_connect") to get connection video
+        * After they create account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account")
+        * Send the link(s) and video(s) together if available
+        * After they fund account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_connect", market=trading_type if known)
+        * Send the connection link(s) and video(s) together if available
       - Provide step-by-step instructions for trading copy setup
     - After providing instructions, note that instructions step is complete and onboarding is finished
     

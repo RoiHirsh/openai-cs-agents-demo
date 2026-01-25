@@ -5,21 +5,8 @@ from pydantic import BaseModel
 
 
 class AirlineAgentContext(BaseModel):
-    """Context for airline customer service agents."""
+    """Context for Lucentive Club customer service agents."""
 
-    passenger_name: str | None = None
-    confirmation_number: str | None = None
-    seat_number: str | None = None
-    flight_number: str | None = None
-    account_number: str | None = None  # Account number associated with the customer
-    itinerary: list[dict[str, str]] | None = None  # Internal only (not surfaced to UI)
-    baggage_claim_id: str | None = None  # Internal only (not surfaced to UI)
-    compensation_case_id: str | None = None
-    scenario: str | None = None
-    vouchers: list[str] | None = None
-    special_service_note: str | None = None
-    origin: str | None = None
-    destination: str | None = None
     # Lead information fields
     first_name: str | None = None
     email: str | None = None
@@ -61,19 +48,6 @@ def create_initial_context() -> AirlineAgentContext:
 def public_context(ctx: AirlineAgentContext) -> dict:
     """
     Return a filtered view of the context for UI display.
-    Hides internal fields like itinerary and baggage_claim_id, and only shows vouchers when granted.
     """
     data = ctx.model_dump()
-    hidden_keys = {
-        "itinerary",
-        "baggage_claim_id",
-        "compensation_case_id",
-        "scenario",
-    }
-    for key in list(data.keys()):
-        if key in hidden_keys:
-            data.pop(key, None)
-    # Only surface vouchers once granted
-    if not data.get("vouchers"):
-        data.pop("vouchers", None)
     return data

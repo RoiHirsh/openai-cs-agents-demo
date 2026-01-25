@@ -14,14 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 
 from airline.agents import (
-    booking_cancellation_agent,
-    faq_agent,
-    flight_information_agent,
     investments_faq_agent,
     onboarding_agent,
-    refunds_compensation_agent,
     scheduling_agent,
-    seat_special_services_agent,
     triage_agent,
 )
 from airline.context import (
@@ -135,16 +130,11 @@ __all__ = [
     "AirlineAgentChatContext",
     "AirlineAgentContext",
     "app",
-    "booking_cancellation_agent",
     "chat_server",
     "create_initial_context",
-    "faq_agent",
-    "flight_information_agent",
     "investments_faq_agent",
     "onboarding_agent",
     "public_context",
-    "refunds_compensation_agent",
     "scheduling_agent",
-    "seat_special_services_agent",
     "triage_agent",
 ]

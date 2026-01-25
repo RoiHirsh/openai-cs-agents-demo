@@ -35,7 +35,7 @@ export function AgentPanel({
           Agent View
         </h1>
         <span className="ml-auto text-xs font-light tracking-wide opacity-80">
-          Airline&nbsp;Co.
+          Lucentive Club
         </span>
       </div>
 

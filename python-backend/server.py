@@ -40,14 +40,9 @@ from chatkit.store import NotFoundError
 from airline.context import AirlineAgentChatContext, AirlineAgentContext, create_initial_context, public_context
 from airline.context_cache import get_lead_info_cache, set_lead_info, restore_lead_info_to_context
 from airline.agents import (
-    booking_cancellation_agent,
-    faq_agent,
-    flight_information_agent,
     investments_faq_agent,
     onboarding_agent,
-    refunds_compensation_agent,
     scheduling_agent,
-    seat_special_services_agent,
     triage_agent,
 )
 from memory_store import MemoryStore
@@ -75,12 +70,7 @@ def _get_agent_by_name(name: str):
     """Return the agent object by name."""
     agents = {
         triage_agent.name: triage_agent,
-        faq_agent.name: faq_agent,
         investments_faq_agent.name: investments_faq_agent,
-        seat_special_services_agent.name: seat_special_services_agent,
-        flight_information_agent.name: flight_information_agent,
-        booking_cancellation_agent.name: booking_cancellation_agent,
-        refunds_compensation_agent.name: refunds_compensation_agent,
         scheduling_agent.name: scheduling_agent,
         onboarding_agent.name: onboarding_agent,
     }
@@ -115,12 +105,7 @@ def _build_agents_list() -> List[Dict[str, Any]]:
 
     return [
         make_agent_dict(triage_agent),
-        make_agent_dict(faq_agent),
         make_agent_dict(investments_faq_agent),
-        make_agent_dict(seat_special_services_agent),
-        make_agent_dict(flight_information_agent),
-        make_agent_dict(booking_cancellation_agent),
-        make_agent_dict(refunds_compensation_agent),
         make_agent_dict(scheduling_agent),
         make_agent_dict(onboarding_agent),
     ]
@@ -324,7 +309,14 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 # Print agent message to terminal
                 print(f"\n[AGENT MESSAGE]")
                 print(f"   Agent: {item.agent.name}")
-                print(f"   Message: {text[:200]}{'...' if len(text) > 200 else ''}")
+                # Safely encode text for Windows console (cp1252) compatibility
+                try:
+                    safe_text = text[:200] + ('...' if len(text) > 200 else '')
+                    print(f"   Message: {safe_text}")
+                except UnicodeEncodeError:
+                    # Fallback: encode with errors='replace' to handle Unicode characters
+                    safe_text = text[:200].encode('utf-8', errors='replace').decode('utf-8', errors='replace') + ('...' if len(text) > 200 else '')
+                    print(f"   Message: {safe_text}")
                 print()
                 
                 events.append(
@@ -396,7 +388,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 print(f"   Agent: {item.agent.name}")
                 print(f"   Tool:  {tool_name}")
                 if parsed_args:
-                    print(f"   Args:  {self._truncate(str(parsed_args), limit=500)}")
+                    try:
+                        args_str = self._truncate(str(parsed_args), limit=500)
+                        print(f"   Args:  {args_str}")
+                    except UnicodeEncodeError:
+                        # Fallback: encode with errors='replace' to handle Unicode characters
+                        args_str = str(parsed_args)[:500].encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+                        print(f"   Args:  {args_str}")
                 print(f"{'-'*60}\n")
                 
                 ev = AgentEvent(
@@ -411,7 +409,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             elif isinstance(item, ToolCallOutputItem):
                 # Print tool output information to terminal
                 output_str = str(item.output)
-                print(f"   [TOOL RESULT] {self._truncate(output_str, limit=300)}")
+                try:
+                    safe_output = self._truncate(output_str, limit=300)
+                    print(f"   [TOOL RESULT] {safe_output}")
+                except UnicodeEncodeError:
+                    # Fallback: encode with errors='replace' to handle Unicode characters
+                    safe_output = output_str[:300].encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+                    print(f"   [TOOL RESULT] {safe_output}")
                 print()
                 
                 ev = AgentEvent(
@@ -583,7 +587,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             print(f"\n{'#'*60}")
             print(f"[AGENT ACTIVE] {current_agent.name}")
             if user_text:
-                print(f"   User Message: {user_text[:100]}{'...' if len(user_text) > 100 else ''}")
+                try:
+                    safe_user_text = user_text[:100] + ('...' if len(user_text) > 100 else '')
+                    print(f"   User Message: {safe_user_text}")
+                except UnicodeEncodeError:
+                    # Fallback: encode with errors='replace' to handle Unicode characters
+                    safe_user_text = user_text[:100].encode('utf-8', errors='replace').decode('utf-8', errors='replace') + ('...' if len(user_text) > 100 else '')
+                    print(f"   User Message: {safe_user_text}")
             print(f"{'#'*60}\n")
             
             result = Runner.run_streamed(

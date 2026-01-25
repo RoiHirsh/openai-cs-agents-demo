@@ -7,14 +7,53 @@ from agents import function_tool
 
 # Type definitions
 BrokerId = Literal["bybit", "vantage", "pu_prime"]
-Purpose = Literal["registration", "copy_trade", "all"]
+Purpose = Literal["registration", "copy_trade_start", "copy_trade_open_account", "copy_trade_connect"]
+AssetType = Literal["videos", "links", "all"]
 Market = Literal["crypto", "gold", "silver", "forex"]
 
-# Broker link structure
-BrokerLink = dict[str, str]  # {title: str, url: str}
+# Asset item structure
+AssetItem = dict[str, str]  # {title: str, url: str}
 
-# Broker links database
-BROKER_LINKS: dict[BrokerId, list[BrokerLink]] = {
+# Broker videos database
+BROKER_VIDEOS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
+    "bybit": {
+        "registration": [
+            {"title": "Bybit sign up instructions", "url": "https://www.youtube.com/shorts/_xABSqSZZsg"},
+        ],
+        "copy_trade_start": [
+            {"title": "Bybit start a copy trade", "url": "https://drive.google.com/file/d/1IHl8aaQyNfDSLqmzNJuJxODBLX2-WyCj/view?usp=drive_link"},
+        ],
+        "copy_trade_open_account": [],
+        "copy_trade_connect": [],
+    },
+    "pu_prime": {
+        "registration": [
+            {"title": "PU Prime registration", "url": "https://drive.google.com/file/d/1Ej39VG4uJSWC_xnkSyyGJN_XCzPM2pvO/view?usp=drive_link"},
+        ],
+        "copy_trade_open_account": [
+            {"title": "PU Prime open a copy trading account", "url": "https://drive.google.com/file/d/10UHdv8K59Lw6U-GutEI6f1TvJkIRplSR/view?usp=drive_link"},
+        ],
+        "copy_trade_connect": [
+            {"title": "PU Prime how to connect to copy trade", "url": "https://drive.google.com/file/d/1o6yJMZ9_1wLS-A_mTN9Mzh_w3gJh6yCA/view?usp=drive_link"},
+        ],
+        "copy_trade_start": [],
+    },
+    "vantage": {
+        "registration": [
+            {"title": "Vantage how to register", "url": "https://drive.google.com/file/d/1kr0JYMPYrfO7BFvpWxghoel4ULmfm2d5/view?usp=drive_link"},
+        ],
+        "copy_trade_open_account": [
+            {"title": "Vantage open a copy trading account", "url": "https://drive.google.com/file/d/1cQlEWHxw2Zx-cfhrWCU3CoV2kvjurJrX/view?usp=drive_link"},
+        ],
+        "copy_trade_connect": [
+            {"title": "Vantage how to connect to copy trade", "url": "https://drive.google.com/file/d/11upZwKRE_eYaqjenyr41RTYPyuf58CBR/view?usp=drive_link"},
+        ],
+        "copy_trade_start": [],
+    },
+}
+
+# Broker links database (for future use when asset_type="links" or "all")
+BROKER_LINKS: dict[BrokerId, list[AssetItem]] = {
     "bybit": [
         {"title": "Bybit Referral Program", "url": "https://bybit.com/en/invite?ref=BYQLKL"},
         {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
@@ -66,53 +105,37 @@ def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
     return None
 
 
-def pick_copy_trade_link(all_links: list[BrokerLink], market: Optional[str] = None) -> list[BrokerLink]:
-    """Pick the best matching copy-trade link based on market preference."""
-    copy_trade_links = [link for link in all_links if "copy trade" in link["title"].lower()]
-    
-    if not market:
-        # Best-effort: return first copy-trade link
-        return copy_trade_links[:1] if copy_trade_links else []
-    
-    # Try to match market in title (e.g., "(Crypto", "(Gold", etc.)
-    market_lower = market.lower()
-    for link in copy_trade_links:
-        # Look for pattern like "(Crypto", "(Gold", etc.
-        if f"({market_lower}" in link["title"].lower():
-            return [link]
-    
-    # Fallback: return first copy-trade link if no match
-    return copy_trade_links[:1] if copy_trade_links else []
-
-
 @function_tool(
-    name_override="get_broker_links",
-    description_override="Return broker-specific links (registration or copy-trade) as {title,url} list. Returns 0-3 links depending on purpose and market."
+    name_override="get_broker_assets",
+    description_override="Return broker tutorial videos (and optionally other assets) for a given broker and onboarding purpose."
 )
-async def get_broker_links(
+async def get_broker_assets(
     broker: str,
-    purpose: Optional[str] = None,
+    purpose: str,
+    asset_type: Optional[str] = None,
     market: Optional[str] = None,
 ) -> str:
     """
-    Get broker-specific links (registration or copy-trade) as a JSON array.
+    Get broker assets (videos and/or links) for a given broker and purpose.
     
     Args:
         broker: Broker name (Bybit, Vantage, PU Prime) - case-insensitive
-        purpose: Which links to return - "registration" (registration link only),
-                "copy_trade" (best matching copy-trade link), or "all" (all links, max 3)
-        market: Used for copy-trade links where market matters - "crypto", "gold", "silver", "forex"
+        purpose: Which onboarding step - "registration", "copy_trade_start", 
+                "copy_trade_open_account", "copy_trade_connect"
+        asset_type: Type of assets requested - "videos" (default), "links", or "all"
+        market: Optional market type for future filtering - "crypto", "gold", "silver", "forex"
     
     Returns:
         JSON string with structure:
         {
             "ok": true/false,
             "broker": "normalized_broker_name",
-            "links": [{"title": "...", "url": "..."}, ...],
-            "error": null or "UNSUPPORTED_BROKER"
+            "purpose": "purpose_value",
+            "assets": [{"title": "...", "url": "..."}, ...],
+            "error": null or error message
         }
     """
-    print(f"   [TOOL EXEC] get_broker_links(broker='{broker}', purpose='{purpose}', market='{market}')")
+    print(f"   [TOOL EXEC] get_broker_assets(broker='{broker}', purpose='{purpose}', asset_type='{asset_type}', market='{market}')")
     
     # Normalize broker name
     broker_id = normalize_broker(broker)
@@ -120,44 +143,73 @@ async def get_broker_links(
         result = {
             "ok": False,
             "broker": broker,
-            "links": [],
+            "purpose": purpose,
+            "assets": [],
             "error": "UNSUPPORTED_BROKER"
         }
         print(f"      [ERROR] Unsupported broker: {broker}")
         return json.dumps(result)
     
-    # Get all links for this broker
-    all_links = BROKER_LINKS[broker_id]
+    # Validate purpose
+    valid_purposes: set[str] = {"registration", "copy_trade_start", "copy_trade_open_account", "copy_trade_connect"}
+    purpose_lower = purpose.lower().strip()
+    if purpose_lower not in valid_purposes:
+        result = {
+            "ok": False,
+            "broker": broker_id,
+            "purpose": purpose,
+            "assets": [],
+            "error": "UNSUPPORTED_PURPOSE"
+        }
+        print(f"      [ERROR] Unsupported purpose: {purpose}")
+        return json.dumps(result)
     
-    # Determine purpose (default to "all")
-    purpose_str = (purpose or "all").lower().strip()
+    # Cast to Purpose type for type checking
+    purpose_typed: Purpose = purpose_lower  # type: ignore
     
-    # Validate purpose (default to "all" if invalid)
-    valid_purposes: set[str] = {"registration", "copy_trade", "all"}
-    if purpose_str not in valid_purposes:
-        print(f"      [WARNING] Invalid purpose '{purpose}', defaulting to 'all'")
-        purpose_str = "all"
+    # Determine asset type (default to "videos")
+    asset_type_str: AssetType = (asset_type or "videos").lower().strip()  # type: ignore
     
-    # Filter links based on purpose
-    links: list[BrokerLink] = []
+    # Validate asset type
+    valid_asset_types: set[str] = {"videos", "links", "all"}
+    if asset_type_str not in valid_asset_types:
+        result = {
+            "ok": False,
+            "broker": broker_id,
+            "purpose": purpose_typed,
+            "assets": [],
+            "error": "UNSUPPORTED_ASSET_TYPE"
+        }
+        print(f"      [ERROR] Unsupported asset_type: {asset_type_str}")
+        return json.dumps(result)
     
-    if purpose_str == "registration":
-        # Return registration link only
-        registration_links = [link for link in all_links if "registration" in link["title"].lower()]
-        links = registration_links[:1]  # Max 1 registration link
-    elif purpose_str == "copy_trade":
-        # Return best matching copy-trade link
-        links = pick_copy_trade_link(all_links, market)
-    else:
-        # "all" - return all links but cap to 3
-        links = all_links[:3]
+    # Get assets based on asset_type
+    assets: list[AssetItem] = []
+    
+    if asset_type_str == "videos":
+        # Return videos for the given purpose
+        videos = BROKER_VIDEOS[broker_id].get(purpose_typed, [])
+        assets = videos[:3]  # Cap to 3
+    elif asset_type_str == "links":
+        # For now, links are not purpose-specific, return all links (capped to 3)
+        # Future: can add purpose-specific link mapping if needed
+        all_links = BROKER_LINKS[broker_id]
+        assets = all_links[:3]
+    else:  # asset_type_str == "all"
+        # Return both videos and links
+        videos = BROKER_VIDEOS[broker_id].get(purpose_typed, [])
+        all_links = BROKER_LINKS[broker_id]
+        # Combine and cap to 3 total
+        combined = videos + all_links
+        assets = combined[:3]
     
     result = {
         "ok": True,
         "broker": broker_id,
-        "links": links,
+        "purpose": purpose_typed,
+        "assets": assets,
         "error": None
     }
     
-    print(f"      [SUCCESS] Returning {len(links)} link(s) for {broker_id} (purpose={purpose_str})")
+    print(f"      [SUCCESS] Returning {len(assets)} asset(s) for {broker_id} (purpose={purpose_typed}, asset_type={asset_type_str})")
     return json.dumps(result)

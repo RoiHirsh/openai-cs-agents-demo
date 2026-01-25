@@ -25,12 +25,12 @@ from .tools import (
     get_calendly_booking_link,
 )
 
-# Import the new broker links tool from lucentive module
+# Import the new broker assets tool from lucentive module
 try:
-    from lucentive.tools import get_broker_links
+    from lucentive.tools import get_broker_assets
 except ImportError:
     # Fallback if lucentive module not available
-    get_broker_links = None
+    get_broker_assets = None
 
 MODEL = "gpt-5.2"
 
@@ -134,14 +134,16 @@ def onboarding_instructions(
     Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
     """
     
-    # Broker setup links - use get_broker_links tool instead of hardcoded links
-    broker_links_note = """
-    BROKER SETUP LINKS:
-    - Use the get_broker_links tool to retrieve broker-specific links dynamically
-    - When user agrees to open account: call get_broker_links(broker="BrokerName", purpose="registration")
-    - When user is funded and ready to connect: call get_broker_links(broker="BrokerName", purpose="copy_trade", market="market_type")
+    # Broker setup assets - use get_broker_assets tool to retrieve videos/links dynamically
+    broker_assets_note = """
+    BROKER SETUP ASSETS:
+    - Use the get_broker_assets tool to retrieve broker-specific videos and links dynamically
+    - When user agrees to open account: call get_broker_assets(broker="BrokerName", purpose="registration")
+    - When user needs to open copy trading account: call get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account")
+    - When user is funded and ready to connect: call get_broker_assets(broker="BrokerName", purpose="copy_trade_connect")
+    - When user wants to start copy trading: call get_broker_assets(broker="BrokerName", purpose="copy_trade_start")
     - Supported brokers: Vantage, PU Prime, Bybit
-    - Market types for copy_trade: crypto, gold, silver, forex
+    - Default asset_type is "videos" (can also use "links" or "all" if needed)
     """
     
     # Determine current step based on completed steps
@@ -170,7 +172,7 @@ def onboarding_instructions(
     
     {country_bot_mapping}
     
-    {broker_links_note}
+    {broker_assets_note}
     
     CURRENT ONBOARDING STATE:
     - Completed steps: {completed_steps}
@@ -208,14 +210,15 @@ def onboarding_instructions(
     - If "instructions" is NOT in completed_steps:
       - If they have an existing broker (previous_broker is set): 
         * Explain copy trading setup with existing broker
-        * Use get_broker_links tool to get copy-trade link: get_broker_links(broker=previous_broker, purpose="copy_trade", market=trading_type)
-        * Share the link(s) returned by the tool
+        * Use get_broker_assets tool to get copy-trade connect video: get_broker_assets(broker=previous_broker, purpose="copy_trade_connect")
+        * Share the video(s) returned by the tool
       - If they need a new broker: 
         * Recommend broker based on country ({country})
-        * Use get_broker_links tool to get registration link: get_broker_links(broker="BrokerName", purpose="registration")
-        * Share the registration link returned by the tool
+        * Use get_broker_assets tool to get registration video: get_broker_assets(broker="BrokerName", purpose="registration")
+        * Share the registration video returned by the tool
         * Explain account creation process
-        * After they create account, use get_broker_links(broker="BrokerName", purpose="copy_trade", market="market_type") to get copy-trade link
+        * After they create account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account") to get account opening video
+        * After they fund account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_connect") to get connection video
       - Provide step-by-step instructions for trading copy setup
     - After providing instructions, note that instructions step is complete and onboarding is finished
     
@@ -255,7 +258,7 @@ onboarding_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[tool for tool in [get_broker_links] if tool is not None],  # Add get_broker_links tool if available
+    tools=[tool for tool in [get_broker_assets] if tool is not None],  # Add get_broker_assets tool if available
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

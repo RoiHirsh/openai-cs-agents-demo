@@ -52,7 +52,7 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
     2. If a question was asked, identify the specific question about investments, trading bots, or related topics.
     3. Use the file_search tool to find the relevant information (use it silently in the background - do not mention it to the customer).
     4. Respond to the customer naturally and conversationally with the answer. Answer as if you know this information personally - do not mention sources, knowledge bases, or that you "looked up" anything. Never say phrases like "the info provided says", "according to the knowledge base", or "based on the documentation".
-    5. If you cannot find relevant information, politely inform the customer that you don't have that information available right now.
+    5. If you cannot find relevant information, politely inform the customer that you don't have that information available right now, then hand off to the Triage Agent. This ensures that the next time around, the conversation will go back and start with the Triage Agent for proper follow-up handling.
     6. When done, return to the Triage Agent.""",
     tools=[FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
@@ -123,6 +123,7 @@ def onboarding_instructions(
     budget_amount = onboarding_state.get("budget_amount")
     demo_offered = onboarding_state.get("demo_offered")
     instructions_provided = onboarding_state.get("instructions_provided")
+    onboarding_complete = onboarding_state.get("onboarding_complete", False)
     
     # Country-to-bot mapping (embedded in prompt)
     country_bot_mapping = """
@@ -158,6 +159,8 @@ def onboarding_instructions(
         current_step = "bot_recommendation"
     elif "budget_check" not in completed_steps:
         current_step = "budget_check"
+    elif "profit_share_clarification" not in completed_steps:
+        current_step = "profit_share_clarification"
     elif "instructions" not in completed_steps:
         current_step = "instructions"
     else:
@@ -187,7 +190,17 @@ def onboarding_instructions(
     - Budget amount: {budget_amount}
     - Demo offered: {demo_offered}
     - Instructions provided: {instructions_provided}
+    - Onboarding complete: {onboarding_complete}
     - Current step to work on: {current_step}
+    
+    FINAL GOAL:
+    The onboarding process is considered COMPLETE when the user has:
+    1. Opened a broker account (either new account or confirmed existing account setup)
+    2. Set up copy trading (connected their account to our copy trading system)
+    
+    When both of these conditions are met, the user is "with us" - they've completed the onboarding process.
+    At this point, you must note that onboarding_complete=True in the onboarding_state.
+    This signals that the user has successfully completed onboarding and is ready to start trading.
     
     ONBOARDING FLOW - Ask ONE question at a time:
     
@@ -204,13 +217,20 @@ def onboarding_instructions(
     - After explaining, note that bot_recommendation step is complete
     
     STEP 3: Budget Check
-    - If "budget_check" is NOT in completed_steps, ask about their investment budget
-    - If budget < $500: Offer demo account for 10 days, note that demo_offered=True
-    - If budget >= $500: Confirm the amount and move to step 4
-    - Remember: budget_confirmed=True, budget_amount, and demo_offered (if applicable)
+    - If "budget_check" is NOT in completed_steps, ask upfront about the minimum requirement
+    - Use this exact text: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?"
+    - If the user says "yes" (or agrees): Continue to step 4 (profit share clarification)
+    - If the user says "no" (or declines): Offer demo account for 10 days, note that demo_offered=True
+    - Remember: budget_confirmed=True (if yes), demo_offered=True (if no)
     - After getting the answer, note that budget_check step is complete
     
-    STEP 4: Instructions Phase
+    STEP 4: Profit Share Clarification
+    - If "profit_share_clarification" is NOT in completed_steps, provide the following clarification about the pricing model
+    - Use this exact text: "One last thing. You might have seen monthly subscription prices on our ads. Ignore that. I'm waiving the subscription fee for you. We switched to a profit share model. We take zero upfront. We only take 35% of the profit we make you at the end of the month. Fair deal?"
+    - Wait for the user's response (they may say "yes", "sounds good", "fair", etc.)
+    - After providing this clarification and getting acknowledgment, note that profit_share_clarification step is complete
+    
+    STEP 5: Instructions Phase
     - If "instructions" is NOT in completed_steps:
       - If they have an existing broker (previous_broker is set): 
         * Explain copy trading setup with existing broker
@@ -230,7 +250,12 @@ def onboarding_instructions(
         * After they fund account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_connect", market=trading_type if known)
         * Send the connection link(s) and video(s) together if available
       - Provide step-by-step instructions for trading copy setup
-    - After providing instructions, note that instructions step is complete and onboarding is finished
+    - After providing instructions, note that instructions step is complete
+    - IMPORTANT: The onboarding is NOT fully complete until the user has:
+      * Opened their broker account (confirmed they've created/set up the account)
+      * Set up copy trading (confirmed they've connected their account to copy trading)
+    - Once the user confirms they have opened the account AND set up copy trading, note that onboarding_complete=True
+    - This is the final goal - when onboarding_complete=True, the user is "with us" and has completed onboarding
     
     IMPORTANT RULES:
     - Ask ONLY ONE question per message - wait for the user's response before proceeding to the next step
@@ -252,10 +277,11 @@ def onboarding_instructions(
       * "How do the bots work?"
       * Any question about trading, investments, or financial topics
     - Do NOT try to answer investment/FAQ questions yourself - always hand off to the Investments FAQ Agent
-    - When onboarding is complete (all 4 steps done): Hand off back to Triage Agent
+    - When onboarding is complete (onboarding_complete=True): Hand off back to Triage Agent
+    - The onboarding is complete when the user has opened a broker account AND set up copy trading - not just when instructions are provided
     
     ONBOARDING FLOW RULES:
-    - Never skip steps - complete them in order: trading_experience → bot_recommendation → budget_check → instructions
+    - Never skip steps - complete them in order: trading_experience → bot_recommendation → budget_check → profit_share_clarification → instructions
     - If the user asks simple clarification questions about the onboarding process itself (e.g., "what do you mean by trading experience?"), you can answer briefly and continue with the current step
     - However, if the question is about investments, trading bots, fees, or any topic that the Investments FAQ Agent handles, you MUST hand off instead of answering
     """
@@ -280,7 +306,7 @@ def triage_instructions(
     new_lead = ctx.new_lead or False
     onboarding_state = ctx.onboarding_state or {}
     completed_steps = onboarding_state.get("completed_steps", [])
-    onboarding_complete = "instructions" in completed_steps
+    onboarding_complete = onboarding_state.get("onboarding_complete", False)
     
     # Debug print to verify state values
     print(f"[DEBUG] Triage Agent - new_lead={new_lead}, first_name={ctx.first_name}, country={ctx.country}, onboarding_complete={onboarding_complete}")
@@ -297,33 +323,37 @@ def triage_instructions(
     if should_route_to_onboarding:
         onboarding_instruction = (
             "\n\n"
-            "PRIORITY ROUTING - NEW LEAD ONBOARDING:\n"
+            "DEFAULT ROUTING - NEW LEAD ONBOARDING (PROACTIVE):\n"
             "- This is a new lead (new_lead=True) who hasn't completed onboarding yet.\n"
-            "- If the user hasn't made a specific request (call or FAQ question), route them to the Onboarding Agent.\n"
+            "- DEFAULT ACTION: Route them to the Onboarding Agent proactively - this is the default behavior.\n"
             "- The Onboarding Agent will guide them through the onboarding process step by step.\n"
-            "- Specific requests (call, FAQ) take priority over onboarding - handle those first.\n"
+            "- Only override this default if there's a specific request (call or FAQ question) - those take priority.\n"
+            "- The goal is to be proactive and make things moving by routing to onboarding by default.\n"
         )
     
     return (
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. Your role is to understand what the customer needs and route them to the appropriate specialist agent.\n\n"
-        "IMPORTANT: Only hand off to a specialist agent when the customer has asked a SPECIFIC QUESTION or made a SPECIFIC REQUEST.\n\n"
         "ROUTING PRIORITY (in order):\n"
-        "1. Specific requests take priority:\n"
+        "1. Specific requests take priority (override default onboarding):\n"
         "   - Scheduling Agent: When customer says 'call' or explicitly requests a call or wants to schedule a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
         "   - Investments FAQ Agent: When customer asks specific questions about trading bots, stocks, investments, fees, profit splits, setup process, etc.\n"
-        "2. New lead onboarding (if no specific request):\n"
-        "   - Onboarding Agent: If this is a new lead (new_lead=True) who hasn't completed onboarding and hasn't made a specific request, route them to the Onboarding Agent.\n"
-        "   - CRITICAL: When a new lead (new_lead=True) responds with 'chat' to the initial greeting, this is NOT a specific request - it's their preference choice. Route them to the Onboarding Agent immediately.\n\n"
+        "2. DEFAULT BEHAVIOR - New lead onboarding (proactive routing):\n"
+        "   - Onboarding Agent: If this is a new lead (new_lead=True) who hasn't completed onboarding (onboarding_complete=False), route them to the Onboarding Agent proactively as the default action.\n"
+        "   - This is the DEFAULT behavior for new leads - you should route to Onboarding Agent unless there's a specific request that requires Scheduling or FAQ Agent.\n"
+        "   - CRITICAL: When a new lead (new_lead=True) responds with 'chat' to the initial greeting, route them to the Onboarding Agent immediately to begin onboarding.\n"
+        "   - The goal is to be proactive - make things moving by routing new leads to onboarding by default.\n"
+        "   - IMPORTANT: If onboarding_complete=True, do NOT route to Onboarding Agent by default - the user has already completed onboarding.\n\n"
         f"{onboarding_instruction}"
         "When NOT to hand off:\n"
-        "- If customer hasn't asked a question yet and they're not a new lead - engage them in conversation first\n"
-        "- If the message is unclear - ask for clarification before routing\n\n"
+        "- If customer hasn't asked a question yet and they're NOT a new lead - engage them in conversation first\n"
+        "- If the message is unclear and they're NOT a new lead - ask for clarification before routing\n"
+        "- If onboarding is already complete (onboarding_complete=True) - do NOT route to Onboarding Agent by default. Handle follow-up questions normally by routing to appropriate agents (Scheduling Agent, Investments FAQ Agent, etc.)\n\n"
         "SPECIAL CASE - 'chat' response from new leads:\n"
-        "- When a new lead (new_lead=True) says 'chat', this means they prefer to chat rather than have a call.\n"
-        "- This is NOT a specific request that requires a specialist - it's just their preference.\n"
-        "- You MUST route them to the Onboarding Agent immediately so they can begin the onboarding process.\n"
-        "- Do NOT just acknowledge and continue - you MUST hand off to Onboarding Agent.\n"
+        "- When a new lead (new_lead=True) says 'chat', this is a direct trigger to begin onboarding - NOT just a preference.\n"
+        "- This MUST trigger an immediate handoff to the Onboarding Agent to begin the onboarding process.\n"
+        "- You MUST route them to the Onboarding Agent immediately - do NOT just acknowledge and continue.\n"
+        "- This is a specific action that requires routing to the Onboarding Agent - treat it the same as a specific request.\n"
         "- Only if they're NOT a new lead or have completed onboarding should you acknowledge and continue naturally.\n\n"
         "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
         "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."

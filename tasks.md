@@ -241,3 +241,122 @@ Configure handoff relationships for the Onboarding Agent:
    - Add to _build_agents_list() function
 
 ---
+
+### Task 10: Update Triage Agent Default Routing for New Leads
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Update the Triage Agent to proactively route new leads to the Onboarding Agent by default:
+
+1. **Update Triage Agent instructions** in `python-backend/airline/agents.py`:
+   - Find the sentence that says: "IMPORTANT: Only hand off to a specialist agent when the customer has asked a SPECIFIC QUESTION or made a SPECIFIC REQUEST."
+   - Modify the logic so that the Triage Agent hands off to the Onboarding Agent as long as the `new_lead` variable is `True`
+   - This should be the default behavior unless there is a specific request where the triage agent determines it should hand off to the Scheduling Agent or to the FAQ Agent
+   - The goal is to be proactive - the triage agent needs to send to the onboarding agent as a default almost, to make things moving
+
+2. **Routing priority should be:**
+   - If specific request for Scheduling Agent: Route to Scheduling Agent
+   - If specific request for Investments FAQ Agent: Route to Investments FAQ Agent
+   - If `new_lead=True` (default case): Route to Onboarding Agent proactively
+   - Otherwise: Continue with appropriate agent
+
+---
+
+### Task 11: Fix "Chat" Button Routing for New Leads
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Update the Triage Agent's handling of the "chat" response from new leads:
+
+1. **Update Triage Agent instructions** in `python-backend/airline/agents.py`:
+   - Find the section that says "SPECIAL CASE - 'chat' response from new leads"
+   - Find the sentence that says: "This is NOT a specific request that requires a specialist - it's just their preference."
+   - Update this logic to ensure that when they click the "Chat" button (which sends the message "chat"), we're sending it to the Onboarding Agent
+   - It's not just a preference - it should trigger an immediate handoff to the Onboarding Agent
+   - Remove or update the language that suggests it's "just a preference" and make it clear this triggers onboarding
+
+---
+
+### Task 12: Add Profit Share Clarification Step to Onboarding Agent
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Add a new step to the Onboarding Agent flow between the budget step and the instructions phase:
+
+1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
+   - Add a new step that comes after the budget step and before the instructions phase
+   - This step should provide a clarification to the user about the pricing model
+   - Use the following exact text:
+     ```
+     One last thing. You might have seen monthly subscription prices on our ads. Ignore that. I'm waiving the subscription fee for you. We switched to a profit share model. We take zero upfront. We only take 35% of the profit we make you at the end of the month. Fair deal?
+     ```
+   - This should be presented as a clarification step before moving to the instructions phase
+   - Update the onboarding flow to include this step in the sequence
+
+---
+
+### Task 13: Update Budget Question in Onboarding Agent
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Change how the Onboarding Agent handles the budget question:
+
+1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
+   - Find the budget check step (Step 3)
+   - Instead of asking "how much you want to spend" and then rejecting if < $500 and offering a demo, change the approach
+   - At the budget step, ask upfront about the minimum requirement using this proposed text:
+     ```
+     Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?
+     ```
+   - If the user says "yes", continue to the instructions phase (or the profit share clarification step if Task 12 is implemented)
+   - If the user says "no", then offer the demo
+   - This approach is more upfront and transparent about the minimum requirement
+
+---
+
+### Task 14: Add Final Goal and Onboarding Completion Variable
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Add a final goal to the Onboarding Agent and implement an onboarding completion variable:
+
+1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
+   - Add a final goal section that defines when onboarding is complete
+   - The final goal should be: After completing all of the instructions, to open a broker account and do the copy trade
+   - This means that the user is with us - they've completed the onboarding process
+   - Add logic to set an `onboarding` variable (or update `onboarding_state`) to "completed" when this final goal is achieved
+
+2. **Update context model** if needed (`python-backend/airline/context.py`):
+   - Ensure there's a way to track onboarding completion (either via `onboarding_state` or a separate `onboarding` variable)
+   - This variable should be set to "completed" when the user has opened a broker account and set up copy trading
+
+3. **Update Triage Agent** in `python-backend/airline/agents.py`:
+   - Modify the Triage Agent to check the onboarding completion status
+   - If `onboarding` is set to "completed", the Triage Agent should NOT send to the Onboarding Agent by default
+   - After onboarding is complete, follow-on questions should be handled by the Triage Agent routing to appropriate agents (like Customer Support scenarios)
+
+---
+
+### Task 15: Update Investments FAQ Agent Return to Triage
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Update the Investments FAQ Agent to return to the Triage Agent when it cannot find relevant information:
+
+1. **Update Investments FAQ Agent instructions** in `python-backend/airline/agents.py`:
+   - Find the section that says: "If you cannot find relevant information, politely inform the customer that you don't have that information available right now."
+   - Add instruction that behind the scenes, after informing the customer, it will now return to the Triage Agent
+   - This ensures that the next time around, the conversation will go back and start with the Triage Agent
+   - The agent should hand off to the Triage Agent after politely informing the customer that the information is not available
+
+2. **Update the routine** in the Investments FAQ Agent:
+   - Step 5 should be: "If you cannot find relevant information, politely inform the customer that you don't have that information available right now, then hand off to the Triage Agent."
+   - This ensures proper routing back to the Triage Agent for follow-up handling
+
+---

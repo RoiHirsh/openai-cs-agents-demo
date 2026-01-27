@@ -23,7 +23,8 @@ class AirlineAgentContext(BaseModel):
     #   "budget_confirmed": bool | None,
     #   "budget_amount": float | None,
     #   "demo_offered": bool | None,
-    #   "instructions_provided": bool | None
+    #   "instructions_provided": bool | None,
+    #   "onboarding_complete": bool | None  # Set to True when user has opened broker account and set up copy trading
     # }
 
 

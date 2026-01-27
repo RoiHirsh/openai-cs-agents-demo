@@ -39,7 +39,14 @@ from chatkit.types import (
 from chatkit.store import NotFoundError
 
 from airline.context import AirlineAgentChatContext, AirlineAgentContext, create_initial_context, public_context
-from airline.context_cache import get_lead_info_cache, set_lead_info, restore_lead_info_to_context
+from airline.context_cache import (
+    get_lead_info_cache,
+    set_lead_info,
+    restore_lead_info_to_context,
+    get_onboarding_state_cache,
+    set_onboarding_state,
+    restore_onboarding_state_to_context,
+)
 from airline.agents import (
     investments_faq_agent,
     onboarding_agent,
@@ -152,6 +159,8 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         # Store lead info persistently per thread to restore if context is reset
         # Also sync with module-level cache for handoff callbacks
         self._lead_info_cache: Dict[str, dict] = get_lead_info_cache()
+        # Store onboarding state persistently per thread to restore if context is reset
+        self._onboarding_state_cache: Dict[str, dict] = get_onboarding_state_cache()
 
     def _state_for_thread(self, thread_id: str) -> ConversationState:
         if thread_id not in self._state:
@@ -172,6 +181,9 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 state.context.country = cached_lead_info["country"]
             if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
                 state.context.new_lead = cached_lead_info["new_lead"]
+        
+        # CRITICAL: Restore onboarding state from cache if context was reset
+        restore_onboarding_state_to_context(thread_id, state.context)
         
         return state
 
@@ -563,6 +575,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         # CRITICAL: Restore context from cache BEFORE creating chat_context
         # This ensures context is populated even if it was reset
         restore_lead_info_to_context(thread.id, state.context)
+        restore_onboarding_state_to_context(thread.id, state.context)
         
         # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
         if (not state.context.first_name and not state.context.country and 
@@ -751,6 +764,10 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
                 state.context.new_lead = cached_lead_info["new_lead"]
         
+        # CRITICAL: After handoffs, ensure onboarding state is never lost
+        # Restore from cache if missing
+        restore_onboarding_state_to_context(thread.id, state.context)
+        
         # Update cache with current context values to keep it in sync
         # This ensures cache always has the latest values
         if state.context.first_name or state.context.country or state.context.email or state.context.phone:
@@ -764,8 +781,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             self._lead_info_cache[thread.id] = lead_info_dict
             set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
         
+        # Update onboarding state cache with current context values to keep it in sync
+        if state.context.onboarding_state:
+            self._onboarding_state_cache[thread.id] = state.context.onboarding_state.copy()
+            set_onboarding_state(thread.id, state.context.onboarding_state.copy())
+        
         # Debug: Print context state to verify it's preserved
-        print(f"[DEBUG] After Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}, email={state.context.email}")
+        print(f"[DEBUG] After Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}, email={state.context.email}, onboarding_state={state.context.onboarding_state}")
 
         new_context = public_context(state.context)
         changes = {k: new_context[k] for k in new_context if previous_context.get(k) != new_context[k]}

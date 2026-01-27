@@ -29,6 +29,7 @@ from agents import RunContextWrapper, function_tool
 from chatkit.types import ProgressUpdateEvent
 
 from .context import AirlineAgentChatContext
+from .context_cache import set_onboarding_state, get_onboarding_state
 
 
 @function_tool(
@@ -335,3 +336,102 @@ async def book_calendly_call(
             "Please let me know your preferred date and time, and I'll arrange for someone to call you back "
             "during our business hours (Monday-Saturday, 11:00 AM - 8:00 PM)."
         )
+
+
+@function_tool(
+    name_override="update_onboarding_state",
+    description_override="Update the onboarding state to track progress through the onboarding flow. Call this after each step is completed to persist the state."
+)
+async def update_onboarding_state(
+    run_context: RunContextWrapper[AirlineAgentChatContext],
+    step_name: str | None = None,
+    trading_experience: str | None = None,
+    previous_broker: str | None = None,
+    trading_type: str | None = None,
+    budget_confirmed: bool | None = None,
+    budget_amount: float | None = None,
+    demo_offered: bool | None = None,
+    instructions_provided: bool | None = None,
+    onboarding_complete: bool | None = None,
+) -> str:
+    """
+    Update the onboarding state in the context.
+    
+    This tool programmatically updates the onboarding_state dictionary in the context,
+    ensuring that progress through the onboarding flow is properly tracked and persisted.
+    
+    Args:
+        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "budget_check", "profit_share_clarification", "instructions")
+        trading_experience: User's trading experience level (e.g., "yes", "no", "beginner", "experienced")
+        previous_broker: Name of the broker the user previously used (if any)
+        trading_type: Type of trading the user did (e.g., "stocks", "forex", "crypto", "futures")
+        budget_confirmed: Whether the user confirmed they have the minimum budget (True/False)
+        budget_amount: The budget amount the user mentioned (if any)
+        demo_offered: Whether a demo account was offered (True/False)
+        instructions_provided: Whether instructions have been provided (True/False)
+        onboarding_complete: Whether onboarding is fully complete - user has opened account AND set up copy trading (True/False)
+    
+    Returns:
+        Confirmation message indicating the state was updated
+    """
+    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete})")
+    
+    ctx = run_context.context.state
+    
+    # Initialize onboarding_state if it doesn't exist
+    if ctx.onboarding_state is None:
+        ctx.onboarding_state = {}
+    
+    # Initialize completed_steps list if it doesn't exist
+    if "completed_steps" not in ctx.onboarding_state:
+        ctx.onboarding_state["completed_steps"] = []
+    
+    # Update completed_steps if step_name is provided
+    if step_name and step_name not in ctx.onboarding_state["completed_steps"]:
+        ctx.onboarding_state["completed_steps"].append(step_name)
+        print(f"      Added step '{step_name}' to completed_steps")
+    
+    # Update individual fields if provided
+    if trading_experience is not None:
+        ctx.onboarding_state["trading_experience"] = trading_experience
+        print(f"      Updated trading_experience: {trading_experience}")
+    
+    if previous_broker is not None:
+        ctx.onboarding_state["previous_broker"] = previous_broker
+        print(f"      Updated previous_broker: {previous_broker}")
+    
+    if trading_type is not None:
+        ctx.onboarding_state["trading_type"] = trading_type
+        print(f"      Updated trading_type: {trading_type}")
+    
+    if budget_confirmed is not None:
+        ctx.onboarding_state["budget_confirmed"] = budget_confirmed
+        print(f"      Updated budget_confirmed: {budget_confirmed}")
+    
+    if budget_amount is not None:
+        ctx.onboarding_state["budget_amount"] = budget_amount
+        print(f"      Updated budget_amount: {budget_amount}")
+    
+    if demo_offered is not None:
+        ctx.onboarding_state["demo_offered"] = demo_offered
+        print(f"      Updated demo_offered: {demo_offered}")
+    
+    if instructions_provided is not None:
+        ctx.onboarding_state["instructions_provided"] = instructions_provided
+        print(f"      Updated instructions_provided: {instructions_provided}")
+    
+    if onboarding_complete is not None:
+        ctx.onboarding_state["onboarding_complete"] = onboarding_complete
+        print(f"      Updated onboarding_complete: {onboarding_complete}")
+    
+    # Cache the onboarding_state for persistence across handoffs
+    thread_id = None
+    if hasattr(run_context.context, 'thread') and run_context.context.thread:
+        thread_id = run_context.context.thread.id
+        if thread_id:
+            set_onboarding_state(thread_id, ctx.onboarding_state.copy())
+            print(f"      Cached onboarding_state for thread {thread_id}")
+    
+    # Return confirmation
+    completed_steps = ctx.onboarding_state.get("completed_steps", [])
+    return f"Onboarding state updated successfully. Completed steps: {', '.join(completed_steps) if completed_steps else 'none'}"

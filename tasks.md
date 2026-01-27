@@ -360,3 +360,44 @@ Update the Investments FAQ Agent to return to the Triage Agent when it cannot fi
    - This ensures proper routing back to the Triage Agent for follow-up handling
 
 ---
+
+### Task 16: Implement Onboarding State Updates
+
+- [x] **Status: DONE**
+
+**Requirements:**
+Currently, the `onboarding_state` variables (`completed_steps`, `trading_experience`, `previous_broker`, etc.) are only read from context but never programmatically updated. The agent instructions tell the LLM to "track this in your memory" but there's no actual mechanism to update the structured state. This means these variables always remain empty/None, and the agent can't properly resume from previous steps.
+
+Implement a mechanism to programmatically update `onboarding_state` during the conversation:
+
+1. **Create a tool or function to update onboarding state** in `python-backend/airline/tools.py` (or create a new module):
+   - Create a function/tool that can update `onboarding_state` in the context
+   - The function should accept parameters like: `step_name`, `trading_experience`, `previous_broker`, `trading_type`, `budget_confirmed`, `budget_amount`, `demo_offered`, etc.
+   - The function should update `ctx.onboarding_state` dictionary with the provided values
+   - Ensure `completed_steps` list is properly maintained (add step names when completed)
+
+2. **Add the tool to Onboarding Agent** in `python-backend/airline/agents.py`:
+   - Import and add the onboarding state update tool to `onboarding_agent.tools`
+   - Update the agent instructions to explicitly call this tool when steps are completed
+   - Replace vague instructions like "track this in your memory" with explicit tool calls
+
+3. **Update Onboarding Agent instructions** to use the tool:
+   - When user answers "Do you have prior trading experience?": Call tool to update `trading_experience` and add "trading_experience" to `completed_steps`
+   - When user provides broker info: Call tool to update `previous_broker` and `trading_type`
+   - When bot recommendation is given: Call tool to add "bot_recommendation" to `completed_steps`
+   - When budget question is answered: Call tool to update `budget_confirmed`, `budget_amount`, `demo_offered` and add "budget_check" to `completed_steps`
+   - When profit share clarification is acknowledged: Call tool to add "profit_share_clarification" to `completed_steps`
+   - When instructions are provided: Call tool to set `instructions_provided=True` and add "instructions" to `completed_steps`
+
+4. **Ensure state persistence** in `python-backend/server.py`:
+   - Ensure `onboarding_state` is preserved during handoffs (similar to how lead_info is cached)
+   - Update the context sync logic to preserve `onboarding_state` when context is restored
+   - Consider adding `onboarding_state` to the lead_info_cache or create a separate cache mechanism
+
+5. **Test the implementation**:
+   - Verify that `completed_steps` grows as the user progresses through onboarding
+   - Verify that variables like `trading_experience`, `previous_broker` are actually set when the user provides this information
+   - Verify that the agent can resume from the correct step if the conversation is interrupted
+   - Check that state persists across handoffs between agents
+
+---

@@ -28,10 +28,11 @@ from .tools import (
 
 # Import the new broker assets tool from lucentive module
 try:
-    from lucentive.tools import get_broker_assets
+    from lucentive.tools import get_broker_assets, get_country_offers
 except ImportError:
     # Fallback if lucentive module not available
     get_broker_assets = None
+    get_country_offers = None
 
 MODEL = "gpt-5.2"
 
@@ -126,16 +127,6 @@ def onboarding_instructions(
     instructions_provided = onboarding_state.get("instructions_provided")
     onboarding_complete = onboarding_state.get("onboarding_complete", False)
     
-    # Country-to-bot mapping (embedded in prompt)
-    country_bot_mapping = """
-    COUNTRY-TO-BOT MAPPING:
-    - Australia: Crypto bot only. Available broker: ByBit
-    - Canada: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available broker: PU Prime*
-    - Any Other Country: Gold, Silver, Forex, Cryptocurrencies, Futures bots. Available brokers: Vantage, PU Prime*, Ox Securities, ByBit
-    
-    Note: *PU Prime investment in Gold and/or Silver is available only in cents (not dollars) and within 500-10,000 USD investment only
-    """
-    
     # Broker setup assets - use get_broker_assets tool to retrieve links and videos
     broker_assets_note = """
     BROKER SETUP ASSETS:
@@ -178,7 +169,12 @@ def onboarding_instructions(
     Use the provided country information directly to recommend appropriate bots and brokers.
     If the country shows "Unknown", you may ask for it. Otherwise, use the provided country value.
     
-    {country_bot_mapping}
+    COUNTRY AVAILABILITY:
+    - When you need to determine available bots and brokers for a country, ALWAYS call the get_country_offers(country) tool
+    - NEVER hardcode availability information - always use the tool to get authoritative, up-to-date data
+    - The tool returns structured JSON with: bots (list of available bot names), brokers (list with names and notes), and general notes
+    - Use the tool results to provide accurate recommendations to the user
+    - Example: Call get_country_offers(country="{country}") to get availability for this lead's country
     
     {broker_assets_note}
     
@@ -214,8 +210,10 @@ def onboarding_instructions(
     
     STEP 2: Country-Based Bot Recommendation
     - If "bot_recommendation" is NOT in completed_steps, recommend appropriate AI trading bot(s) based on their country ({country})
-    - Use the country-to-bot mapping above to determine which bots are available
-    - Explain which bots are available for their country in a friendly, conversational way
+    - FIRST: Call get_country_offers(country="{country}") to get the authoritative list of available bots and brokers for their country
+    - Use the tool results to determine which bots are available (the tool returns a "bots" array)
+    - Also check the "brokers" array and "notes" from the tool response for any special constraints or information
+    - Explain which bots are available for their country in a friendly, conversational way, mentioning any relevant notes or constraints
     - After explaining, you MUST call the update_onboarding_state tool:
       * Call update_onboarding_state(step_name="bot_recommendation")
     - This tool call is REQUIRED - do not skip it. The state must be updated programmatically
@@ -247,7 +245,10 @@ def onboarding_instructions(
         * If videos are available, share them alongside the link as extra help
         * Present both together in the same message: "Here's your copy trade link: [link]. Here's a helpful video: [video]"
       - If they need a new broker: 
-        * Recommend broker based on country ({country})
+        * FIRST: Call get_country_offers(country="{country}") to get the authoritative list of available brokers for their country
+        * Use the tool results to recommend an appropriate broker (the tool returns a "brokers" array with broker names)
+        * Check the "notes" in the tool response for any special constraints (e.g., PU Prime investment limits)
+        * Recommend a broker based on the tool results
         * Use get_broker_assets tool: get_broker_assets(broker="BrokerName", purpose="registration")
         * ALWAYS send the registration link first - this is the referral URL they need to sign up
         * If a registration video is available, share it alongside the link as extra help
@@ -306,7 +307,7 @@ onboarding_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[tool for tool in [get_broker_assets, update_onboarding_state] if tool is not None],  # Add get_broker_assets and update_onboarding_state tools if available
+    tools=[tool for tool in [get_country_offers, get_broker_assets, update_onboarding_state] if tool is not None],  # Add get_country_offers, get_broker_assets and update_onboarding_state tools if available
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

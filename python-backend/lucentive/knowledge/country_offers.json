@@ -1,0 +1,26 @@
+{
+  "AUSTRALIA": {
+    "bots": ["Crypto"],
+    "brokers": [
+      {"name": "ByBit", "notes": []}
+    ],
+    "notes": []
+  },
+  "CANADA": {
+    "bots": ["Gold", "Silver", "Forex", "Cryptocurrencies", "Futures"],
+    "brokers": [
+      {"name": "PU Prime", "notes": ["Gold/Silver only in cents; $500–$10,000 USD only"]}
+    ],
+    "notes": ["PU Prime investment in Gold/Silver is only in cents and within $500–$10,000."]
+  },
+  "OTHER": {
+    "bots": ["Gold", "Silver", "Forex", "Cryptocurrencies", "Futures"],
+    "brokers": [
+      {"name": "Vantage", "notes": []},
+      {"name": "PU Prime", "notes": ["Gold/Silver only in cents; $500–$10,000 USD only"]},
+      {"name": "Ox Securities", "notes": []},
+      {"name": "ByBit", "notes": []}
+    ],
+    "notes": ["PU Prime investment in Gold/Silver is only in cents and within $500–$10,000."]
+  }
+}

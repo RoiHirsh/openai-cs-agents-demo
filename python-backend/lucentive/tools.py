@@ -1,6 +1,7 @@
 from __future__ import annotations as _annotations
 
 import json
+from pathlib import Path
 from typing import Literal, Optional
 
 from agents import function_tool
@@ -101,6 +102,72 @@ def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
     if b in ("pu prime", "pu_prime", "puprime", "pu-prime"):
         return "pu_prime"
     return None
+
+
+def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "OTHER"]:
+    """
+    Normalize country name to canonical country group.
+    
+    Maps country names (case/spacing tolerant) to country groups:
+    - "Australia", "AU", "AUS" → "AUSTRALIA"
+    - "Canada", "CA", "CAN" → "CANADA"
+    - Everything else → "OTHER"
+    
+    Args:
+        country: Country name or code (case-insensitive, spacing-tolerant)
+    
+    Returns:
+        Normalized country group: "AUSTRALIA", "CANADA", or "OTHER"
+    """
+    if not country:
+        return "OTHER"
+    
+    country_normalized = country.strip().lower()
+    
+    # Australia variants
+    if country_normalized in ("australia", "au", "aus"):
+        return "AUSTRALIA"
+    
+    # Canada variants
+    if country_normalized in ("canada", "ca", "can"):
+        return "CANADA"
+    
+    # Everything else
+    return "OTHER"
+
+
+# Load country offers data
+_COUNTRY_OFFERS_DATA: dict[str, dict[str, any]] | None = None
+
+
+def _load_country_offers_data() -> dict[str, dict[str, any]]:
+    """Load country offers data from JSON file. Cached after first load."""
+    global _COUNTRY_OFFERS_DATA
+    if _COUNTRY_OFFERS_DATA is not None:
+        return _COUNTRY_OFFERS_DATA
+    
+    # Get the path to the knowledge directory relative to this file
+    current_file = Path(__file__)
+    knowledge_dir = current_file.parent / "knowledge"
+    json_file = knowledge_dir / "country_offers.json"
+    
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            _COUNTRY_OFFERS_DATA = json.load(f)
+        print(f"      [INFO] Loaded country offers data from {json_file}")
+        return _COUNTRY_OFFERS_DATA
+    except FileNotFoundError:
+        print(f"      [ERROR] Country offers file not found: {json_file}")
+        _COUNTRY_OFFERS_DATA = {}
+        return _COUNTRY_OFFERS_DATA
+    except json.JSONDecodeError as e:
+        print(f"      [ERROR] Invalid JSON in country offers file: {e}")
+        _COUNTRY_OFFERS_DATA = {}
+        return _COUNTRY_OFFERS_DATA
+    except Exception as e:
+        print(f"      [ERROR] Error loading country offers data: {e}")
+        _COUNTRY_OFFERS_DATA = {}
+        return _COUNTRY_OFFERS_DATA
 
 
 def pick_copy_trade_link_by_market(links: list[AssetItem], market: Optional[str] = None) -> list[AssetItem]:
@@ -234,4 +301,144 @@ async def get_broker_assets(
     }
     
     print(f"      [SUCCESS] Returning {len(links)} link(s) and {len(videos)} video(s) for {broker_id} (purpose={purpose_typed}, asset_type={asset_type_str})")
+    return json.dumps(result)
+
+
+@function_tool(
+    name_override="get_country_offers",
+    description_override="Get available bots and brokers for a given country. Returns structured JSON with bots, brokers, and any special notes or constraints."
+)
+async def get_country_offers(country: str) -> str:
+    """
+    Get available trading bots and brokers for a given country.
+    
+    This tool provides authoritative country-specific availability information.
+    Always use this tool instead of hardcoding availability data.
+    
+    Args:
+        country: Country name (e.g., "Australia", "Canada", "Israel") or country code (e.g., "AU", "CA")
+                Case-insensitive and spacing-tolerant. Accepts common variants like "AU", "AUS", "CA", "CAN"
+    
+    Returns:
+        JSON string with structure:
+        {
+            "ok": true/false,
+            "normalized_country_group": "AUSTRALIA" | "CANADA" | "OTHER",
+            "bots": ["Crypto", "Gold", ...],  // List of available bot names
+            "brokers": [{"name": "ByBit", "notes": [...]}, ...],  // List of available brokers with optional notes
+            "notes": ["PU Prime investment...", ...],  // General notes about availability
+            "error": null or error message
+        }
+    """
+    print(f"   [TOOL EXEC] get_country_offers(country='{country}')")
+    
+    # Validate input
+    if not country or not country.strip():
+        result = {
+            "ok": False,
+            "normalized_country_group": None,
+            "bots": [],
+            "brokers": [],
+            "notes": [],
+            "error": "MISSING_COUNTRY"
+        }
+        print(f"      [ERROR] Country parameter is missing or empty")
+        return json.dumps(result)
+    
+    # Normalize country
+    normalized_group = normalize_country(country)
+    print(f"      [INFO] Input country: '{country}' -> Normalized group: '{normalized_group}'")
+    
+    # Load country offers data
+    country_data = _load_country_offers_data()
+    
+    # Look up offers for normalized country group
+    if normalized_group not in country_data:
+        result = {
+            "ok": False,
+            "normalized_country_group": normalized_group,
+            "bots": [],
+            "brokers": [],
+            "notes": [],
+            "error": "COUNTRY_GROUP_NOT_FOUND"
+        }
+        print(f"      [ERROR] Country group '{normalized_group}' not found in data")
+        return json.dumps(result)
+    
+    offers = country_data[normalized_group]
+    
+    # Validate and extract data
+    bots = offers.get("bots", [])
+    brokers = offers.get("brokers", [])
+    notes = offers.get("notes", [])
+    
+    # Validate schema - ensure required keys exist
+    required_keys = ["bots", "brokers", "notes"]
+    missing_keys = [key for key in required_keys if key not in offers]
+    if missing_keys:
+        result = {
+            "ok": False,
+            "normalized_country_group": normalized_group,
+            "bots": [],
+            "brokers": [],
+            "notes": [],
+            "error": f"INVALID_DATA_SCHEMA: Missing keys: {', '.join(missing_keys)}"
+        }
+        print(f"      [ERROR] Invalid data schema - missing keys: {missing_keys}")
+        return json.dumps(result)
+    
+    # Validate brokers structure
+    if not isinstance(brokers, list):
+        result = {
+            "ok": False,
+            "normalized_country_group": normalized_group,
+            "bots": [],
+            "brokers": [],
+            "notes": [],
+            "error": "INVALID_DATA_SCHEMA: brokers must be a list"
+        }
+        print(f"      [ERROR] Invalid brokers structure - must be a list")
+        return json.dumps(result)
+    
+    # Validate each broker has required fields
+    for broker in brokers:
+        if not isinstance(broker, dict):
+            result = {
+                "ok": False,
+                "normalized_country_group": normalized_group,
+                "bots": [],
+                "brokers": [],
+                "notes": [],
+                "error": "INVALID_DATA_SCHEMA: broker items must be objects"
+            }
+            print(f"      [ERROR] Invalid broker structure - must be objects")
+            return json.dumps(result)
+        if "name" not in broker:
+            result = {
+                "ok": False,
+                "normalized_country_group": normalized_group,
+                "bots": [],
+                "brokers": [],
+                "notes": [],
+                "error": "INVALID_DATA_SCHEMA: broker missing 'name' field"
+            }
+            print(f"      [ERROR] Invalid broker structure - missing 'name' field")
+            return json.dumps(result)
+    
+    # Build result
+    result = {
+        "ok": True,
+        "normalized_country_group": normalized_group,
+        "bots": bots,
+        "brokers": brokers,
+        "notes": notes,
+        "error": None
+    }
+    
+    print(f"      [SUCCESS] Returning {len(bots)} bot(s) and {len(brokers)} broker(s) for {normalized_group}")
+    print(f"      [INFO] Bots: {', '.join(bots) if bots else 'none'}")
+    print(f"      [INFO] Brokers: {', '.join(b.get('name', 'Unknown') for b in brokers) if brokers else 'none'}")
+    if notes:
+        print(f"      [INFO] Notes: {len(notes)} note(s)")
+    
     return json.dumps(result)

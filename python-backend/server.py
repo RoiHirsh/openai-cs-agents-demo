@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import time
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 import asyncio
@@ -54,6 +55,8 @@ from airline.agents import (
     triage_agent,
 )
 from memory_store import MemoryStore
+
+logger = logging.getLogger(__name__)
 
 
 class AgentEvent(BaseModel):
@@ -611,8 +614,19 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         # Tell the client which thread to bind runner updates to before streaming starts.
         yield ClientEffectEvent(name="runner_bind_thread", data={"thread_id": thread.id, "ts": time.time()})
 
+        result = None
+        started_at = time.time()
         try:
             current_agent = _get_agent_by_name(state.current_agent_name)
+            logger.info(
+                "Runner starting",
+                extra={
+                    "thread_id": thread.id,
+                    "agent": getattr(current_agent, "name", None),
+                    "input_items_len": len(state.input_items),
+                    "user_text": user_text[:200] if isinstance(user_text, str) else "",
+                },
+            )
             print(f"\n{'#'*60}")
             print(f"[AGENT ACTIVE] {current_agent.name}")
             if user_text:
@@ -657,8 +671,15 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                                     "events": [e.model_dump() for e in new_events],
                                 },
                             )
-                    except Exception as err:
-                        pass
+                    except Exception:
+                        logger.exception(
+                            "Failed to record/broadcast streamed run item",
+                            extra={
+                                "thread_id": thread.id,
+                                "agent": state.current_agent_name,
+                                "user_text": user_text[:200] if isinstance(user_text, str) else "",
+                            },
+                        )
                 yield event
                 new_items = result.new_items[streamed_items_seen:]
                 if new_items:
@@ -711,6 +732,52 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     content=[AssistantMessageContent(text=refusal)],
                 )
             )
+            return
+        except Exception:
+            logger.exception(
+                "Unhandled exception while streaming agent response",
+                extra={
+                    "thread_id": thread.id,
+                    "agent": state.current_agent_name,
+                    "user_text": user_text[:500] if isinstance(user_text, str) else "",
+                    "lead_first_name": getattr(state.context, "first_name", None),
+                    "lead_country": getattr(state.context, "country", None),
+                },
+            )
+            # Make the failure visible to the client instead of hanging silently.
+            error_text = (
+                "Sorry — something went wrong on our side while generating that response. "
+                "Please try again."
+            )
+            state.input_items.append({"role": "assistant", "content": error_text})
+            yield ThreadItemDoneEvent(
+                item=AssistantMessageItem(
+                    id=self.store.generate_item_id("message", thread, context),
+                    thread_id=thread.id,
+                    created_at=datetime.now(),
+                    content=[AssistantMessageContent(text=error_text)],
+                )
+            )
+            await self._broadcast_state(thread, context)
+            return
+        finally:
+            try:
+                elapsed_ms = int((time.time() - started_at) * 1000)
+                logger.info(
+                    "Runner finished",
+                    extra={
+                        "thread_id": thread.id,
+                        "agent": state.current_agent_name,
+                        "elapsed_ms": elapsed_ms,
+                        "result_is_none": result is None,
+                    },
+                )
+            except Exception:
+                # Never let logging cleanup crash the request.
+                pass
+        
+        if result is None:
+            # Defensive: if Runner failed before producing a result, we already returned above.
             return
         state.input_items = result.to_input_list()
         remaining_items = result.new_items[streamed_items_seen:]

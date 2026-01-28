@@ -1,6 +1,7 @@
 from __future__ import annotations as _annotations
 
 import json
+import logging
 import os
 from typing import Any, Dict
 
@@ -12,6 +13,8 @@ from fastapi import Depends, FastAPI, Query, Request
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
+
+logger = logging.getLogger(__name__)
 
 from airline.agents import (
     investments_faq_agent,
@@ -61,13 +64,21 @@ def get_server() -> AirlineServer:
 async def chatkit_endpoint(
     request: Request, server: AirlineServer = Depends(get_server)
 ) -> Response:
-    payload = await request.body()
-    result = await server.process(payload, {"request": request})
-    if isinstance(result, StreamingResult):
-        return StreamingResponse(result, media_type="text/event-stream")
-    if hasattr(result, "json"):
-        return Response(content=result.json, media_type="application/json")
-    return Response(content=result)
+    try:
+        payload = await request.body()
+        result = await server.process(payload, {"request": request})
+        if isinstance(result, StreamingResult):
+            return StreamingResponse(result, media_type="text/event-stream")
+        if hasattr(result, "json"):
+            return Response(content=result.json, media_type="application/json")
+        return Response(content=result)
+    except Exception:
+        logger.exception("Unhandled exception in /chatkit endpoint")
+        return Response(
+            content=json.dumps({"error": "Internal server error"}),
+            status_code=500,
+            media_type="application/json",
+        )
 
 
 @app.get("/chatkit/state")
@@ -75,7 +86,11 @@ async def chatkit_state(
     thread_id: str = Query(...),
     server: AirlineServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    return await server.snapshot(thread_id, {"request": None})
+    try:
+        return await server.snapshot(thread_id, {"request": None})
+    except Exception:
+        logger.exception("Unhandled exception in /chatkit/state endpoint", extra={"thread_id": thread_id})
+        raise
 
 
 @app.get("/chatkit/bootstrap")
@@ -87,17 +102,28 @@ async def chatkit_bootstrap(
     new_lead: bool = Query(False),
     server: AirlineServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    context = {
-        "request": None,
-        "lead_info": {
-            "first_name": first_name,
-            "email": email,
-            "phone": phone,
-            "country": country,
-            "new_lead": new_lead,
-        } if any([first_name, email, phone, country]) else None,
-    }
-    return await server.snapshot(None, context)
+    try:
+        context = {
+            "request": None,
+            "lead_info": {
+                "first_name": first_name,
+                "email": email,
+                "phone": phone,
+                "country": country,
+                "new_lead": new_lead,
+            } if any([first_name, email, phone, country]) else None,
+        }
+        return await server.snapshot(None, context)
+    except Exception:
+        logger.exception(
+            "Unhandled exception in /chatkit/bootstrap endpoint",
+            extra={
+                "first_name": first_name,
+                "country": country,
+                "new_lead": new_lead,
+            },
+        )
+        raise
 
 
 @app.get("/chatkit/state/stream")
@@ -105,20 +131,27 @@ async def chatkit_state_stream(
     thread_id: str = Query(...),
     server: AirlineServer = Depends(get_server),
 ):
-    thread = await server.ensure_thread(thread_id, {"request": None})
-    queue = server.register_listener(thread.id)
+    try:
+        thread = await server.ensure_thread(thread_id, {"request": None})
+        queue = server.register_listener(thread.id)
 
-    async def event_generator():
-        try:
-            initial = await server.snapshot(thread.id, {"request": None})
-            yield f"data: {json.dumps(initial, default=str)}\n\n"
-            while True:
-                data = await queue.get()
-                yield f"data: {data}\n\n"
-        finally:
-            server.unregister_listener(thread.id, queue)
+        async def event_generator():
+            try:
+                initial = await server.snapshot(thread.id, {"request": None})
+                yield f"data: {json.dumps(initial, default=str)}\n\n"
+                while True:
+                    data = await queue.get()
+                    yield f"data: {data}\n\n"
+            except Exception:
+                logger.exception("Exception in state stream event generator", extra={"thread_id": thread.id})
+                raise
+            finally:
+                server.unregister_listener(thread.id, queue)
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+    except Exception:
+        logger.exception("Unhandled exception in /chatkit/state/stream endpoint", extra={"thread_id": thread_id})
+        raise
 
 
 @app.get("/health")

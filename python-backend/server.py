@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import asyncio
 import json
+import re
 from typing import Any, AsyncIterator, Dict, List, Optional
 from uuid import uuid4
 
@@ -57,6 +58,47 @@ from airline.agents import (
 from memory_store import MemoryStore
 
 logger = logging.getLogger(__name__)
+
+_CITATION_PATTERNS: list[re.Pattern[str]] = [
+    # OpenAI file_search citation format, e.g. "…"
+    re.compile(r"【[^】]*†source】"),
+]
+
+
+def _strip_user_visible_citations(text: str) -> str:
+    """Remove retrieval/tool citation markers from user-visible assistant text."""
+    if not text:
+        return text
+    cleaned = text
+    for pat in _CITATION_PATTERNS:
+        cleaned = pat.sub("", cleaned)
+    # Normalize whitespace left behind by removals.
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
+def _sanitize_thread_stream_event(event: ThreadStreamEvent) -> ThreadStreamEvent:
+    """
+    Ensure citations/sources never appear in the *chat UI* assistant text.
+
+    Runner events/tool outputs remain unchanged for debugging in the Runner panel.
+    """
+    try:
+        if not hasattr(event, "item"):
+            return event
+        item = getattr(event, "item", None)
+        if not isinstance(item, AssistantMessageItem):
+            return event
+        if not item.content:
+            return event
+        for part in item.content:
+            if isinstance(part, AssistantMessageContent) and isinstance(part.text, str):
+                part.text = _strip_user_visible_citations(part.text)
+    except Exception:
+        # Never fail the stream because of sanitization.
+        return event
+    return event
 
 
 class AgentEvent(BaseModel):
@@ -648,6 +690,8 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 if isinstance(event, ProgressUpdateEvent) or getattr(event, "type", "") == "progress_update_event":
                     # Ignore progress updates for the Runner panel; ChatKit will handle them separately.
                     continue
+                # Ensure user-visible assistant text never includes citations/sources.
+                event = _sanitize_thread_stream_event(event)
                 # If this is a run-item event, convert and broadcast immediately.
                 if hasattr(event, "item"):
                     try:

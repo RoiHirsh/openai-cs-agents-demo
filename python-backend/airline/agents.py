@@ -23,6 +23,7 @@ from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
     check_call_availability,
     get_calendly_booking_link,
+    update_lead_info,
     update_onboarding_state,
 )
 
@@ -74,17 +75,35 @@ def scheduling_instructions(
         "   - Call check_call_availability() to get current service status\n"
         "   - If service is open and we're within the availability window, offer a call in the next 20 minutes\n"
         "   - Present this option naturally: 'I can have someone call you in about 20 minutes. Does that work?'\n"
+        "   - IMPORTANT: If customer says YES to this option, confirm immediately and STOP - do NOT ask follow-up questions\n"
         "\n"
         "2. SECOND PRIORITY - 2-4 hours callback:\n"
         "   - If 20 minutes is not possible (service closed, outside window, or customer declines), suggest a callback in 2-4 hours\n"
         "   - Use the availability information from check_call_availability() to determine if this is feasible\n"
         "   - Present this option: 'How about we schedule a call in 2-4 hours? I can have someone reach out then.'\n"
+        "   - IMPORTANT: If customer says YES to this option, confirm immediately and STOP - do NOT ask follow-up questions about specific times\n"
         "\n"
         "3. FALLBACK - Calendly booking link:\n"
         "   - If neither 20 minutes nor 2-4 hours is possible (outside availability window, customer declines, or service closed), use the get_calendly_booking_link() tool to get the booking link\n"
         "   - Call get_calendly_booking_link() to retrieve the Calendly booking URL\n"
         "   - Present the booking link to the customer: 'Let me help you schedule a call for later. Here's our booking page where you can select a time that works for you.'\n"
         "   - Share the link naturally and let the customer know they can choose their preferred time\n"
+        "\n"
+        "CALL CONFIRMATION (CRITICAL - ABSOLUTE RULE):\n"
+        "- If you offered 'about 20 minutes' OR 'in 2-4 hours' and the customer says YES (or 'ok', 'sure', 'that works', 'yes', 'sounds good', etc.), you must IMMEDIATELY confirm the call and STOP.\n"
+        "- DO NOT ask ANY follow-up questions whatsoever:\n"
+        "  * NO asking for phone number\n"
+        "  * NO asking 'what time works best for you?'\n"
+        "  * NO asking '2 hours from now or 4 hours from now?'\n"
+        "  * NO asking for preferred time\n"
+        "  * NO asking for notes or additional details\n"
+        "  * NO asking 'when convenient'\n"
+        "  * NO asking anything else - the conversation ends here\n"
+        "- Reply with ONLY a short confirmation message matching the agreed timeframe, for example:\n"
+        "  - 'Perfect — confirmed. Someone will call you in about 20 minutes.'\n"
+        "  - 'Confirmed. Someone will call you within the next 2–4 hours.'\n"
+        "- After sending the confirmation message, IMMEDIATELY return to the Triage Agent. Do NOT send any other messages.\n"
+        "- The user has confirmed - there is nothing more to ask. Just confirm and hand off.\n"
         "\n"
         "IMPORTANT RULES:\n"
         "- Always call check_call_availability() FIRST to understand current service status\n"
@@ -168,6 +187,11 @@ def onboarding_instructions(
     CRITICAL: The lead's country is already known ({country}). DO NOT ask the user for their country. 
     Use the provided country information directly to recommend appropriate bots and brokers.
     If the country shows "Unknown", you may ask for it. Otherwise, use the provided country value.
+    
+    IMPORTANT - USER CORRECTIONS:
+    - If the user corrects any lead info (especially country), acknowledge the correction and call update_lead_info(...) to persist it.
+    - Example: user says "Actually I'm from Australia" -> reply briefly, then call update_lead_info(country="Australia").
+    - After updating, continue onboarding using the updated country value.
     
     COUNTRY AVAILABILITY:
     - When you need to determine available bots and brokers for a country, ALWAYS call the get_country_offers(country) tool
@@ -307,7 +331,11 @@ onboarding_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[tool for tool in [get_country_offers, get_broker_assets, update_onboarding_state] if tool is not None],  # Add get_country_offers, get_broker_assets and update_onboarding_state tools if available
+    tools=[
+        tool
+        for tool in [get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state]
+        if tool is not None
+    ],  # Add tools if available
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
@@ -347,6 +375,12 @@ def triage_instructions(
     return (
         f"{RECOMMENDED_PROMPT_PREFIX} "
         "You are a helpful triaging agent. Your role is to understand what the customer needs and route them to the appropriate specialist agent.\n\n"
+        "IMPORTANT - USER CORRECTIONS:\n"
+        "- If the user corrects a conversation variable (at minimum country), you must:\n"
+        "  1) Acknowledge the correction briefly\n"
+        "  2) Call update_lead_info(...) to persist the corrected value so the UI variables panel updates\n"
+        "  3) Then continue routing normally\n"
+        "- Example: if country is Austria but user says 'Actually I'm from Australia', call update_lead_info(country='Australia').\n\n"
         "ROUTING PRIORITY (in order):\n"
         "1. Specific requests take priority (override default onboarding):\n"
         "   - Scheduling Agent: When customer says 'call' or explicitly requests a call or wants to schedule a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
@@ -378,7 +412,7 @@ triage_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Delegates requests to the right specialist agent (scheduling, investments FAQ, onboarding).",
     instructions=triage_instructions,
-    tools=[],
+    tools=[update_lead_info],
     handoffs=[],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )

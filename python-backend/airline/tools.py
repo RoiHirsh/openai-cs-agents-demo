@@ -29,7 +29,8 @@ from agents import RunContextWrapper, function_tool
 from chatkit.types import ProgressUpdateEvent
 
 from .context import AirlineAgentChatContext
-from .context_cache import set_onboarding_state, get_onboarding_state
+from .context_cache import set_lead_info, set_onboarding_state, get_onboarding_state
+from .scheduling import compute_call_availability_status
 
 
 @function_tool(
@@ -47,162 +48,11 @@ async def check_call_availability() -> str:
     # Use timezone.utc which is always available
     now_utc = datetime.now(timezone.utc)
     print(f"      Current UTC time: {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    
-    # Get timezone-aware times for Israel and Guatemala
-    israel_tz = None
-    guatemala_tz = None
-    
-    if PYTZ_AVAILABLE:
-        print(f"      [USING PYTZ] Attempting to load timezones with pytz...")
-        try:
-            israel_tz = pytz.timezone("Asia/Jerusalem")
-            guatemala_tz = pytz.timezone("America/Guatemala")
-            print(f"      Timezones loaded: Israel={israel_tz}, Guatemala={guatemala_tz}")
-        except Exception as e:
-            israel_tz = None
-            guatemala_tz = None
-            print(f"      Timezone loading failed, using fallback: {e}")
-    elif ZoneInfo is not None:
-        print(f"      [USING ZONEINFO] Attempting to load timezones with zoneinfo...")
-        try:
-            israel_tz = ZoneInfo("Asia/Jerusalem")
-            guatemala_tz = ZoneInfo("America/Guatemala")
-            print(f"      Timezones loaded: Israel={israel_tz}, Guatemala={guatemala_tz}")
-        except Exception as e:
-            israel_tz = None
-            guatemala_tz = None
-            print(f"      Timezone loading failed, using fallback: {e}")
-    else:
-        print(f"      No timezone library available, using fallback calculations")
-    
-    # Get current day of week (0 = Monday, 6 = Sunday)
-    day_of_week = now_utc.weekday()
-    day_name = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][day_of_week]
-    print(f"      Current day: {day_name} (day_of_week={day_of_week})")
-    
-    # Check if it's Sunday - no service
-    if day_of_week == 6:  # Sunday
-        print(f"      [SUNDAY DETECTED] Service closed on Sundays")
-        # Calculate next Monday 11:00 Israel time
-        days_until_monday = 1
-        if israel_tz:
-            # Get next Monday's date in Israel timezone
-            now_israel = now_utc.astimezone(israel_tz)
-            print(f"      Current Israel time: {now_israel.strftime('%Y-%m-%d %H:%M:%S %Z')}")
-            next_monday_date = now_israel.date() + timedelta(days=days_until_monday)
-            if PYTZ_AVAILABLE:
-                next_monday_israel = israel_tz.localize(datetime.combine(next_monday_date, time(11, 0)))
-            else:
-                next_monday_israel = datetime.combine(next_monday_date, time(11, 0), tzinfo=israel_tz)
-            next_monday_utc = next_monday_israel.astimezone(timezone.utc)
-            print(f"      Next Monday 11:00 Israel = {next_monday_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        else:
-            # Fallback: assume 11:00 Israel = 09:00 UTC
-            next_monday_date = (now_utc + timedelta(days=days_until_monday)).date()
-            next_monday_utc = datetime.combine(next_monday_date, time(9, 0), tzinfo=timezone.utc)
-            print(f"      [FALLBACK] Next Monday 09:00 UTC = {next_monday_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        
-        hours_until_open = (next_monday_utc - now_utc).total_seconds() / 3600
-        result = json.dumps({
-            "day": day_name.lower(),
-            "customer_service": "currently_closed",
-            "service_opens": f"service will resume on {next_monday_utc.strftime('%A, %B %d')} at 09:00 UTC, {int(hours_until_open)} hours from now"
-        })
-        print(f"      Result: {result}")
-        return result
-    
-    # Calculate window boundaries
-    # Window: 11:00 Israel time to 20:00 Guatemala time
-    print(f"      Calculating service window: 11:00 Israel -> 20:00 Guatemala")
-    if israel_tz and guatemala_tz:
-        # Get today's date in Israel timezone
-        now_israel = now_utc.astimezone(israel_tz)
-        today_israel = now_israel.date()
-        print(f"      Today in Israel timezone: {today_israel}")
-        
-        # Window start: 11:00 Israel time today
-        if PYTZ_AVAILABLE:
-            window_start_israel = israel_tz.localize(datetime.combine(today_israel, time(11, 0)))
-        else:
-            window_start_israel = datetime.combine(today_israel, time(11, 0), tzinfo=israel_tz)
-        window_start_utc = window_start_israel.astimezone(timezone.utc)
-        print(f"      Window start: 11:00 Israel = {window_start_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        
-        # Window end: 20:00 Guatemala time today (or next day if it wraps)
-        now_guatemala = now_utc.astimezone(guatemala_tz)
-        today_guatemala = now_guatemala.date()
-        print(f"      Today in Guatemala timezone: {today_guatemala}")
-        if PYTZ_AVAILABLE:
-            window_end_guatemala = guatemala_tz.localize(datetime.combine(today_guatemala, time(20, 0)))
-        else:
-            window_end_guatemala = datetime.combine(today_guatemala, time(20, 0), tzinfo=guatemala_tz)
-        window_end_utc = window_end_guatemala.astimezone(timezone.utc)
-        print(f"      Window end: 20:00 Guatemala = {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        
-        # If window end is before window start, it means it wraps to next day
-        if window_end_utc < window_start_utc:
-            window_end_utc += timedelta(days=1)
-            print(f"      [WINDOW WRAPS] Adjusted end to next day: {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    else:
-        # Fallback calculation
-        # Approximate: 11:00 Israel (UTC+2) = 09:00 UTC, 20:00 Guatemala (UTC-6) = 02:00 UTC next day
-        print(f"      [FALLBACK MODE] Using approximate timezone offsets")
-        today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
-        window_start_utc = today_utc + timedelta(hours=9)  # 09:00 UTC
-        window_end_utc = today_utc + timedelta(days=1, hours=2)  # 02:00 UTC next day
-        print(f"      Window start (fallback): {window_start_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        print(f"      Window end (fallback): {window_end_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        
-        # If we're past window_end, move to next day
-        if now_utc > window_end_utc:
-            window_start_utc += timedelta(days=1)
-            window_end_utc += timedelta(days=1)
-            print(f"      [PAST WINDOW] Moved to next day")
-    
-    # Check if we're within the window
-    print(f"      Checking if current time is within window...")
-    print(f"         Window: {window_start_utc.strftime('%H:%M UTC')} to {window_end_utc.strftime('%H:%M UTC')}")
-    print(f"         Current: {now_utc.strftime('%H:%M UTC')}")
-    
-    if window_start_utc <= now_utc <= window_end_utc:
-        # Service is open
-        print(f"      [SERVICE OPEN] Current time is within service window")
-        hours_until_close = (window_end_utc - now_utc).total_seconds() / 3600
-        result = json.dumps({
-            "day": day_name.lower(),
-            "customer_service": "open",
-            "service_closes": f"service will close in the next {int(hours_until_close)} hours"
-        })
-        print(f"      Result: {result}")
-        return result
-    else:
-        # Service is closed
-        if now_utc < window_start_utc:
-            # Before opening today
-            print(f"      [SERVICE CLOSED] Before opening today")
-            hours_until_open = (window_start_utc - now_utc).total_seconds() / 3600
-            open_time_str = window_start_utc.strftime("%A, %B %d") if hours_until_open > 24 else window_start_utc.strftime("%H:%M UTC")
-            result = json.dumps({
-                "day": day_name.lower(),
-                "customer_service": "currently_closed",
-                "service_opens": f"service will resume at {open_time_str}, {int(hours_until_open)} hours from now"
-            })
-            print(f"      Hours until open: {int(hours_until_open)}")
-            print(f"      Result: {result}")
-            return result
-        else:
-            # After closing - next window is tomorrow
-            print(f"      [SERVICE CLOSED] After closing today, next window is tomorrow")
-            next_window_start = window_start_utc + timedelta(days=1)
-            hours_until_open = (next_window_start - now_utc).total_seconds() / 3600
-            result = json.dumps({
-                "day": day_name.lower(),
-                "customer_service": "currently_closed",
-                "service_opens": f"service will resume on {next_window_start.strftime('%A, %B %d')} at 09:00 UTC, {int(hours_until_open)} hours from now"
-            })
-            print(f"      Hours until next window: {int(hours_until_open)}")
-            print(f"      Result: {result}")
-            return result
+
+    status = compute_call_availability_status(now_utc)
+    result = json.dumps(status)
+    print(f"      Result: {result}")
+    return result
 
 
 @function_tool(
@@ -435,3 +285,60 @@ async def update_onboarding_state(
     # Return confirmation
     completed_steps = ctx.onboarding_state.get("completed_steps", [])
     return f"Onboarding state updated successfully. Completed steps: {', '.join(completed_steps) if completed_steps else 'none'}"
+
+
+@function_tool(
+    name_override="update_lead_info",
+    description_override="Update lead info fields (e.g. country) in the conversation context so the UI variables reflect user corrections."
+)
+async def update_lead_info(
+    run_context: RunContextWrapper[AirlineAgentChatContext],
+    first_name: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    country: str | None = None,
+    new_lead: bool | None = None,
+) -> str:
+    """
+    Update lead info fields in the context (and cache) so user corrections persist across handoffs.
+
+    Typical usage: if user says "Actually I'm from Australia", call update_lead_info(country="Australia").
+    """
+    print(
+        "   [TOOL EXEC] update_lead_info("
+        f"first_name={first_name!r}, email={email!r}, phone={phone!r}, country={country!r}, new_lead={new_lead!r})"
+    )
+
+    ctx = run_context.context.state
+
+    # Update individual fields if provided (ignore None so callers can update one field at a time)
+    if first_name is not None and first_name.strip():
+        ctx.first_name = first_name.strip()
+    if email is not None and email.strip():
+        ctx.email = email.strip()
+    if phone is not None and phone.strip():
+        ctx.phone = phone.strip()
+    if country is not None and country.strip():
+        ctx.country = country.strip()
+    if new_lead is not None:
+        ctx.new_lead = bool(new_lead)
+
+    # Cache the lead info for persistence across handoffs
+    thread_id = None
+    if hasattr(run_context.context, "thread") and run_context.context.thread:
+        thread_id = run_context.context.thread.id
+        if thread_id:
+            lead_info_dict = {
+                "first_name": ctx.first_name,
+                "email": ctx.email,
+                "phone": ctx.phone,
+                "country": ctx.country,
+                "new_lead": ctx.new_lead,
+            }
+            set_lead_info(thread_id, lead_info_dict)
+            print(f"      Cached lead info for thread {thread_id}: {lead_info_dict}")
+
+    return (
+        "Lead info updated successfully."
+        f" first_name={ctx.first_name!r}, country={ctx.country!r}, new_lead={ctx.new_lead!r}"
+    )

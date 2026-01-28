@@ -401,3 +401,58 @@ Implement a mechanism to programmatically update `onboarding_state` during the c
    - Check that state persists across handoffs between agents
 
 ---
+
+### Task 17: Scheduling Timezone Bug - Root Cause + Fix
+
+- [x] **Status: DONE**
+
+**Requirements:**
+The scheduling logic is failing every time due to a timezone/UTC conversion bug. Identify the exact reason it fails (reproducible), implement the fix, and ensure it works reliably.
+
+- Determine where the current time is sourced and how timezone conversion is performed
+- Verify Israel time and Guatemala time conversions into UTC across DST changes
+- Fix the logic so the availability window is computed correctly and consistently
+- Add a minimal automated test (or deterministic checks) that covers:
+  - Service open/closed boundaries
+  - Crossing midnight (e.g. 09:00–02:00 UTC)
+  - DST periods for Israel and Guatemala assumptions
+
+---
+
+### Task 18: Call Confirmation Flow - No Extra Questions
+
+- [x] **Status: DONE**
+
+**Requirements:**
+When a call is being confirmed (e.g., agent suggests “someone will call within 2–4 hours” or “within 20 minutes” and the user says “yes”), the agent should **only** confirm the call.
+
+- Do **not** ask follow-up questions (no phone number, no “when convenient”, no notes)
+- Reply with a short confirmation that the call is confirmed in the agreed timeframe
+- Later escalation/assignment to a human is out of scope for this task (only confirmation text + state update if applicable)
+
+---
+
+### Task 19: Remove Source Citations From UI Responses
+
+- [x] **Status: DONE**
+
+**Requirements:**
+When answering via the FAQ / Q&A retrieval flow, do not display or include sources/citations in the user-visible response.
+
+- Sources may remain available for debugging/logging, but must not appear in the chat UI response text
+- Ensure this applies consistently to the Investments FAQ Agent and any other retrieval-driven responses
+
+---
+
+### Task 20: Conversation Variables Must Update On User Corrections
+
+- [x] **Status: DONE**
+
+**Requirements:**
+If the user corrects information that exists in conversation variables (example: country is set to “Austria” but user says “Actually I’m from Australia”), the agent must:
+
+- Acknowledge the correction
+- Update the relevant conversation variable(s) so the UI “conversation variables” panel reflects the new value
+- Apply this to at least `country`, and build it so other fields can be updated the same way
+
+---

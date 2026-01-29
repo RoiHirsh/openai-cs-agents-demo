@@ -82,6 +82,8 @@ def _sanitize_thread_stream_event(event: ThreadStreamEvent) -> ThreadStreamEvent
     """
     Ensure citations/sources never appear in the *chat UI* assistant text.
 
+    Strip citation markers from text and clear annotations so the UI does not
+    show inline citation icons or the "N Source(s)" block.
     Runner events/tool outputs remain unchanged for debugging in the Runner panel.
     """
     try:
@@ -93,8 +95,10 @@ def _sanitize_thread_stream_event(event: ThreadStreamEvent) -> ThreadStreamEvent
         if not item.content:
             return event
         for part in item.content:
-            if isinstance(part, AssistantMessageContent) and isinstance(part.text, str):
-                part.text = _strip_user_visible_citations(part.text)
+            if isinstance(part, AssistantMessageContent):
+                if isinstance(part.text, str):
+                    part.text = _strip_user_visible_citations(part.text)
+                part.annotations = []
     except Exception:
         # Never fail the stream because of sanitization.
         return event

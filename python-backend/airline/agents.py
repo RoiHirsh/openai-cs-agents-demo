@@ -22,6 +22,7 @@ from .context_cache import restore_lead_info_to_context, restore_onboarding_stat
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
     check_call_availability,
+    confirm_callback,
     get_scheduling_recommendation,
     get_calendly_booking_link,
     update_lead_info,
@@ -78,31 +79,18 @@ def scheduling_instructions(
         "   - You MUST send the 'user_safe_message' verbatim (copy/paste exactly). Do NOT change timeframes.\n"
         "   - IMPORTANT: This prevents offering '20 minutes' while service is closed.\n"
         "\n"
-        "2. If the user accepts the offer:\n"
-        "   - Confirm immediately and STOP - do NOT ask follow-up questions about the call itself\n"
-        "   - Then ask: 'In the meantime, do you have any questions or anything I can help you with?'\n"
-        "   - Then return to the Triage Agent.\n"
+        "2. If the user accepts the offer (says yes to 20 minutes or 2-4 hours):\n"
+        "   - You MUST call confrimation_call() first.\n"
+        "   - The tool returns JSON with 'suggested_response'. Send that message to the user verbatim.\n"
+        "   - Do NOT ask any other question (no phone, no timezone, no 'In the meantime...').\n"
+        "   - Then hand off to the Triage Agent.\n"
         "\n"
         "3. If the user declines:\n"
         "   - Call get_scheduling_recommendation(exclude_actions=[previous recommended_action]) and send its 'user_safe_message' verbatim.\n"
         "\n"
-        "CALL CONFIRMATION (CRITICAL - ABSOLUTE RULE):\n"
-        "- If you offered 'about 20 minutes' OR 'in 2-4 hours' and the customer says YES (or 'ok', 'sure', 'that works', 'yes', 'sounds good', etc.), you must IMMEDIATELY confirm the call.\n"
-        "- DO NOT ask ANY follow-up questions about the call itself. After they say yes, you may ONLY: (1) confirm the timeframe, (2) ask the engagement question below, then return to Triage. Nothing else about the call.\n"
-        "  * NO asking for phone number, country code, or 'best number to reach you on'\n"
-        "  * NO asking for timezone or 'what's your timezone?'\n"
-        "  * NO asking 'what time works best for you?'\n"
-        "  * NO asking '2 hours from now or 4 hours from now?'\n"
-        "  * NO asking for preferred time, notes, or additional details about the call\n"
-        "  * NO asking 'when convenient'\n"
-        "- WRONG (never say this after they say yes): 'What's the best phone number to reach you on (include country code), and what's your timezone?'\n"
-        "- Reply with ONLY a short confirmation message matching the agreed timeframe, for example:\n"
-        "  - 'Perfect — confirmed. Someone will call you in about 20 minutes.'\n"
-        "  - 'Confirmed. Someone will call you within the next 2–4 hours.'\n"
-        "- AFTER confirming the call, you MUST immediately follow up with this engagement question:\n"
-        "  'In the meantime, do you have any questions or anything I can help you with?'\n"
-        "- This engagement question is REQUIRED and must be asked after every call confirmation (20 minutes, 2-4 hours, or Calendly link).\n"
-        "- After asking the engagement question, return to the Triage Agent.\n"
+        "CALL CONFIRMATION (CRITICAL):\n"
+        "- When the customer says YES (or 'ok', 'sure', 'that works', 'sounds good', etc.) to a callback time, you MUST call confrimation_call(), then send the tool's suggested_response to the user, then hand off to Triage. No other message, no follow-up questions.\n"
+        "- Do NOT ask for phone number, timezone, or any other detail after confirmation.\n"
         "\n"
         "IMPORTANT RULES:\n"
         "- Always call get_scheduling_recommendation() FIRST to determine the correct offer\n"
@@ -121,7 +109,7 @@ scheduling_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
-    tools=[get_scheduling_recommendation, get_calendly_booking_link],
+    tools=[get_scheduling_recommendation, confirm_callback, get_calendly_booking_link],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

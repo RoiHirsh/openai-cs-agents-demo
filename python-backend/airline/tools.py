@@ -96,7 +96,11 @@ async def get_scheduling_recommendation(exclude_actions: list[str] | None = None
     if recommended_action == "offer_20_min":
         user_safe_message = "I can have someone call you in about 20 minutes. Does that work?"
     elif recommended_action == "offer_2_4_hours":
-        user_safe_message = "We're closed right now, but I can have someone call you in 2-4 hours. Does that work?"
+        # Only say "We're closed" when we're actually closed; when open and stepping down from 20 min, don't.
+        if customer_service == "currently_closed":
+            user_safe_message = "We're closed right now, but I can have someone call you in 2-4 hours. Does that work?"
+        else:
+            user_safe_message = "I can have someone call you in 2-4 hours. Does that work?"
     else:
         user_safe_message = (
             "Let me help you schedule a call for later. "
@@ -112,6 +116,24 @@ async def get_scheduling_recommendation(exclude_actions: list[str] | None = None
         "exclude_actions": list(excluded),
         "candidate_actions": candidate_actions,
         "availability": status,
+    }
+    return json.dumps(payload)
+
+
+@function_tool(
+    name_override="confrimation_call",
+    description_override=(
+        "Call this when the customer has accepted a callback time (e.g. said yes to '20 minutes' or '2-4 hours'). "
+        "Returns a suggested_response to send to the user verbatim. After sending it, hand off to the Triage Agent."
+    ),
+)
+async def confirm_callback() -> str:
+    """
+    Called when the user confirms a callback time slot. Returns JSON with the exact message
+    the Scheduling Agent should send to the user, then the agent must hand off to Triage.
+    """
+    payload = {
+        "suggested_response": "Great, someone from our team will call you within this timeframe.",
     }
     return json.dumps(payload)
 

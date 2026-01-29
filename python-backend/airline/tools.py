@@ -280,6 +280,8 @@ async def update_onboarding_state(
     trading_experience: str | None = None,
     previous_broker: str | None = None,
     trading_type: str | None = None,
+    bot_preference: str | None = None,
+    broker_preference: str | None = None,
     budget_confirmed: bool | None = None,
     budget_amount: float | None = None,
     demo_offered: bool | None = None,
@@ -293,10 +295,12 @@ async def update_onboarding_state(
     ensuring that progress through the onboarding flow is properly tracked and persisted.
     
     Args:
-        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "budget_check", "profit_share_clarification", "instructions")
+        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "broker_selection", "budget_check", "profit_share_clarification", "instructions")
         trading_experience: User's trading experience level (e.g., "yes", "no", "beginner", "experienced")
         previous_broker: Name of the broker the user previously used (if any)
         trading_type: Type of trading the user did (e.g., "stocks", "forex", "crypto", "futures")
+        bot_preference: User's chosen bot type from step 2a (e.g., "Gold", "Forex", "Crypto")
+        broker_preference: User's chosen broker from step 2b (e.g., "Vantage", "PU Prime")
         budget_confirmed: Whether the user confirmed they have the minimum budget (True/False)
         budget_amount: The budget amount the user mentioned (if any)
         demo_offered: Whether a demo account was offered (True/False)
@@ -306,7 +310,7 @@ async def update_onboarding_state(
     Returns:
         Confirmation message indicating the state was updated
     """
-    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete})")
+    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', bot_preference='{bot_preference}', broker_preference='{broker_preference}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete})")
     
     ctx = run_context.context.state
     
@@ -335,6 +339,14 @@ async def update_onboarding_state(
     if trading_type is not None:
         ctx.onboarding_state["trading_type"] = trading_type
         print(f"      Updated trading_type: {trading_type}")
+    
+    if bot_preference is not None:
+        ctx.onboarding_state["bot_preference"] = bot_preference
+        print(f"      Updated bot_preference: {bot_preference}")
+    
+    if broker_preference is not None:
+        ctx.onboarding_state["broker_preference"] = broker_preference
+        print(f"      Updated broker_preference: {broker_preference}")
     
     if budget_confirmed is not None:
         ctx.onboarding_state["budget_confirmed"] = budget_confirmed

@@ -20,6 +20,8 @@ class AirlineAgentContext(BaseModel):
     #   "trading_experience": str | None,
     #   "previous_broker": str | None,
     #   "trading_type": str | None,
+    #   "bot_preference": str | None,   # User's chosen bot type (e.g. Gold, Forex, Crypto) from step 2a
+    #   "broker_preference": str | None, # User's chosen broker (e.g. Vantage, PU Prime) from step 2b
     #   "budget_confirmed": bool | None,
     #   "budget_amount": float | None,
     #   "demo_offered": bool | None,

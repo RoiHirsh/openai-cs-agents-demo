@@ -138,6 +138,8 @@ def onboarding_instructions(
     trading_experience = onboarding_state.get("trading_experience")
     previous_broker = onboarding_state.get("previous_broker")
     trading_type = onboarding_state.get("trading_type")
+    bot_preference = onboarding_state.get("bot_preference")
+    broker_preference = onboarding_state.get("broker_preference")
     budget_confirmed = onboarding_state.get("budget_confirmed")
     budget_amount = onboarding_state.get("budget_amount")
     demo_offered = onboarding_state.get("demo_offered")
@@ -166,6 +168,8 @@ def onboarding_instructions(
         current_step = "trading_experience"
     elif "bot_recommendation" not in completed_steps:
         current_step = "bot_recommendation"
+    elif "broker_selection" not in completed_steps:
+        current_step = "broker_selection"
     elif "budget_check" not in completed_steps:
         current_step = "budget_check"
     elif "profit_share_clarification" not in completed_steps:
@@ -205,6 +209,8 @@ def onboarding_instructions(
     - Trading experience: {trading_experience}
     - Previous broker: {previous_broker}
     - Trading type: {trading_type}
+    - Bot preference: {bot_preference}
+    - Broker preference: {broker_preference}
     - Budget confirmed: {budget_confirmed}
     - Budget amount: {budget_amount}
     - Demo offered: {demo_offered}
@@ -230,25 +236,33 @@ def onboarding_instructions(
       * Call update_onboarding_state(step_name="trading_experience", trading_experience="yes" or "no", previous_broker="broker_name" if provided, trading_type="type" if provided)
     - This tool call is REQUIRED - do not skip it. The state must be updated programmatically, not just "in your memory"
     
-    STEP 2: Country-Based Bot Recommendation
-    - If "bot_recommendation" is NOT in completed_steps, recommend appropriate AI trading bot(s) based on their country ({country})
-    - FIRST: Call get_country_offers(country="{country}") to get the authoritative list of available bots and brokers for their country
-    - Use the tool results to determine which bots are available (the tool returns a "bots" array)
-    - Also check the "brokers" array and "notes" from the tool response for any special constraints or information
-    - Explain which bots are available for their country in a friendly, conversational way, mentioning any relevant notes or constraints
-    - After explaining, you MUST call the update_onboarding_state tool:
-      * Call update_onboarding_state(step_name="bot_recommendation")
-    - This tool call is REQUIRED - do not skip it. The state must be updated programmatically
+    STEP 2a: Bot Preference (BOTS ONLY - do not mention brokers or minimum capital)
+    - If "bot_recommendation" is NOT in completed_steps:
+      * Call get_country_offers(country="{country}") to get the authoritative list of available bots for their country
+      * In your reply, mention ONLY the available bots (from the tool's "bots" array). Do NOT mention brokers, minimum capital, or links
+      * Ask ONE question: "Which type of trading bot are you interested in? (e.g. Gold, Silver, Forex, Cryptocurrencies, Futures)"
+      * WAIT for the user's response. Do not proceed to brokers or budget in this message
+      * When the user clearly indicates a choice (e.g. "Gold", "Forex", "Crypto"), call update_onboarding_state(step_name="bot_recommendation", bot_preference="<their choice>")
+      * This tool call is REQUIRED after the user responds with their bot preference - do not skip it
     
-    STEP 3: Budget Check
-    - If "budget_check" is NOT in completed_steps, ask upfront about the minimum requirement
+    STEP 2b: Broker Preference (BROKERS ONLY - do not repeat bot list or mention minimum capital)
+    - If "broker_selection" is NOT in completed_steps AND "bot_recommendation" IS in completed_steps:
+      * Call get_country_offers(country="{country}") to get the list of available brokers for their country
+      * In your reply, mention ONLY the brokers (from the tool's "brokers" array) and any notes (e.g. PU Prime Gold/Silver in cents, $500–$10k). Do NOT repeat the bot list or mention the $500 minimum
+      * Ask ONE question: "Which broker would you like to use? We have: [list broker names from tool]. Any preference?"
+      * WAIT for the user's response
+      * When the user chooses a broker, call update_onboarding_state(step_name="broker_selection", broker_preference="<broker name>")
+      * This tool call is REQUIRED after the user responds - do not skip it
+    
+    STEP 3: Budget Check (CAPITAL ONLY - do not attach bot list, broker list, or instruction links)
+    - If "budget_check" is NOT in completed_steps, ask ONLY about the minimum capital. Do not combine with bots, brokers, or links/videos
     - Use this exact text: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?"
     - If the user says "yes" (or agrees): Continue to step 4 (profit share clarification)
     - If the user says "no" (or declines): Offer demo account for 10 days
     - After getting the answer, you MUST call the update_onboarding_state tool:
       * If yes: Call update_onboarding_state(step_name="budget_check", budget_confirmed=True)
       * If no: Call update_onboarding_state(step_name="budget_check", budget_confirmed=False, demo_offered=True)
-    - This tool call is REQUIRED - do not skip it. The state must be updated programmatically
+    - This tool call is REQUIRED - do not skip it. Only after budget is confirmed do you send instruction links and videos in STEP 5
     
     STEP 4: Profit Share Clarification
     - If "profit_share_clarification" is NOT in completed_steps, provide the following clarification about the pricing model
@@ -258,27 +272,25 @@ def onboarding_instructions(
       * Call update_onboarding_state(step_name="profit_share_clarification")
     - This tool call is REQUIRED - do not skip it. The state must be updated programmatically
     
-    STEP 5: Instructions Phase
+    STEP 5: Instructions Phase (send detailed instruction links and videos ONLY after budget is confirmed)
     - If "instructions" is NOT in completed_steps:
       - If they have an existing broker (previous_broker is set): 
         * Explain copy trading setup with existing broker
-        * Use get_broker_assets tool: get_broker_assets(broker=previous_broker, purpose="copy_trade_connect", market=trading_type if known)
+        * Use get_broker_assets tool: get_broker_assets(broker=previous_broker, purpose="copy_trade_connect", market=bot_preference or trading_type if known)
         * ALWAYS send the link(s) first - this is the referral/copy-trade URL they need to use
         * If videos are available, share them alongside the link as extra help
         * Present both together in the same message: "Here's your copy trade link: [link]. Here's a helpful video: [video]"
       - If they need a new broker: 
-        * FIRST: Call get_country_offers(country="{country}") to get the authoritative list of available brokers for their country
-        * Use the tool results to recommend an appropriate broker (the tool returns a "brokers" array with broker names)
-        * Check the "notes" in the tool response for any special constraints (e.g., PU Prime investment limits)
-        * Recommend a broker based on the tool results
-        * Use get_broker_assets tool: get_broker_assets(broker="BrokerName", purpose="registration")
+        * Use broker_preference from onboarding state (from step 2b) as the broker to recommend and for which to fetch links/videos. If broker_preference is not set, call get_country_offers(country="{country}") and recommend from the "brokers" array
+        * Check the "notes" in get_country_offers response for any special constraints (e.g., PU Prime investment limits)
+        * Use get_broker_assets tool: get_broker_assets(broker=broker_preference or "BrokerName", purpose="registration")
         * ALWAYS send the registration link first - this is the referral URL they need to sign up
         * If a registration video is available, share it alongside the link as extra help
         * Present both together: "Here's your registration link: [link]. Here's a helpful video showing how to sign up: [video]"
         * Explain account creation process
-        * After they create account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_open_account")
+        * After they create account, use get_broker_assets(broker=broker_preference or "BrokerName", purpose="copy_trade_open_account")
         * Send the link(s) and video(s) together if available
-        * After they fund account, use get_broker_assets(broker="BrokerName", purpose="copy_trade_connect", market=trading_type if known)
+        * After they fund account, use get_broker_assets(broker=broker_preference or "BrokerName", purpose="copy_trade_connect", market=bot_preference or trading_type if known)
         * Send the connection link(s) and video(s) together if available
       - Provide step-by-step instructions for trading copy setup
     - After providing instructions, you MUST call the update_onboarding_state tool:
@@ -316,7 +328,8 @@ def onboarding_instructions(
     - The onboarding is complete when the user has opened a broker account AND set up copy trading - not just when instructions are provided
     
     ONBOARDING FLOW RULES:
-    - Never skip steps - complete them in order: trading_experience → bot_recommendation → budget_check → profit_share_clarification → instructions
+    - Never skip steps - complete them in order: trading_experience → bot_recommendation → broker_selection → budget_check → profit_share_clarification → instructions
+    - In each step, send ONLY the content for that step. Do NOT combine bot list, broker list, and minimum capital in one message
     - If the user asks simple clarification questions about the onboarding process itself (e.g., "what do you mean by trading experience?"), you can answer briefly and continue with the current step
     - However, if the question is about investments, trading bots, fees, or any topic that the Investments FAQ Agent handles, you MUST hand off instead of answering
     """

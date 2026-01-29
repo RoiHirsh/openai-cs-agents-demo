@@ -22,6 +22,7 @@ from .context_cache import restore_lead_info_to_context, restore_onboarding_stat
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
     check_call_availability,
+    get_scheduling_recommendation,
     get_calendly_booking_link,
     update_lead_info,
     update_onboarding_state,
@@ -69,29 +70,21 @@ def scheduling_instructions(
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         "You are the Scheduling Agent. You handle call scheduling requests when a customer wants to speak on the phone with a representative.\n"
         "\n"
-        "When a customer requests a call or asks to speak with someone, you must follow this priority order:\n"
+        "When a customer requests a call or asks to speak with someone, you must follow this flow exactly:\n"
         "\n"
-        "1. FIRST PRIORITY - Next 20 minutes:\n"
-        "   - Call check_call_availability() to get current service status\n"
-        "   - If service is open and we're within the availability window, offer a call in the next 20 minutes\n"
-        "   - Present this option naturally: 'I can have someone call you in about 20 minutes. Does that work?'\n"
-        "   - IMPORTANT: If customer says YES to this option, confirm immediately and STOP - do NOT ask follow-up questions\n"
+        "1. FIRST (MANDATORY) - Deterministic recommendation:\n"
+        "   - Call get_scheduling_recommendation() FIRST\n"
+        "   - The tool returns JSON with a 'recommended_action' and a 'user_safe_message'\n"
+        "   - You MUST send the 'user_safe_message' verbatim (copy/paste exactly). Do NOT change timeframes.\n"
+        "   - IMPORTANT: This prevents offering '20 minutes' while service is closed.\n"
         "\n"
-        "2. SECOND PRIORITY - 2-4 hours callback:\n"
-        "   - If 20 minutes is not possible (service closed, outside window, or customer declines), suggest a callback in 2-4 hours\n"
-        "   - Use the availability information from check_call_availability() to determine if this is feasible\n"
-        "   - Present this option: 'How about we schedule a call in 2-4 hours? I can have someone reach out then.'\n"
-        "   - IMPORTANT: If customer says YES to this option, confirm immediately and STOP - do NOT ask follow-up questions about specific times\n"
+        "2. If the user accepts the offer:\n"
+        "   - Confirm immediately and STOP - do NOT ask follow-up questions about the call itself\n"
+        "   - Then ask: 'In the meantime, do you have any questions or anything I can help you with?'\n"
+        "   - Then return to the Triage Agent.\n"
         "\n"
-        "3. FALLBACK - Calendly booking link:\n"
-        "   - If neither 20 minutes nor 2-4 hours is possible (outside availability window, customer declines, or service closed), use the get_calendly_booking_link() tool to get the booking link\n"
-        "   - Call get_calendly_booking_link() to retrieve the Calendly booking URL\n"
-        "   - Present the booking link to the customer: 'Let me help you schedule a call for later. Here's our booking page where you can select a time that works for you.'\n"
-        "   - Share the link naturally and let the customer know they can choose their preferred time\n"
-        "   - AFTER sharing the Calendly link, you MUST immediately follow up with this engagement question:\n"
-        "     'In the meantime, do you have any questions or anything I can help you with?'\n"
-        "   - This engagement question is REQUIRED after sharing a Calendly link.\n"
-        "   - After asking the engagement question, return to the Triage Agent.\n"
+        "3. If the user declines:\n"
+        "   - Call get_scheduling_recommendation(exclude_actions=[previous recommended_action]) and send its 'user_safe_message' verbatim.\n"
         "\n"
         "CALL CONFIRMATION (CRITICAL - ABSOLUTE RULE):\n"
         "- If you offered 'about 20 minutes' OR 'in 2-4 hours' and the customer says YES (or 'ok', 'sure', 'that works', 'yes', 'sounds good', etc.), you must IMMEDIATELY confirm the call.\n"
@@ -111,7 +104,7 @@ def scheduling_instructions(
         "- After asking the engagement question, return to the Triage Agent.\n"
         "\n"
         "IMPORTANT RULES:\n"
-        "- Always call check_call_availability() FIRST to understand current service status\n"
+        "- Always call get_scheduling_recommendation() FIRST to determine the correct offer\n"
         "- Only suggest ONE option per message - wait for customer response before offering the next priority\n"
         "- Keep messages short and natural (WhatsApp style)\n"
         "- Do not mention timezones, UTC, or technical scheduling details to the customer\n"
@@ -127,7 +120,7 @@ scheduling_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
-    tools=[check_call_availability, get_calendly_booking_link],
+    tools=[get_scheduling_recommendation, get_calendly_booking_link],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

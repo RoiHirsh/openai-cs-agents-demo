@@ -21,7 +21,6 @@ from .context import AirlineAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
-    check_call_availability,
     confirm_callback,
     get_scheduling_recommendation,
     get_calendly_booking_link,

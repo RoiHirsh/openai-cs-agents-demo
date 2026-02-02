@@ -7,7 +7,7 @@
     "notes": []
   },
   "CANADA": {
-    "bots": ["Gold", "Silver", "Forex", "Cryptocurrencies", "Futures"],
+    "bots": ["Gold", "Silver", "Forex", "Cryptocurrencies"],
     "brokers": [
       {"name": "PU Prime", "notes": ["Gold/Silver only in cents; $500–$10,000 USD only"]}
     ],

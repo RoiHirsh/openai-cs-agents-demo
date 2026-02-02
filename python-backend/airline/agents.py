@@ -138,6 +138,7 @@ def onboarding_instructions(
     demo_offered = onboarding_state.get("demo_offered")
     instructions_provided = onboarding_state.get("instructions_provided")
     onboarding_complete = onboarding_state.get("onboarding_complete", False)
+    has_broker_account = onboarding_state.get("has_broker_account")
 
     if "trading_experience" not in completed_steps:
         current_step = "trading_experience"
@@ -149,6 +150,8 @@ def onboarding_instructions(
         current_step = "budget_check"
     elif "profit_share_clarification" not in completed_steps:
         current_step = "profit_share_clarification"
+    elif broker_preference and "has_broker_account" not in completed_steps:
+        current_step = "has_broker_account"
     elif "instructions" not in completed_steps:
         current_step = "instructions"
     else:
@@ -178,6 +181,7 @@ def onboarding_instructions(
         f"- Demo offered: {demo_offered}\n"
         f"- Instructions provided: {instructions_provided}\n"
         f"- Onboarding complete: {onboarding_complete}\n"
+        f"- Has broker account: {has_broker_account}\n"
         f"- Current step to work on: {current_step}\n"
         "\n"
         "You have access to the **onboarding skill** below. Follow it. Use the tools (get_country_offers, get_broker_assets, update_onboarding_state, update_lead_info) as the skill describes. "

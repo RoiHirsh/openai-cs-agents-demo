@@ -65,6 +65,7 @@ async def update_onboarding_state(
     demo_offered: bool | None = None,
     instructions_provided: bool | None = None,
     onboarding_complete: bool | None = None,
+    has_broker_account: bool | None = None,
 ) -> str:
     """
     Update the onboarding state in the context.
@@ -73,7 +74,7 @@ async def update_onboarding_state(
     ensuring that progress through the onboarding flow is properly tracked and persisted.
     
     Args:
-        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "broker_selection", "budget_check", "profit_share_clarification", "instructions")
+        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "broker_selection", "budget_check", "profit_share_clarification", "has_broker_account", "instructions")
         trading_experience: User's trading experience level (e.g., "yes", "no", "beginner", "experienced")
         previous_broker: Name of the broker the user previously used (if any)
         trading_type: Type of trading the user did (e.g., "stocks", "forex", "crypto", "futures")
@@ -84,11 +85,12 @@ async def update_onboarding_state(
         demo_offered: Whether a demo account was offered (True/False)
         instructions_provided: Whether instructions have been provided (True/False)
         onboarding_complete: Whether onboarding is fully complete - user has opened account AND set up copy trading (True/False)
+        has_broker_account: Whether the user already has an account with the selected broker (True/False); used to skip registration when True
     
     Returns:
         Confirmation message indicating the state was updated
     """
-    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', bot_preference='{bot_preference}', broker_preference='{broker_preference}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete})")
+    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', bot_preference='{bot_preference}', broker_preference='{broker_preference}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete}, has_broker_account={has_broker_account})")
     
     ctx = run_context.context.state
     
@@ -145,6 +147,10 @@ async def update_onboarding_state(
     if onboarding_complete is not None:
         ctx.onboarding_state["onboarding_complete"] = onboarding_complete
         print(f"      Updated onboarding_complete: {onboarding_complete}")
+    
+    if has_broker_account is not None:
+        ctx.onboarding_state["has_broker_account"] = has_broker_account
+        print(f"      Updated has_broker_account: {has_broker_account}")
     
     # Cache the onboarding_state for persistence across handoffs
     thread_id = None

@@ -63,7 +63,9 @@ BROKER_LINKS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
             {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
         ],
         "copy_trade_start": [],
-        "copy_trade_open_account": [],
+        "copy_trade_open_account": [
+            {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
+        ],
     },
     "vantage": {
         "registration": [

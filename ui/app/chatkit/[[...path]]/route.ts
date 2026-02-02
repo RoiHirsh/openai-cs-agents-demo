@@ -3,10 +3,13 @@
  * Uses BACKEND_URL from env (read when the request runs), so it works on Vercel
  * even when rewrites in next.config.mjs were built without the var.
  */
-const backendUrl =
+let backendUrl =
   process.env.BACKEND_URL ??
   process.env.NEXT_PUBLIC_BACKEND_URL ??
   "http://127.0.0.1:8000";
+if (!/^https?:\/\//i.test(backendUrl)) {
+  backendUrl = `https://${backendUrl}`;
+}
 
 async function proxyToBackend(
   request: Request,

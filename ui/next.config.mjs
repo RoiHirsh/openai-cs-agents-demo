@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 
 // Backend URL: use BACKEND_URL in production (e.g. Vercel), else localhost for dev
-const backendUrl =
+let backendUrl =
   process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
+// Next.js rewrites require destination to start with /, http://, or https://
+if (!/^https?:\/\//i.test(backendUrl)) {
+  backendUrl = `https://${backendUrl}`;
+}
 
 const nextConfig = {
   devIndicators: false,

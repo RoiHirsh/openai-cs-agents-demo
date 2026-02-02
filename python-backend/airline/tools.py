@@ -24,130 +24,28 @@ from chatkit.types import ProgressUpdateEvent
 
 from .context import AirlineAgentChatContext
 from .context_cache import set_lead_info, set_onboarding_state, get_onboarding_state
-from .scheduling import compute_call_availability_status
-
-CALENDLY_BOOKING_URL = "https://calendly.com/lucentiveclub-support/30min"
-
-
-def _parse_utc_stamp(s: str | None) -> datetime | None:
-    """
-    Parse timestamps like '2026-01-29 09:00:00 UTC' into an aware datetime (UTC).
-    """
-    if not s:
-        return None
-    try:
-        dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S UTC")
-        return dt.replace(tzinfo=timezone.utc)
-    except Exception:
-        return None
+from .scheduling import CALENDLY_BOOKING_URL, compute_scheduling_context
 
 
 @function_tool(
-    name_override="get_scheduling_recommendation",
+    name_override="get_scheduling_context",
     description_override=(
-        "Return the recommended next scheduling offer based on current service availability. "
-        "Provides a user_safe_message that should be sent verbatim."
+        "Get current scheduling context: day, open/closed, why, which offers are available (20 min, 2–4 hours, Calendly), "
+        "and reasons when an offer is unavailable. Use this context to respond in natural language; do not copy-paste messages."
     ),
 )
-async def get_scheduling_recommendation(exclude_actions: list[str] | None = None) -> str:
+async def get_scheduling_context(exclude_actions: list[str] | None = None) -> str:
     """
-    Deterministic helper for the Scheduling Agent.
-
-    This tool returns a single recommended_action plus a user_safe_message the agent should
-    send verbatim, to avoid model-only branching mistakes.
+    Returns scheduling context only (no user-facing messages).
+    Agent must use status_reason and reason_* to explain in natural language.
     """
     now_utc = datetime.now(timezone.utc)
-    status = compute_call_availability_status(now_utc)
-
-    customer_service = status.get("customer_service")
-    window_start = _parse_utc_stamp(status.get("window_start_utc"))
-
-    minutes_until_open: int | None = None
-    if customer_service == "currently_closed" and window_start is not None:
-        delta_seconds = (window_start - now_utc).total_seconds()
-        if delta_seconds > 0:
-            # round up to be conservative (avoid understating wait)
-            minutes_until_open = int((delta_seconds + 59) // 60)
-        else:
-            minutes_until_open = 0
-
-    # Build an ordered list of allowed actions based on deterministic availability.
-    if customer_service == "open":
-        candidate_actions = ["offer_20_min", "offer_2_4_hours", "offer_calendly"]
-    else:
-        if minutes_until_open is not None and minutes_until_open <= 240:
-            candidate_actions = ["offer_2_4_hours", "offer_calendly"]
-        else:
-            candidate_actions = ["offer_calendly"]
-
-    # Allow the agent to step down deterministically on user decline.
-    excluded = set()
-    if isinstance(exclude_actions, list):
-        excluded = {str(a) for a in exclude_actions if a}
-
-    recommended_action = next((a for a in candidate_actions if a not in excluded), "offer_calendly")
-
-    if recommended_action == "offer_20_min":
-        user_safe_message = "I can have someone call you in about 20 minutes. Does that work?"
-    elif recommended_action == "offer_2_4_hours":
-        # Only say "We're closed" when we're actually closed; when open and stepping down from 20 min, don't.
-        if customer_service == "currently_closed":
-            user_safe_message = "We're closed right now, but I can have someone call you in 2-4 hours. Does that work?"
-        else:
-            user_safe_message = "I can have someone call you in 2-4 hours. Does that work?"
-    else:
-        user_safe_message = (
-            "Let me help you schedule a call for later. "
-            f"Here's our booking page where you can select a time that works for you: {CALENDLY_BOOKING_URL}\n\n"
-            "In the meantime, do you have any questions or anything I can help you with?"
-        )
-
-    payload = {
-        "now_utc": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "recommended_action": recommended_action,
-        "user_safe_message": user_safe_message,
-        "minutes_until_open": minutes_until_open,
-        "exclude_actions": list(excluded),
-        "candidate_actions": candidate_actions,
-        "availability": status,
-    }
-    return json.dumps(payload)
-
-
-@function_tool(
-    name_override="confrimation_call",
-    description_override=(
-        "Call this when the customer has accepted a callback time (e.g. said yes to '20 minutes' or '2-4 hours'). "
-        "Returns a suggested_response to send to the user verbatim. After sending it, hand off to the Triage Agent."
-    ),
-)
-async def confirm_callback() -> str:
-    """
-    Called when the user confirms a callback time slot. Returns JSON with the exact message
-    the Scheduling Agent should send to the user, then the agent must hand off to Triage.
-    """
-    payload = {
-        "suggested_response": "Great, someone from our team will call you within this timeframe.",
-    }
-    return json.dumps(payload)
-
-
-@function_tool(
-    name_override="get_calendly_booking_link",
-    description_override="Get the Calendly booking link for scheduling a call when immediate callbacks are not available."
-)
-async def get_calendly_booking_link() -> str:
-    """
-    Returns the Calendly booking URL for customers to schedule calls.
-    Use this when neither 20 minutes nor 2-4 hours callback options are available.
-    
-    Returns:
-        A message with the Calendly booking link
-    """
-    return (
-        f"You can schedule a call at your convenience using our booking page: {CALENDLY_BOOKING_URL}\n"
-        "Simply select a time that works for you, and we'll call you at the scheduled time."
+    ctx = compute_scheduling_context(
+        now_utc, exclude_actions=exclude_actions, calendly_link=CALENDLY_BOOKING_URL
     )
+    out = json.dumps(ctx)
+    print("[SCHEDULING TOOL] response:", out)
+    return out
 
 
 @function_tool(

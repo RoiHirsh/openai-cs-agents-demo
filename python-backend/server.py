@@ -78,7 +78,49 @@ def _strip_user_visible_citations(text: str) -> str:
     return cleaned.strip()
 
 
-def _sanitize_thread_stream_event(event: ThreadStreamEvent) -> ThreadStreamEvent:
+# Short acceptance phrases — user accepted a callback; we must NOT ask for phone/timezone
+_SCHEDULING_ACCEPTANCE_PHRASES = (
+    "yes", "sure", "ok", "okay", "yes please", "that works", "sounds good", "please", "yeah", "yep",
+)
+
+
+def _is_scheduling_acceptance(user_text: str) -> bool:
+    """True if the user message looks like accepting a callback (e.g. yes, sure, ok)."""
+    if not user_text or not isinstance(user_text, str):
+        return False
+    t = user_text.strip().lower()
+    if not t or len(t) > 50:
+        return False
+    return t in _SCHEDULING_ACCEPTANCE_PHRASES or t.startswith("yes ") or t == "yes"
+
+
+def _contains_phone_timezone_request(text: str) -> bool:
+    """True if the message asks for phone number or timezone (must be replaced when user accepted callback)."""
+    if not text or not isinstance(text, str):
+        return False
+    lower = text.lower()
+    return (
+        "phone number" in lower
+        or "time zone" in lower
+        or "timezone" in lower
+        or "country code" in lower
+        or "reach you" in lower
+        or "contact details" in lower
+        or "best number" in lower
+    )
+
+
+# Default confirmation when we replace a forbidden "ask for phone/timezone" response
+_SCHEDULING_CONFIRMATION_REPLACEMENT = (
+    "That's great, someone will give you a call in the next 2–4 hours."
+)
+
+
+def _sanitize_thread_stream_event(
+    event: ThreadStreamEvent,
+    agent_name: str | None = None,
+    last_user_message: str | None = None,
+) -> ThreadStreamEvent:
     """
     Ensure citations/sources never appear in the *chat UI* assistant text.
 
@@ -97,7 +139,16 @@ def _sanitize_thread_stream_event(event: ThreadStreamEvent) -> ThreadStreamEvent
         for part in item.content:
             if isinstance(part, AssistantMessageContent):
                 if isinstance(part.text, str):
-                    part.text = _strip_user_visible_citations(part.text)
+                    # Scheduling Agent: when user accepted callback, never show "ask for phone/timezone"
+                    if (
+                        agent_name == "Scheduling Agent"
+                        and last_user_message is not None
+                        and _is_scheduling_acceptance(last_user_message)
+                        and _contains_phone_timezone_request(part.text)
+                    ):
+                        part.text = _SCHEDULING_CONFIRMATION_REPLACEMENT
+                    else:
+                        part.text = _strip_user_visible_citations(part.text)
                 part.annotations = []
     except Exception:
         # Never fail the stream because of sanitization.
@@ -371,6 +422,12 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 # Print agent message to terminal
                 print(f"\n[AGENT MESSAGE]")
                 print(f"   Agent: {item.agent.name}")
+                if item.agent.name == "Scheduling Agent":
+                    try:
+                        safe = text[:500].encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8", errors="replace")
+                        print(f"   [SCHEDULING AGENT] said: {safe}")
+                    except Exception:
+                        print(f"   [SCHEDULING AGENT] said: (see Message above)")
                 # Safely encode text for Windows console compatibility
                 # Get console encoding or default to utf-8
                 console_encoding = sys.stdout.encoding or 'utf-8'
@@ -486,6 +543,12 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             elif isinstance(item, ToolCallOutputItem):
                 # Print tool output information to terminal
                 output_str = str(item.output)
+                if active_agent == "Scheduling Agent":
+                    try:
+                        safe = output_str[:500].encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8", errors="replace")
+                        print(f"   [SCHEDULING TOOL] response: {safe}")
+                    except Exception:
+                        pass
                 try:
                     safe_output = self._truncate(output_str, limit=300)
                     print(f"   [TOOL RESULT] {safe_output}")
@@ -694,8 +757,19 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 if isinstance(event, ProgressUpdateEvent) or getattr(event, "type", "") == "progress_update_event":
                     # Ignore progress updates for the Runner panel; ChatKit will handle them separately.
                     continue
-                # Ensure user-visible assistant text never includes citations/sources.
-                event = _sanitize_thread_stream_event(event)
+                # If this is a run-item event, get agent name for scheduling sanitization.
+                agent_name_for_sanitize = state.current_agent_name
+                if hasattr(event, "item"):
+                    run_item = getattr(event, "item", None)
+                    if isinstance(run_item, MessageOutputItem):
+                        agent_name_for_sanitize = run_item.agent.name
+                # Ensure user-visible assistant text never includes citations/sources;
+                # when Scheduling Agent and user accepted callback, replace phone/timezone ask with confirmation.
+                event = _sanitize_thread_stream_event(
+                    event,
+                    agent_name=agent_name_for_sanitize,
+                    last_user_message=user_text if isinstance(user_text, str) else None,
+                )
                 # If this is a run-item event, convert and broadcast immediately.
                 if hasattr(event, "item"):
                     try:
@@ -828,6 +902,22 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             # Defensive: if Runner failed before producing a result, we already returned above.
             return
         state.input_items = result.to_input_list()
+        # When Scheduling Agent responded to an acceptance with phone/timezone ask, replace in stored thread too
+        try:
+            final_agent_name = result.last_agent.name
+        except Exception:
+            final_agent_name = state.current_agent_name
+        if (
+            final_agent_name == "Scheduling Agent"
+            and state.input_items
+            and len(state.input_items) >= 2
+            and _is_scheduling_acceptance(user_text if isinstance(user_text, str) else "")
+        ):
+            last_item = state.input_items[-1]
+            if isinstance(last_item, dict) and last_item.get("role") == "assistant":
+                content = last_item.get("content") or ""
+                if isinstance(content, str) and _contains_phone_timezone_request(content):
+                    state.input_items[-1] = {**last_item, "content": _SCHEDULING_CONFIRMATION_REPLACEMENT}
         remaining_items = result.new_items[streamed_items_seen:]
         new_events, active_agent = self._record_events(remaining_items, state.current_agent_name, thread.id)
         state.events.extend(new_events)

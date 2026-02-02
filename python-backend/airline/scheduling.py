@@ -188,3 +188,118 @@ def compute_call_availability_json(now_utc: datetime) -> str:
     """Convenience wrapper for tool usage."""
     return json.dumps(compute_call_availability_status(now_utc))
 
+
+# Calendly link used by scheduling context (single source for tool + skill)
+CALENDLY_BOOKING_URL = "https://calendly.com/lucentiveclub-support/30min"
+
+
+def _parse_utc_stamp(s: str | None) -> datetime | None:
+    """Parse 'YYYY-MM-DD HH:MM:SS UTC' into UTC-aware datetime."""
+    if not s:
+        return None
+    try:
+        dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S UTC")
+        return dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+def compute_scheduling_context(
+    now_utc: datetime,
+    exclude_actions: list[str] | None = None,
+    calendly_link: str = CALENDLY_BOOKING_URL,
+) -> dict:
+    """
+    Return scheduling context only (no user-facing messages).
+    Used by the scheduling tool so the agent/skill can respond in natural language.
+
+    Returns JSON-serializable dict with:
+      - current_utc, day_name, is_sunday, status (open/closed)
+      - status_reason: human-readable why we're open or closed
+      - window_start_utc, window_end_utc (or null on Sunday)
+      - minutes_until_open (if closed), minutes_until_close (if open)
+      - available_offers: ["20_min", "2_4_hours", "calendly"] in priority order (after exclude_actions)
+      - reason_20_min_unavailable, reason_2_4_hours_unavailable (null if available)
+      - calendly_link
+    """
+    if now_utc.tzinfo is None:
+        now_utc = now_utc.replace(tzinfo=timezone.utc)
+
+    raw = compute_call_availability_status(now_utc)
+    day_lower = raw.get("day", "unknown")
+    customer_service = raw.get("customer_service", "currently_closed")
+    window_start_utc_s = raw.get("window_start_utc")
+    window_end_utc_s = raw.get("window_end_utc")
+    window_start = _parse_utc_stamp(window_start_utc_s)
+    window_end = _parse_utc_stamp(window_end_utc_s)
+    is_sunday = day_lower == "sunday"
+
+    status_reason: str
+    reason_20_min: str | None = None
+    reason_2_4_hours: str | None = None
+    minutes_until_open: int | None = None
+    minutes_until_close: int | None = None
+
+    if is_sunday:
+        status_reason = "Today is Sunday; we're not working."
+        reason_20_min = "Today is Sunday; we're not working."
+        reason_2_4_hours = "Today is Sunday; we're not working."
+        candidate_offers = ["calendly"]
+    elif customer_service == "open":
+        status_reason = "We're open."
+        candidate_offers = ["20_min", "2_4_hours", "calendly"]
+        if window_end and now_utc < window_end:
+            minutes_until_close = max(0, int((window_end - now_utc).total_seconds() // 60))
+        else:
+            minutes_until_close = None
+    else:
+        # Closed but not Sunday (e.g. outside window or before open)
+        if window_start and now_utc < window_start:
+            delta_seconds = (window_start - now_utc).total_seconds()
+            minutes_until_open = max(0, int((delta_seconds + 59) // 60))
+            # Offer 2–4 hours when we open within 4 hours (we'll be open by then)
+            if minutes_until_open <= 240:
+                status_reason = f"We're closed; we open in {minutes_until_open} minutes."
+                reason_20_min = f"We open in {minutes_until_open} minutes; we can't offer a 20-minute callback yet."
+                reason_2_4_hours = None
+                candidate_offers = ["2_4_hours", "calendly"]
+            else:
+                status_reason = f"We're closed; we open in {minutes_until_open} minutes."
+                reason_20_min = f"We open in {minutes_until_open} minutes."
+                reason_2_4_hours = f"We open in {minutes_until_open} minutes."
+                candidate_offers = ["calendly"]
+        else:
+            status_reason = "We're outside service hours."
+            reason_20_min = "We're outside service hours."
+            reason_2_4_hours = "We're outside service hours."
+            candidate_offers = ["calendly"]
+
+    excluded = set()
+    if isinstance(exclude_actions, list):
+        excluded = {str(a).strip() for a in exclude_actions if a}
+    normalized = set()
+    for e in excluded:
+        if e in ("offer_20_min", "20_min"):
+            normalized.add("20_min")
+        elif e in ("offer_2_4_hours", "2_4_hours"):
+            normalized.add("2_4_hours")
+        elif e in ("offer_calendly", "calendly"):
+            normalized.add("calendly")
+    available_offers = [o for o in candidate_offers if o not in normalized]
+
+    return {
+        "current_utc": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "day_name": day_lower,
+        "is_sunday": is_sunday,
+        "status": "open" if customer_service == "open" else "closed",
+        "status_reason": status_reason,
+        "window_start_utc": window_start_utc_s,
+        "window_end_utc": window_end_utc_s,
+        "minutes_until_open": minutes_until_open,
+        "minutes_until_close": minutes_until_close,
+        "available_offers": available_offers,
+        "reason_20_min_unavailable": reason_20_min,
+        "reason_2_4_hours_unavailable": reason_2_4_hours,
+        "calendly_link": calendly_link,
+    }
+

@@ -1,5 +1,7 @@
 from __future__ import annotations as _annotations
 
+from pathlib import Path
+
 from dotenv import load_dotenv
 from agents import Agent, RunContextWrapper, handoff
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
@@ -21,9 +23,7 @@ from .context import AirlineAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
-    confirm_callback,
-    get_scheduling_recommendation,
-    get_calendly_booking_link,
+    get_scheduling_context,
     update_lead_info,
     update_onboarding_state,
 )
@@ -63,43 +63,41 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
 )
 
 
+def _load_scheduling_skill() -> str:
+    skill_path = Path(__file__).parent / "skills" / "scheduling" / "SKILL.md"
+    try:
+        return skill_path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
 def scheduling_instructions(
     run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
 ) -> str:
+    skill_content = _load_scheduling_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
-        "You are the Scheduling Agent. You handle call scheduling requests when a customer wants to speak on the phone with a representative.\n"
+        "FIRST RULE: When the user says yes/sure/ok/yes please to a callback, reply with ONLY: \"That's great, someone will give you a call in the next [timeframe].\" Do not ask for phone, timezone, or country code. Never.\n"
         "\n"
-        "When a customer requests a call or asks to speak with someone, you must follow this flow exactly:\n"
+        "You are the Scheduling Agent. The user has asked to be called back and was handed off from Triage.\n"
         "\n"
-        "1. FIRST (MANDATORY) - Deterministic recommendation:\n"
-        "   - Call get_scheduling_recommendation() FIRST\n"
-        "   - The tool returns JSON with a 'recommended_action' and a 'user_safe_message'\n"
-        "   - You MUST send the 'user_safe_message' verbatim (copy/paste exactly). Do NOT change timeframes.\n"
-        "   - IMPORTANT: This prevents offering '20 minutes' while service is closed.\n"
+        "CRITICAL: When the user ACCEPTS a callback (e.g. \"yes\", \"sure\", \"ok\", \"yes please\"), reply with ONLY a "
+        "short confirmation of the timeframe (e.g. \"That's great, someone will give you a call in the next 2–4 hours.\") "
+        "and hand off to Triage. NEVER ask for phone number, timezone, or country code—we already have them from the campaign. "
+        "Do NOT say \"confirm the best phone number\", \"phone number (with country code)\", \"your time zone\", or \"so we can place the callback\".\n"
         "\n"
-        "2. If the user accepts the offer (says yes to 20 minutes or 2-4 hours):\n"
-        "   - You MUST call confrimation_call() first.\n"
-        "   - The tool returns JSON with 'suggested_response'. Send that message to the user verbatim.\n"
-        "   - Do NOT ask any other question (no phone, no timezone, no 'In the meantime...').\n"
-        "   - Then hand off to the Triage Agent.\n"
+        "You have access to the **scheduling skill** below. Follow it. Your only tool is **get_scheduling_context**. "
+        "Call it first. It returns **context only** (day, open/closed, why, available offers, reasons). "
+        "**Do not** copy-paste any message from the tool. Use the context to reply in **natural language** and explain "
+        "why you're offering what you're offering.\n"
         "\n"
-        "3. If the user declines:\n"
-        "   - Call get_scheduling_recommendation(exclude_actions=[previous recommended_action]) and send its 'user_safe_message' verbatim.\n"
+        "Offer one option at a time; if the user declines, call the tool again with exclude_actions and offer the next "
+        "option. When the user accepts: one confirmation sentence only, then hand off. Do not ask for phone or timezone.\n"
         "\n"
-        "CALL CONFIRMATION (CRITICAL):\n"
-        "- When the customer says YES (or 'ok', 'sure', 'that works', 'sounds good', etc.) to a callback time, you MUST call confrimation_call(), then send the tool's suggested_response to the user, then hand off to Triage. No other message, no follow-up questions.\n"
-        "- Do NOT ask for phone number, timezone, or any other detail after confirmation.\n"
+        "---\n"
+        "## Scheduling skill\n"
         "\n"
-        "IMPORTANT RULES:\n"
-        "- Always call get_scheduling_recommendation() FIRST to determine the correct offer\n"
-        "- Only suggest ONE option per message - wait for customer response before offering the next priority\n"
-        "- Keep messages short and natural (WhatsApp style)\n"
-        "- Do not mention timezones, UTC, or technical scheduling details to the customer\n"
-        "- Do not book calls on Sundays (the tool will indicate if it's Sunday)\n"
-        "- When scheduling is complete or the customer declines, return to the Triage Agent\n"
-        "- If the customer says 'no call' or 'stop calling', acknowledge and return to Triage Agent\n"
-        "- If the customer asks specific questions about investments, trading bots, stocks, or other topics unrelated to scheduling, hand off to the Triage Agent so they can be routed to the appropriate specialist. Do NOT attempt to answer these questions yourself."
+        f"{skill_content}"
     )
 
 
@@ -108,7 +106,7 @@ scheduling_agent = Agent[AirlineAgentChatContext](
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
-    tools=[get_scheduling_recommendation, confirm_callback, get_calendly_booking_link],
+    tools=[get_scheduling_context],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
@@ -401,6 +399,9 @@ def triage_instructions(
         "- You MUST route them to the Onboarding Agent immediately - do NOT just acknowledge and continue.\n"
         "- This is a specific action that requires routing to the Onboarding Agent - treat it the same as a specific request.\n"
         "- Only if they're NOT a new lead or have completed onboarding should you acknowledge and continue naturally.\n\n"
+        "CALLBACK ACCEPTANCE - When the user says only 'yes', 'sure', 'ok', 'yes please', or 'that works' and the last assistant message was from the Scheduling Agent offering a callback (e.g. 20 minutes or 2–4 hours):\n"
+        "- Do NOT ask for phone number or timezone. We already have them from the campaign.\n"
+        "- Hand off immediately to the Scheduling Agent so it can send the confirmation and close the flow. Do not ask any questions.\n\n"
         "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
         "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."
     )

@@ -19,35 +19,33 @@ AssetItem = dict[str, str]  # {title: str, url: str}
 BROKER_VIDEOS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
     "bybit": {
         "registration": [
-            {"title": "Bybit sign up instructions", "url": "https://www.youtube.com/shorts/_xABSqSZZsg"},
+            {"title": "video to sign up", "url": "https://www.youtube.com/shorts/_xABSqSZZsg"},
         ],
-        "copy_trade_start": [
-            {"title": "Bybit start a copy trade", "url": "https://drive.google.com/file/d/1IHl8aaQyNfDSLqmzNJuJxODBLX2-WyCj/view?usp=drive_link"},
-        ],
+        "copy_trade_start": [],
         "copy_trade_open_account": [],
-        "copy_trade_connect": [],
+        "copy_trade_connect": [
+            {"title": "video how to copy in bybit", "url": "https://drive.google.com/file/d/1IHl8aaQyNfDSLqmzNJuJxODBLX2-WyCj/view?usp=drive_link"},
+        ],
     },
     "pu_prime": {
         "registration": [
-            {"title": "PU Prime registration", "url": "https://drive.google.com/file/d/1Ej39VG4uJSWC_xnkSyyGJN_XCzPM2pvO/view?usp=drive_link"},
+            {"title": "video how to sign up", "url": "https://drive.google.com/file/d/1Ej39VG4uJSWC_xnkSyyGJN_XCzPM2pvO/view?usp=sharing"},
         ],
         "copy_trade_open_account": [
-            {"title": "PU Prime open a copy trading account", "url": "https://drive.google.com/file/d/10UHdv8K59Lw6U-GutEI6f1TvJkIRplSR/view?usp=drive_link"},
+            {"title": "video how open a copy trading account", "url": "https://drive.google.com/file/d/10UHdv8K59Lw6U-GutEI6f1TvJkIRplSR/view?usp=sharing"},
         ],
         "copy_trade_connect": [
-            {"title": "PU Prime how to connect to copy trade", "url": "https://drive.google.com/file/d/1o6yJMZ9_1wLS-A_mTN9Mzh_w3gJh6yCA/view?usp=drive_link"},
+            {"title": "video how to connect to copy trading", "url": "https://drive.google.com/file/d/1o6yJMZ9_1wLS-A_mTN9Mzh_w3gJh6yCA/view?usp=sharing"},
         ],
         "copy_trade_start": [],
     },
     "vantage": {
         "registration": [
-            {"title": "Vantage how to register", "url": "https://drive.google.com/file/d/1kr0JYMPYrfO7BFvpWxghoel4ULmfm2d5/view?usp=drive_link"},
+            {"title": "video How to sign up in vantage", "url": "https://drive.google.com/file/d/1kr0JYMPYrfO7BFvpWxghoel4ULmfm2d5/view?usp=sharing"},
         ],
-        "copy_trade_open_account": [
-            {"title": "Vantage open a copy trading account", "url": "https://drive.google.com/file/d/1cQlEWHxw2Zx-cfhrWCU3CoV2kvjurJrX/view?usp=drive_link"},
-        ],
+        "copy_trade_open_account": [],
         "copy_trade_connect": [
-            {"title": "Vantage how to connect to copy trade", "url": "https://drive.google.com/file/d/11upZwKRE_eYaqjenyr41RTYPyuf58CBR/view?usp=drive_link"},
+            {"title": "video how to copy in vantage", "url": "https://drive.google.com/file/d/11upZwKRE_eYaqjenyr41RTYPyuf58CBR/view?usp=sharing"},
         ],
         "copy_trade_start": [],
     },
@@ -57,36 +55,33 @@ BROKER_VIDEOS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
 BROKER_LINKS: dict[BrokerId, dict[Purpose, list[AssetItem]]] = {
     "bybit": {
         "registration": [
-            {"title": "Bybit Referral Program", "url": "https://bybit.com/en/invite?ref=BYQLKL"},
+            {"title": "Bybit link for sign up", "url": "https://bybit.com/en/invite?ref=BYQLKL"},
         ],
         "copy_trade_connect": [
-            {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
+            {"title": "Link for Copy Trade", "url": "https://i.bybit.com/Jabvb8i?action=inviteToCopy"},
         ],
         "copy_trade_start": [],
-        "copy_trade_open_account": [
-            {"title": "Bybit Invite to Copy Trade", "url": "https://i.bybit.com/1Zabpd4n?action=inviteToCopy"},
-        ],
+        "copy_trade_open_account": [],
     },
     "vantage": {
         "registration": [
-            {"title": "Vantage Registration", "url": "https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340"},
+            {"title": "Vantage sign up link", "url": "https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340"},
         ],
         "copy_trade_connect": [
-            # Multiple copy trade links for different markets - agent can pick based on market if provided
-            {"title": "Vantage Copy Trade (Crypto - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-820189"},
-            {"title": "Vantage Copy Trade (Gold - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-795666"},
-            {"title": "Vantage Copy Trade (Forex - Dave)", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-828839"},
+            {"title": "link to copy crypto in vantage", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-820189"},
+            {"title": "link to copy gold in vantage", "url": "https://vantageapp.onelink.me/qaPD?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7361340%7Cplatform-copytrading&deep_link_sub1=spid-828839"},
         ],
         "copy_trade_start": [],
         "copy_trade_open_account": [],
     },
     "pu_prime": {
         "registration": [
-            {"title": "PU Prime Registration", "url": "https://www.puprime.partners/forex-trading-account/?affid=7525953"},
+            {"title": "PU Prime sign up link", "url": "https://www.puprime.partners/forex-trading-account/?affid=7525953"},
         ],
         "copy_trade_connect": [
-            {"title": "PU Prime Copy Trade (Silver - Adi)", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825967&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
-            {"title": "PU Prime Copy Trade (Gold - Adi No Swap)", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825948&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
+            {"title": "PU Prime Silver register", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825967&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
+            {"title": "Pu Prime Gold register", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-825948&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
+            {"title": "Pu Prime forex register", "url": "https://puprime.onelink.me/O5Jx?af_xp=referral&pid=IBSHARE&deep_link_value=mt4id-7525953%7Cplatform-copytrading&deep_link_sub1=spid-878524&campaignCode=1pHJLS6RBENRLbA7/b+Ayg=="},
         ],
         "copy_trade_start": [],
         "copy_trade_open_account": [],
@@ -178,11 +173,11 @@ def pick_copy_trade_link_by_market(links: list[AssetItem], market: Optional[str]
         # Return first link if no market specified or no links
         return links[:1] if links else []
     
-    # Try to match market in title (e.g., "(Crypto", "(Gold", etc.)
     market_lower = market.lower()
     for link in links:
-        # Look for pattern like "(Crypto", "(Gold", etc.
-        if f"({market_lower}" in link["title"].lower():
+        title_lower = link["title"].lower()
+        # Match pattern like "(Crypto", "(Gold", or "crypto", "gold" in title (e.g. "link to copy crypto in vantage")
+        if f"({market_lower}" in title_lower or market_lower in title_lower:
             return [link]
     
     # Fallback: return first link if no match

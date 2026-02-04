@@ -78,6 +78,16 @@ The frontend will be available at: [http://localhost:3000](http://localhost:3000
 
 This command will also start the backend.
 
+## Deploy on Railway
+
+When deploying the **Python backend** with Railway (Railpack), the default Python 3.13.x may not have precompiled binaries yet. To avoid `mise ERROR no precompiled python found`:
+
+1. In Railway: open your **backend service** → **Variables**.
+2. Add a variable: **`RAILPACK_PYTHON_VERSION`** = **`3.12`** (or `3.12.7`).
+3. Redeploy.
+
+This forces Railpack to use Python 3.12 instead of 3.13. The repo also includes `runtime.txt` and `python-backend/runtime.txt` with `python-3.12.7`; if the build still picks 3.13, the env var overrides it.
+
 ## Customization
 
 This app is designed for demonstration purposes. Feel free to update the agent prompts, guardrails, and tools to fit your own customer service workflows or experiment with new use cases! The modular structure makes it easy to extend or modify the orchestration logic for your needs.

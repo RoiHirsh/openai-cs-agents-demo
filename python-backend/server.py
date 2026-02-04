@@ -59,6 +59,19 @@ from memory_store import MemoryStore
 
 logger = logging.getLogger(__name__)
 
+class _PlainTextPart:
+    """Minimal message part with `.text` for `_user_message_to_text`."""
+
+    def __init__(self, text: str):
+        self.text = text
+
+
+class _PlainTextUserMessage:
+    """Minimal user message with `.content` list used by `respond()`."""
+
+    def __init__(self, text: str):
+        self.content = [_PlainTextPart(text)]
+
 _CITATION_PATTERNS: list[re.Pattern[str]] = [
     # OpenAI file_search citation format, e.g. "…"
     re.compile(r"【[^】]*†source】"),
@@ -286,6 +299,49 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         restore_onboarding_state_to_context(thread_id, state.context)
         
         return state
+
+    async def process_plaintext_message(
+        self,
+        *,
+        thread_id: str | None,
+        user_text: str,
+        request_context: dict[str, Any] | None = None,
+        lead_info: dict[str, Any] | None = None,
+    ) -> tuple[str, str]:
+        """
+        Process a plain inbound text message (e.g. WhatsApp) using the same
+        runner/server state as ChatKit.
+
+        Returns: (assistant_text, thread_id)
+        """
+        ctx: dict[str, Any] = {"request": None}
+        if request_context:
+            ctx.update(request_context)
+        if lead_info:
+            ctx["lead_info"] = lead_info
+
+        # Ensure thread exists (create if missing).
+        thread = await self._ensure_thread(thread_id, ctx)
+
+        # Run the normal `respond()` streaming loop but capture the final assistant text.
+        input_user_message = _PlainTextUserMessage(user_text)
+        last_assistant_text = ""
+        async for event in self.respond(thread, input_user_message, ctx):
+            try:
+                item = getattr(event, "item", None)
+                if isinstance(item, AssistantMessageItem):
+                    parts = []
+                    for part in item.content or []:
+                        t = getattr(part, "text", None)
+                        if isinstance(t, str) and t:
+                            parts.append(t)
+                    if parts:
+                        last_assistant_text = "".join(parts).strip()
+            except Exception:
+                # Never break message processing because of capture logic.
+                continue
+
+        return last_assistant_text, thread.id
 
     async def _ensure_thread(
         self, thread_id: Optional[str], context: dict[str, Any]

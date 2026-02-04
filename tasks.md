@@ -476,216 +476,111 @@ After confirming a call (2–4 hours) or sending a Calendly link, the agent shou
 
 ---
 
-### Task 22: Introduce Lead Call State Variable
+### Task 22: WhatsApp (Twilio) — Install dependencies + env config
 
 - [ ] **Status: NOT DONE**
 
 **Requirements:**
-Add a lead status flag to track call-related states and guide follow-up behavior:
+Prepare the Python backend to communicate with Twilio WhatsApp (Sandbox):
 
-1. **Update context model** (`python-backend/airline/context.py`):
-   - Add a new field: `lead_call_state: str | None = None`
-   - Possible values: `waiting_for_call`, `call_booked`, `call_completed`, or `None` (no call scheduled)
-   - This field should be included in the context structure
+1. **Add Twilio dependency** (`python-backend/requirements.txt`):
+   - Add the `twilio` Python package.
 
-2. **Update Scheduling Agent** in `python-backend/airline/agents.py`:
-   - When a call is confirmed (2–4 hours or Calendly): Set `lead_call_state = "call_booked"`
-   - When a call is scheduled for immediate callback (20 minutes): Set `lead_call_state = "waiting_for_call"`
-   - Use this state to guide follow-up behavior and messaging
+2. **Add/confirm environment variables** (document in README/tasks as needed):
+   - `TWILIO_ACCOUNT_SID` (starts with `AC...`)
+   - `TWILIO_AUTH_TOKEN` (secret)
+   - `TWILIO_WHATSAPP_FROM` (Twilio WhatsApp sandbox sender, format: `whatsapp:+14155238886`)
+   - `PUBLIC_BASE_URL` (your deployed public base URL, used for signature validation)
 
-3. **Update Onboarding Agent** in `python-backend/airline/agents.py`:
-   - Check `lead_call_state` before asking questions
-   - Adjust messaging based on call state (e.g., acknowledge pending call in responses)
-
-4. **Ensure state persistence**:
-   - `lead_call_state` should persist across handoffs and conversation turns
-   - Update context sync logic to preserve this state
+3. **Optional variables (if needed)**:
+   - `TWILIO_MESSAGING_SERVICE_SID` (if sending through a Messaging Service instead of `from_`)
+   - `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` (alternative to Auth Token)
 
 ---
 
-### Task 23: Enable Funnel Continuation While Waiting
+### Task 23: WhatsApp (Twilio) — Create inbound webhook endpoint (FastAPI)
 
 - [ ] **Status: NOT DONE**
 
 **Requirements:**
-Allow the onboarding agent to continue light funnel questions even when a call is scheduled:
+Add an inbound WhatsApp webhook endpoint to the FastAPI app:
 
-1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
-   - Check `lead_call_state` before deciding whether to continue onboarding
-   - If `lead_call_state` is `waiting_for_call` or `call_booked`, allow the onboarding agent to continue with light funnel questions
-   - Do not block onboarding progress just because a call is scheduled
-   - The agent should be able to ask non-blocking questions that don't require immediate action
+1. **Create a new POST route** in `python-backend/main.py` (example: `/twilio/whatsapp/webhook`).
 
-2. **Define "light funnel questions"**:
-   - Questions that gather information but don't require immediate action
-   - Examples: trading experience, preferences, bot interest
-   - Avoid questions that require account setup or immediate decisions while waiting for call
+2. **Parse Twilio webhook payload** (form-encoded):
+   - Read at least: `From`, `To`, `Body`, `MessageSid`.
 
-3. **Balance engagement**:
-   - Continue gathering information to prepare for the call
-   - Don't overwhelm the user with too many questions while waiting
-   - Keep questions conversational and helpful
+3. **Validate request authenticity**:
+   - Verify Twilio signature using the request URL (must match your deployed `PUBLIC_BASE_URL`) and payload.
+   - Reject invalid signatures (return 403).
+
+4. **Return a fast success response**:
+   - Respond with 200 quickly (even if agent processing continues), so Twilio doesn’t retry.
 
 ---
 
-### Task 24: Split Onboarding into Explicit Steps
+### Task 24: WhatsApp (Twilio) — Connect webhook to agent + send outbound reply via REST API
 
 - [ ] **Status: NOT DONE**
 
 **Requirements:**
-Restructure the onboarding flow into discrete steps instead of one long message, preventing info dumping:
+When the webhook receives a WhatsApp message, run the existing agent and send a reply back via Twilio REST API.
 
-1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
-   - Break the onboarding conversation into explicit, separate steps
-   - Each step should ask ONE question and wait for user response before proceeding
-   - No combining multiple questions or information in a single message
+1. **Thread mapping**:
+   - Map `From` (the user’s WhatsApp number) to a stable internal thread/conversation id.
 
-2. **Step 1 – Bot Interest Selection**:
-   - After detecting country, ask ONLY:
-     - "Which type of trading bot are you interested in? (e.g. Gold, Forex, Crypto, Futures)"
-   - Wait for user response before proceeding to Step 2
-   - Update `onboarding_state` with the selected bot type
+2. **Initial message “template mimic” behavior**:
+   - Ensure the backend stores the Perry greeting as the **first assistant message** before the first user message.
+   - Note: This behavior already exists in `python-backend/server.py` (it injects the greeting when `state.input_items` is empty). Reuse it for WhatsApp so a first user reply like `call` is correctly interpreted as a response to that greeting.
 
-3. **Step 2 – Broker Selection (Country-Aware)**:
-   - Based on country + selected bot from Step 1, ask:
-     - "We support these brokers in your region: X, Y, Z. Do you already have an account with any of them?"
-   - Wait for user response
-   - Update `onboarding_state` with broker information
+3. **Run the agent with the inbound `Body`**:
+   - Convert inbound text into the same pathway used by ChatKit so the current multi-agent flow works unchanged.
 
-4. **Step 3 – Capital Requirement Check**:
-   - Ask minimum capital question as a separate step:
-     - "To manage risk properly, do you have at least $500 available for trading?"
-   - Wait for user response
-   - Update `onboarding_state` accordingly
-
-5. **Ensure step-by-step flow**:
-   - Each step must complete before moving to the next
-   - Use `onboarding_state.completed_steps` to track progress
-   - Resume from the last incomplete step if conversation is interrupted
+4. **Send reply via Twilio REST API**:
+   - Use `messages.create(...)` (REST API) to send the assistant message back to the WhatsApp user.
+   - Ensure correct `to`/`from_` formatting (`whatsapp:+E164`).
 
 ---
 
-### Task 25: Prioritize Onboarding Agent for New Leads
+### Task 25: WhatsApp (Twilio) — Add automated tests for webhook wiring (mock Twilio)
 
 - [ ] **Status: NOT DONE**
 
 **Requirements:**
-Ensure the onboarding agent is the default handler for new leads, even when other agents answer questions:
+Prove the integration works without relying on live Twilio:
 
-1. **Update Triage Agent routing logic** in `python-backend/airline/agents.py`:
-   - When `new_lead === true`, all user messages should default to the onboarding agent
-   - Even if another agent (e.g., Investments FAQ Agent) answers a question, the next turn should route back to onboarding agent
-   - Onboarding agent takes priority over other agents for new leads
+1. **Webhook test**:
+   - Post a representative Twilio payload to the webhook endpoint.
+   - Assert signature validation behavior (valid accepted, invalid rejected).
 
-2. **Update agent handoff logic**:
-   - When Investments FAQ Agent or other agents handle a question for a new lead, they should hand off back to Onboarding Agent after answering
-   - Ensure the handoff message indicates the user is a new lead and should return to onboarding
+2. **Outbound send test (mocked)**:
+   - Mock Twilio client `messages.create`.
+   - Assert it is called with the correct `to`, `from_`, and message body.
 
-3. **Maintain priority**:
-   - Only specific requests (like urgent call requests) should override onboarding priority
-   - FAQ answers should be brief and then return control to onboarding
+3. **Greeting ordering test (“template mimic”)**:
+   - Simulate a first inbound message like `call`.
+   - Assert the conversation state includes the Perry greeting before the first user message.
 
 ---
 
-### Task 26: Prevent Context Loss Across Agents
+### Task 26: WhatsApp (Twilio) — Sandbox hookup checklist + dashboard details needed
 
 - [ ] **Status: NOT DONE**
 
 **Requirements:**
-Ensure onboarding context variables are accessible even when another agent responds:
+Document and collect what’s needed from Twilio, then configure the Sandbox:
 
-1. **Update context sync logic** in `python-backend/server.py`:
-   - Ensure onboarding context variables (`country`, `experience`, `preferences`, `onboarding_state`) are preserved during handoffs
-   - When an agent hands off to another agent, all onboarding context should be maintained
-   - Check that `onboarding_state` dictionary is properly passed between agents
+1. **Twilio dashboard values to collect**:
+   - Account SID (`TWILIO_ACCOUNT_SID`)
+   - Auth Token (`TWILIO_AUTH_TOKEN`)
+   - WhatsApp Sandbox sender number (`TWILIO_WHATSAPP_FROM`)
+   - Your tester WhatsApp number (the user `From`, format `whatsapp:+E164`)
 
-2. **Update agent instructions**:
-   - All agents (Investments FAQ, Scheduling, etc.) should be aware of onboarding context when handling new leads
-   - Agents should not reset or clear onboarding state when responding
-   - Ensure context variables are read-only for non-onboarding agents (they can read but not modify)
+2. **Twilio Sandbox configuration**:
+   - Configure the inbound webhook URL to your deployed endpoint (e.g. `POST /twilio/whatsapp/webhook`).
+   - Verify a message from your phone reaches the backend and triggers an agent reply.
 
-3. **Verify context persistence**:
-   - Test that when Investments FAQ Agent answers a question and hands back to Onboarding Agent, all previous onboarding progress is maintained
-   - Ensure `onboarding_state.completed_steps` and other variables persist correctly
-
----
-
-### Task 27: Return Control to Onboarding After FAQ Answers
-
-- [ ] **Status: NOT DONE**
-
-**Requirements:**
-When another agent (e.g., Investment FAQ) answers a question for a new lead, automatically route the next turn back to onboarding:
-
-1. **Update Investments FAQ Agent** in `python-backend/airline/agents.py`:
-   - Check if `new_lead === true` before answering
-   - After providing an answer, automatically hand off back to Onboarding Agent
-   - Include a transition message that acknowledges the answer and returns to onboarding flow
-
-2. **Update other agents** (Scheduling Agent, etc.):
-   - When handling requests for new leads, after completing the specific request, hand off back to Onboarding Agent
-   - Exception: If the user explicitly requests to exit onboarding or complete onboarding, don't force return
-
-3. **Ensure smooth transitions**:
-   - The handoff message should be natural and not jarring
-   - Example: "I hope that helps! Let's continue with your onboarding..."
-
----
-
-### Task 28: Define Onboarding Completion Condition and Lifecycle Management
-
-- [ ] **Status: NOT DONE**
-
-**Requirements:**
-Explicitly define when onboarding is complete and manage the lead lifecycle:
-
-1. **Define onboarding completion condition**:
-   - Update Onboarding Agent instructions in `python-backend/airline/agents.py`:
-     - Onboarding is "done" when: account opened + copy trading instructions delivered
-     - This should be explicitly defined in the agent's instructions
-     - Set `onboarding_state.onboarding_completed = True` when this condition is met
-
-2. **Flip new_lead to false on completion**:
-   - When onboarding is completed, set `new_lead = False` in the context
-   - This should happen automatically when the completion condition is met
-   - Update context model if needed to support this state change
-
-3. **Post-onboarding mode switch**:
-   - After `new_lead = False`, switch default behavior from "lead management" to "customer support"
-   - Update Triage Agent to check `new_lead` status:
-     - If `new_lead = False`, route to appropriate customer support agents instead of onboarding
-     - If `new_lead = True`, continue prioritizing onboarding agent
-
-4. **Update context model** (`python-backend/airline/context.py`):
-   - Ensure `new_lead` can be updated programmatically
-   - Consider adding `onboarding_completed` flag to `onboarding_state` if not already present
-
----
-
-### Task 29: Add Step-Aware Guardrails
-
-- [ ] **Status: NOT DONE**
-
-**Requirements:**
-Prevent the agent from jumping ahead to future steps unless the current step is completed:
-
-1. **Update Onboarding Agent instructions** in `python-backend/airline/agents.py`:
-   - Add explicit guardrails that check `onboarding_state.completed_steps` before proceeding
-   - The agent should NOT skip steps or jump ahead to future steps
-   - Each step must be completed (added to `completed_steps`) before moving to the next
-
-2. **Implement step validation**:
-   - Before asking a question from Step N, verify that Step N-1 is in `completed_steps`
-   - If a step is incomplete, resume from that step instead of proceeding
-   - Example: If Step 1 (bot interest) is not completed, don't ask Step 2 (broker selection)
-
-3. **Handle interruptions gracefully**:
-   - If user interrupts with a question, answer it, then return to the current incomplete step
-   - Don't lose track of which step was in progress
-   - Use `onboarding_state.completed_steps` to determine where to resume
-
-4. **Update onboarding state tool** (if Task 16 is implemented):
-   - Ensure the tool validates step order before updating state
-   - Prevent marking Step N as complete if Step N-1 is not complete
+3. **Operational notes**:
+   - In Sandbox, we cannot create WhatsApp templates, so rely on the backend’s injected greeting to mimic “template sent” state and preserve correct context for replies like `call` / `chat`.
 
 ---

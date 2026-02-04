@@ -16,6 +16,14 @@ from fastapi.responses import Response, StreamingResponse
 
 logger = logging.getLogger(__name__)
 
+from twilio_whatsapp import (
+    WhatsAppThreadMapper,
+    build_public_request_url,
+    load_twilio_whatsapp_config,
+    send_whatsapp_message,
+    validate_twilio_signature,
+)
+
 from airline.agents import (
     investments_faq_agent,
     onboarding_agent,
@@ -54,6 +62,7 @@ app.add_middleware(
 )
 
 chat_server = AirlineServer()
+wa_thread_mapper = WhatsAppThreadMapper()
 
 
 def get_server() -> AirlineServer:
@@ -157,6 +166,94 @@ async def chatkit_state_stream(
 @app.get("/health")
 async def health_check() -> Dict[str, str]:
     return {"status": "healthy"}
+
+
+@app.post("/twilio/whatsapp/webhook")
+async def twilio_whatsapp_webhook(
+    request: Request,
+    server: AirlineServer = Depends(get_server),
+) -> Response:
+    """
+    Twilio WhatsApp inbound webhook.
+
+    We validate the Twilio signature (when configured), run the existing agent
+    flow for the inbound message, then send the agent's reply back via Twilio
+    REST API (messages.create).
+    """
+    cfg = load_twilio_whatsapp_config()
+    try:
+        form = await request.form()
+        wa_from = str(form.get("From") or "")
+        body = str(form.get("Body") or "")
+        # `To` is the Twilio WhatsApp number that received the message (e.g. sandbox number).
+        wa_to = str(form.get("To") or "")
+        message_sid = str(form.get("MessageSid") or "")
+
+        if not wa_from or not body:
+            return Response(
+                content=json.dumps({"ok": False, "error": "Missing From/Body"}),
+                status_code=400,
+                media_type="application/json",
+            )
+
+        # Optional signature validation (recommended for deployed public URL).
+        if cfg.auth_token and cfg.public_base_url:
+            signature = request.headers.get("X-Twilio-Signature")
+            full_url = build_public_request_url(
+                public_base_url=cfg.public_base_url,
+                path=request.url.path,
+                query_params=dict(request.query_params),
+            )
+            if not validate_twilio_signature(
+                auth_token=cfg.auth_token,
+                signature_header=signature,
+                full_url=full_url,
+                form_params=form,
+            ):
+                return Response(
+                    content=json.dumps({"ok": False, "error": "Invalid signature"}),
+                    status_code=403,
+                    media_type="application/json",
+                )
+
+        # Map WhatsApp number -> thread id (create on first message).
+        thread_id = wa_thread_mapper.get(wa_from)
+        assistant_text, thread_id = await server.process_plaintext_message(
+            thread_id=thread_id,
+            user_text=body,
+            request_context={"request": request},
+        )
+        wa_thread_mapper.set(wa_from, thread_id)
+
+        # Send outbound reply via Twilio REST API.
+        if cfg.account_sid and cfg.auth_token:
+            send_whatsapp_message(
+                account_sid=cfg.account_sid,
+                auth_token=cfg.auth_token,
+                to=wa_from,
+                body=assistant_text or "(no response)",
+                whatsapp_from=cfg.whatsapp_from or wa_to or None,
+                messaging_service_sid=cfg.messaging_service_sid,
+            )
+
+        return Response(
+            content=json.dumps(
+                {
+                    "ok": True,
+                    "thread_id": thread_id,
+                    "message_sid": message_sid,
+                }
+            ),
+            status_code=200,
+            media_type="application/json",
+        )
+    except Exception:
+        logger.exception("Unhandled exception in /twilio/whatsapp/webhook")
+        return Response(
+            content=json.dumps({"ok": False, "error": "Internal server error"}),
+            status_code=500,
+            media_type="application/json",
+        )
 
 
 __all__ = [

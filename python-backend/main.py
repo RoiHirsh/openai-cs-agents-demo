@@ -17,6 +17,7 @@ from fastapi.responses import Response, StreamingResponse
 logger = logging.getLogger(__name__)
 
 from twilio_whatsapp import (
+    WhatsAppMessageCoalescer,
     WhatsAppThreadMapper,
     build_public_request_url,
     load_twilio_whatsapp_config,
@@ -63,6 +64,7 @@ app.add_middleware(
 
 chat_server = AirlineServer()
 wa_thread_mapper = WhatsAppThreadMapper()
+wa_coalescer = WhatsAppMessageCoalescer()
 
 
 def get_server() -> AirlineServer:
@@ -176,9 +178,11 @@ async def twilio_whatsapp_webhook(
     """
     Twilio WhatsApp inbound webhook.
 
-    We validate the Twilio signature (when configured), run the existing agent
-    flow for the inbound message, then send the agent's reply back via Twilio
-    REST API (messages.create).
+    We validate the Twilio signature (when configured), then enqueue the message
+    in the coalescer. The coalescer waits DEBOUNCE_SECONDS after the last message
+    (debounce), runs the agent once with all messages combined, and sends one reply.
+    If a new message arrives while the agent is running, we cancel and re-debounce
+    with the full batch so the user gets a single response per burst.
     """
     cfg = load_twilio_whatsapp_config()
     try:
@@ -216,31 +220,31 @@ async def twilio_whatsapp_webhook(
                     media_type="application/json",
                 )
 
-        # Map WhatsApp number -> thread id (create on first message).
-        thread_id = wa_thread_mapper.get(wa_from)
-        assistant_text, thread_id = await server.process_plaintext_message(
-            thread_id=thread_id,
-            user_text=body,
-            request_context={"request": request},
-        )
-        wa_thread_mapper.set(wa_from, thread_id)
-
-        # Send outbound reply via Twilio REST API.
-        if cfg.account_sid and cfg.auth_token:
-            send_whatsapp_message(
-                account_sid=cfg.account_sid,
-                auth_token=cfg.auth_token,
-                to=wa_from,
-                body=assistant_text or "(no response)",
-                whatsapp_from=cfg.whatsapp_from or wa_to or None,
-                messaging_service_sid=cfg.messaging_service_sid,
+        # Enqueue message; coalescer will debounce, then run agent once and send reply.
+        async def flush_callback(wa_from_arg: str, combined_text: str) -> None:
+            thread_id = wa_thread_mapper.get(wa_from_arg)
+            assistant_text, new_thread_id = await server.process_plaintext_message(
+                thread_id=thread_id,
+                user_text=combined_text,
+                request_context={"request": None},
             )
+            wa_thread_mapper.set(wa_from_arg, new_thread_id)
+            if cfg.account_sid and cfg.auth_token:
+                send_whatsapp_message(
+                    account_sid=cfg.account_sid,
+                    auth_token=cfg.auth_token,
+                    to=wa_from_arg,
+                    body=assistant_text or "(no response)",
+                    whatsapp_from=cfg.whatsapp_from or wa_to or None,
+                    messaging_service_sid=cfg.messaging_service_sid,
+                )
+
+        await wa_coalescer.add_message(wa_from, body, flush_callback)
 
         return Response(
             content=json.dumps(
                 {
                     "ok": True,
-                    "thread_id": thread_id,
                     "message_sid": message_sid,
                 }
             ),

@@ -1,6 +1,10 @@
+import asyncio
 import os
 import unittest
 from unittest.mock import patch
+
+# Debounce is 2s by default; wait slightly longer so coalescer flushes.
+COALESCE_WAIT = 2.5
 
 
 class TestTwilioWhatsAppWebhook(unittest.TestCase):
@@ -30,30 +34,41 @@ class TestTwilioWhatsAppWebhook(unittest.TestCase):
             self.assertEqual(res.status_code, 403)
 
     def test_valid_signature_sends_reply_via_rest(self):
+        import httpx
         from main import app
-        from fastapi.testclient import TestClient
 
-        with (
-            patch("main.validate_twilio_signature", return_value=True),
-            patch("main.send_whatsapp_message", return_value="SM_OUT") as send_mock,
-            patch("server.AirlineServer.process_plaintext_message", return_value=("OK", "thread_1")),
-        ):
-            client = TestClient(app)
-            res = client.post(
-                "/twilio/whatsapp/webhook",
-                data={
-                    "From": "whatsapp:+15551234567",
-                    "To": "whatsapp:+14155238886",
-                    "Body": "hello",
-                    "MessageSid": "SM123",
-                },
-                headers={"X-Twilio-Signature": "good"},
-            )
-            self.assertEqual(res.status_code, 200)
-            send_mock.assert_called()
-            called_kwargs = send_mock.call_args.kwargs
-            self.assertEqual(called_kwargs["to"], "whatsapp:+15551234567")
-            self.assertEqual(called_kwargs["body"], "OK")
+        async def run() -> None:
+            with (
+                patch("main.validate_twilio_signature", return_value=True),
+                patch("main.send_whatsapp_message", return_value="SM_OUT") as send_mock,
+                patch(
+                    "server.AirlineServer.process_plaintext_message",
+                    return_value=("OK", "thread_1"),
+                ),
+            ):
+                async with httpx.AsyncClient(
+                    transport=httpx.ASGITransport(app=app),
+                    base_url="http://test",
+                ) as client:
+                    res = await client.post(
+                        "/twilio/whatsapp/webhook",
+                        data={
+                            "From": "whatsapp:+15551234567",
+                            "To": "whatsapp:+14155238886",
+                            "Body": "hello",
+                            "MessageSid": "SM123",
+                        },
+                        headers={"X-Twilio-Signature": "good"},
+                    )
+                self.assertEqual(res.status_code, 200)
+                # Reply is sent after debounce; give coalescer time to flush.
+                await asyncio.sleep(COALESCE_WAIT)
+                send_mock.assert_called()
+                called_kwargs = send_mock.call_args.kwargs
+                self.assertEqual(called_kwargs["to"], "whatsapp:+15551234567")
+                self.assertEqual(called_kwargs["body"], "OK")
+
+        asyncio.run(run())
 
 
 class TestGreetingOrderingTemplateMimic(unittest.IsolatedAsyncioTestCase):

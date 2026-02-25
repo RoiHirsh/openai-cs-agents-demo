@@ -190,13 +190,15 @@ async def api_chat(
     sb = get_supabase_client()
 
     # 1. Look up phone_number in leads table → get thread_id
-    lead_res = sb.table("leads").select("thread_id").eq("phone_number", body.phone_number).maybe_single().execute()
-    thread_id: str | None = (lead_res.data or {}).get("thread_id")
+    lead_res = sb.table("leads").select("thread_id").eq("phone_number", body.phone_number).limit(1).execute()
+    if not lead_res.data:
+        return {"reply": "Sorry, I could not find your account."}
+    thread_id: str | None = lead_res.data[0].get("thread_id")
 
     # 2. If thread_id exists, restore input_items from threads table into server state
     if thread_id:
-        thread_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).maybe_single().execute()
-        stored_items = (thread_res.data or {}).get("input_items")
+        thread_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).limit(1).execute()
+        stored_items = (thread_res.data[0].get("input_items") if thread_res.data else None)
         if stored_items:
             server._state[thread_id] = ConversationState(input_items=stored_items)
 

@@ -9,11 +9,16 @@ from dotenv import load_dotenv
 from chatkit.server import StreamingResult
 
 load_dotenv()
+from datetime import datetime, timezone
+
 from fastapi import Depends, FastAPI, Query, Request
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+
+from server import ConversationState
+from supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -182,11 +187,40 @@ async def api_chat(
     body: ApiChatRequest,
     server: AirlineServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    reply, _ = await server.process_plaintext_message(
-        thread_id=None,
+    sb = get_supabase_client()
+
+    # 1. Look up phone_number in leads table → get thread_id
+    lead_res = sb.table("leads").select("thread_id").eq("phone_number", body.phone_number).maybe_single().execute()
+    thread_id: str | None = (lead_res.data or {}).get("thread_id")
+
+    # 2. If thread_id exists, restore input_items from threads table into server state
+    if thread_id:
+        thread_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).maybe_single().execute()
+        stored_items = (thread_res.data or {}).get("input_items")
+        if stored_items:
+            server._state[thread_id] = ConversationState(input_items=stored_items)
+
+    # 3. Run the agent
+    reply, new_thread_id = await server.process_plaintext_message(
+        thread_id=thread_id,
         user_text=body.message,
         request_context={"request": None},
     )
+
+    # 4. Persist updated input_items back to threads table
+    current_state = server._state.get(new_thread_id)
+    if current_state:
+        sb.table("threads").upsert({
+            "thread_id": new_thread_id,
+            "phone_number": body.phone_number,
+            "input_items": current_state.input_items,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+
+    # 5. If thread_id was new, save it back to the lead record
+    if not thread_id:
+        sb.table("leads").update({"thread_id": new_thread_id}).eq("phone_number", body.phone_number).execute()
+
     return {"reply": reply}
 
 

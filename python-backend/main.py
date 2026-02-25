@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
+from chatkit.types import ThreadMetadata
 from server import ConversationState
 from supabase_client import get_supabase_client
 
@@ -197,6 +198,13 @@ async def api_chat(
 
     # 2. If thread_id exists, restore full state from threads table
     if thread_id:
+        # Register thread in MemoryStore so _ensure_thread can find it
+        # Without this it throws NotFoundError and creates a new thread every time
+        await server.store.save_thread(
+            ThreadMetadata(id=thread_id, created_at=datetime.now(timezone.utc)),
+            {"request": None},
+        )
+
         thread_res = sb.table("threads").select("input_items,context,current_agent_name").eq("thread_id", thread_id).limit(1).execute()
         if thread_res.data:
             row = thread_res.data[0]

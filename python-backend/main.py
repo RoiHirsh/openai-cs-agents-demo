@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, Query, Request
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -168,6 +169,25 @@ async def chatkit_state_stream(
 @app.get("/health")
 async def health_check() -> Dict[str, str]:
     return {"status": "healthy"}
+
+
+class ApiChatRequest(BaseModel):
+    phone_number: str
+    message: str
+    conversation_id: str
+
+
+@app.post("/api/chat")
+async def api_chat(
+    body: ApiChatRequest,
+    server: AirlineServer = Depends(get_server),
+) -> Dict[str, Any]:
+    reply, _ = await server.process_plaintext_message(
+        thread_id=None,
+        user_text=body.message,
+        request_context={"request": None},
+    )
+    return {"reply": reply}
 
 
 @app.post("/twilio/whatsapp/webhook")

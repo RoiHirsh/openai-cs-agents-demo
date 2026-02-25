@@ -133,3 +133,6 @@ node_modules/
 # ui stuff
 
 ui/.next/
+
+# Claude Code local state
+.claude/

@@ -195,12 +195,17 @@ async def api_chat(
         return {"reply": "Sorry, I could not find your account."}
     thread_id: str | None = lead_res.data[0].get("thread_id")
 
-    # 2. If thread_id exists, restore input_items from threads table into server state
+    # 2. If thread_id exists, restore full state from threads table
     if thread_id:
-        thread_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).limit(1).execute()
-        stored_items = (thread_res.data[0].get("input_items") if thread_res.data else None)
-        if stored_items:
-            server._state[thread_id] = ConversationState(input_items=stored_items)
+        thread_res = sb.table("threads").select("input_items,context,current_agent_name").eq("thread_id", thread_id).limit(1).execute()
+        if thread_res.data:
+            row = thread_res.data[0]
+            stored_context = row.get("context")
+            server._state[thread_id] = ConversationState(
+                input_items=row.get("input_items") or [],
+                context=AirlineAgentContext(**stored_context) if stored_context else create_initial_context(),
+                current_agent_name=row.get("current_agent_name") or triage_agent.name,
+            )
 
     # 3. Run the agent
     reply, new_thread_id = await server.process_plaintext_message(
@@ -209,13 +214,15 @@ async def api_chat(
         request_context={"request": None},
     )
 
-    # 4. Persist updated input_items back to threads table
+    # 4. Persist updated full state back to threads table
     current_state = server._state.get(new_thread_id)
     if current_state:
         sb.table("threads").upsert({
             "thread_id": new_thread_id,
             "phone_number": body.phone_number,
             "input_items": current_state.input_items,
+            "context": current_state.context.model_dump(),
+            "current_agent_name": current_state.current_agent_name,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
 

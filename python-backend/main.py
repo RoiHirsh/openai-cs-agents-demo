@@ -190,11 +190,19 @@ async def api_chat(
 ) -> Dict[str, Any]:
     sb = get_supabase_client()
 
-    # 1. Look up phone_number in leads table → get thread_id
-    lead_res = sb.table("leads").select("thread_id").eq("phone_number", body.phone_number).limit(1).execute()
+    # 1. Look up phone_number in leads table → get thread_id + lead profile
+    lead_res = sb.table("leads").select("thread_id,full_name,email,country,phone_number,new_lead").eq("phone_number", body.phone_number).limit(1).execute()
     if not lead_res.data:
         return {"reply": "Sorry, I could not find your account."}
-    thread_id: str | None = lead_res.data[0].get("thread_id")
+    lead_row = lead_res.data[0]
+    thread_id: str | None = lead_row.get("thread_id")
+    lead_info = {
+        "first_name": lead_row.get("full_name"),
+        "email": lead_row.get("email"),
+        "phone": lead_row.get("phone_number"),
+        "country": lead_row.get("country"),
+        "new_lead": lead_row.get("new_lead") or False,
+    }
 
     # 2. If thread_id exists, restore full state from threads table
     if thread_id:
@@ -220,6 +228,7 @@ async def api_chat(
         thread_id=thread_id,
         user_text=body.message,
         request_context={"request": None},
+        lead_info=lead_info,
     )
 
     # 4. Persist updated full state back to threads table

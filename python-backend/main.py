@@ -11,6 +11,7 @@ from chatkit.server import StreamingResult
 load_dotenv()
 from datetime import datetime, timezone
 
+import httpx
 from fastapi import Depends, FastAPI, Query, Request
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,6 +46,7 @@ from airline.context import (
     public_context,
 )
 from server import AirlineServer
+from airline.context_cache import clear_thread_cache
 
 app = FastAPI()
 
@@ -177,6 +179,100 @@ async def health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
+_CHATWOOT_BASE = "https://chatwoot-chatwoot.spurtz.easypanel.host/api/v1/accounts/1"
+_N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
+
+
+async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[str, Any]:
+    """Full reset sequence for a lead. Dev-only (requires RESET_ENABLED=true)."""
+    chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
+
+    # Step 1: Load lead data before deleting
+    lead_row: dict | None = None
+    thread_id: str | None = None
+    try:
+        lead_res = sb.table("leads").select("*").eq("phone_number", phone_number).limit(1).execute()
+        if lead_res.data:
+            lead_row = lead_res.data[0]
+            thread_id = lead_row.get("thread_id")
+    except Exception:
+        logger.exception("[reset] Failed to load lead data")
+
+    # Step 2: Delete lead row from Supabase
+    try:
+        sb.table("leads").delete().eq("phone_number", phone_number).execute()
+        logger.info("[reset] Deleted lead for %s", phone_number)
+    except Exception:
+        logger.exception("[reset] Failed to delete lead from Supabase")
+
+    # Step 3: Delete thread row from Supabase
+    try:
+        sb.table("threads").delete().eq("phone_number", phone_number).execute()
+        logger.info("[reset] Deleted thread for %s", phone_number)
+    except Exception:
+        logger.exception("[reset] Failed to delete thread from Supabase")
+
+    # Step 4: Clear RAM caches
+    if thread_id:
+        try:
+            clear_thread_cache(thread_id)
+            server._state.pop(thread_id, None)
+            await server.store.delete_thread(thread_id, {"request": None})
+            logger.info("[reset] Cleared RAM caches for thread %s", thread_id)
+        except Exception:
+            logger.exception("[reset] Failed to clear RAM caches")
+
+    # Step 5: Search and delete Chatwoot contact
+    if chatwoot_token:
+        try:
+            async with httpx.AsyncClient() as client:
+                search_res = await client.get(
+                    f"{_CHATWOOT_BASE}/contacts/search",
+                    params={"q": phone_number},
+                    headers={"api_access_token": chatwoot_token},
+                    timeout=10.0,
+                )
+                contacts = search_res.json().get("payload", {}).get("contacts", [])
+                if contacts:
+                    contact_id = contacts[0].get("id")
+                    if contact_id:
+                        await client.delete(
+                            f"{_CHATWOOT_BASE}/contacts/{contact_id}",
+                            headers={"api_access_token": chatwoot_token},
+                            timeout=10.0,
+                        )
+                        logger.info("[reset] Deleted Chatwoot contact %s", contact_id)
+                else:
+                    logger.info("[reset] No Chatwoot contact found for %s", phone_number)
+        except Exception:
+            logger.exception("[reset] Failed to delete Chatwoot contact")
+    else:
+        logger.warning("[reset] CHATWOOT_API_TOKEN not set, skipping Chatwoot deletion")
+
+    # Step 6: POST to n8n welcome webhook
+    if lead_row:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    _N8N_WEBHOOK_URL,
+                    json={
+                        "full name": lead_row.get("full_name", ""),
+                        "phone_number": lead_row.get("phone_number", ""),
+                        "email": lead_row.get("email", ""),
+                        "Which country do you live in?": lead_row.get("country", ""),
+                        "What would you like your investment to help you achieve?": lead_row.get("investment_goal", "saving_for_the_future"),
+                    },
+                    timeout=10.0,
+                )
+                logger.info("[reset] Posted to n8n welcome webhook for %s", phone_number)
+        except Exception:
+            logger.exception("[reset] Failed to post to n8n welcome webhook")
+    else:
+        logger.warning("[reset] No lead data available to post to n8n")
+
+    return {"ok": True}
+
+
 class ApiChatRequest(BaseModel):
     phone_number: str
     message: str
@@ -189,6 +285,10 @@ async def api_chat(
     server: AirlineServer = Depends(get_server),
 ) -> Dict[str, Any]:
     sb = get_supabase_client()
+
+    # Reset command (dev only)
+    if os.getenv("RESET_ENABLED", "").lower() == "true" and body.message.strip().lower() == "reset":
+        return await _handle_reset(body.phone_number, sb, server)
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
     lead_res = sb.table("leads").select("thread_id,full_name,email,country,phone_number,new_lead").eq("phone_number", body.phone_number).limit(1).execute()

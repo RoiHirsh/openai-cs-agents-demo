@@ -56,6 +56,12 @@ def get_onboarding_state(thread_id: str) -> dict | None:
     return _onboarding_state_cache.get(thread_id)
 
 
+def clear_thread_cache(thread_id: str) -> None:
+    """Remove all cached state for a thread (used by reset command)."""
+    _lead_info_cache.pop(thread_id, None)
+    _onboarding_state_cache.pop(thread_id, None)
+
+
 def restore_onboarding_state_to_context(thread_id: str, context) -> None:
     """Restore onboarding state from cache to a context object."""
     cached = get_onboarding_state(thread_id)

@@ -277,6 +277,43 @@ async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[st
     return {"ok": True}
 
 
+class ApiContextRequest(BaseModel):
+    phone_number: str
+    message: str
+    role: str
+
+
+@app.post("/api/context")
+async def api_context(body: ApiContextRequest) -> Dict[str, Any]:
+    sb = get_supabase_client()
+
+    # Look up thread_id from leads
+    lead_res = sb.table("leads").select("thread_id").eq("phone_number", body.phone_number).limit(1).execute()
+    if not lead_res.data:
+        return {"ok": False, "error": "Lead not found"}
+
+    thread_id = lead_res.data[0].get("thread_id")
+    if not thread_id:
+        return {"ok": False, "error": "No thread found for this lead"}
+
+    # Load current input_items from threads
+    thread_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).limit(1).execute()
+    input_items = []
+    if thread_res.data:
+        input_items = thread_res.data[0].get("input_items") or []
+
+    # Append the injected message
+    input_items.append({"role": body.role, "content": body.message})
+
+    # Save back to Supabase
+    sb.table("threads").update({
+        "input_items": input_items,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("thread_id", thread_id).execute()
+
+    return {"ok": True}
+
+
 class ApiChatRequest(BaseModel):
     phone_number: str
     message: str

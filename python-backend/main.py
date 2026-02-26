@@ -232,16 +232,20 @@ async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[st
                     headers={"api_access_token": chatwoot_token},
                     timeout=10.0,
                 )
-                contacts = search_res.json().get("payload", {}).get("contacts", [])
+                search_json = search_res.json()
+                logger.info("[reset] Chatwoot search response: %s", search_json)
+                payload = search_json.get("payload", [])
+                # payload is a list of contacts in Chatwoot v2/v3
+                contacts = payload if isinstance(payload, list) else payload.get("contacts", [])
                 if contacts:
                     contact_id = contacts[0].get("id")
                     if contact_id:
-                        await client.delete(
+                        delete_res = await client.delete(
                             f"{_CHATWOOT_BASE}/contacts/{contact_id}",
                             headers={"api_access_token": chatwoot_token},
                             timeout=10.0,
                         )
-                        logger.info("[reset] Deleted Chatwoot contact %s", contact_id)
+                        logger.info("[reset] Chatwoot delete status %s for contact %s", delete_res.status_code, contact_id)
                 else:
                     logger.info("[reset] No Chatwoot contact found for %s", phone_number)
         except Exception:
@@ -255,13 +259,13 @@ async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[st
             async with httpx.AsyncClient() as client:
                 await client.post(
                     _N8N_WEBHOOK_URL,
-                    json={
-                        "full name": lead_row.get("full_name", ""),
+                    json=[{
+                        "full_name": lead_row.get("full_name", ""),
                         "phone_number": lead_row.get("phone_number", ""),
                         "email": lead_row.get("email", ""),
-                        "Which country do you live in?": lead_row.get("country", ""),
-                        "What would you like your investment to help you achieve?": lead_row.get("investment_goal", "saving_for_the_future"),
-                    },
+                        "country": lead_row.get("country", ""),
+                        "investment_goal": lead_row.get("investment_goal", "saving_for_the_future"),
+                    }],
                     timeout=10.0,
                 )
                 logger.info("[reset] Posted to n8n welcome webhook for %s", phone_number)

@@ -478,7 +478,7 @@ After confirming a call (2–4 hours) or sending a Calendly link, the agent shou
 
 ### Task 22: WhatsApp (Twilio) — Install dependencies + env config
 
-- [ ] **Status: NOT DONE**
+- [x] **Status: DONE**
 
 **Requirements:**
 Prepare the Python backend to communicate with Twilio WhatsApp (Sandbox):

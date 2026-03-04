@@ -328,7 +328,7 @@ async def api_chat(
     sb = get_supabase_client()
 
     # Reset command (dev only)
-    if os.getenv("RESET_ENABLED", "").lower() == "true" and body.message.strip().lower() == "reset":
+    if os.getenv("RESET_ENABLED", "").lower() == "true" and body.message.strip().lower() == "/reset":
         return await _handle_reset(body.phone_number, sb, server)
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta, time, timezone
 
 # Try to import pytz
@@ -182,11 +181,6 @@ def compute_call_availability_status(now_utc: datetime) -> dict:
         "window_start_utc": window_start_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "window_end_utc": window_end_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
-
-
-def compute_call_availability_json(now_utc: datetime) -> str:
-    """Convenience wrapper for tool usage."""
-    return json.dumps(compute_call_availability_status(now_utc))
 
 
 # Calendly link used by scheduling context (single source for tool + skill)

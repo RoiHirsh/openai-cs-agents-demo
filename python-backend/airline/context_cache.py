@@ -1,5 +1,9 @@
 """Module-level cache for lead information and onboarding state to persist across agent handoffs."""
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Global cache: thread_id -> lead_info dict
 _lead_info_cache: dict[str, dict] = {}
 
@@ -71,10 +75,10 @@ def restore_onboarding_state_to_context(thread_id: str, context) -> None:
     # Restore onboarding_state if it's missing or empty
     if cached and (context.onboarding_state is None or not context.onboarding_state):
         context.onboarding_state = cached.copy()
-        print(f"[DEBUG] Restored onboarding_state from cache for thread {thread_id}")
+        logger.debug("Restored onboarding_state from cache for thread %s", thread_id)
     elif cached and context.onboarding_state:
         # Merge cached state with existing state (cached takes precedence for non-None values)
         for key, value in cached.items():
             if value is not None:
                 context.onboarding_state[key] = value
-        print(f"[DEBUG] Merged onboarding_state from cache for thread {thread_id}")
+        logger.debug("Merged onboarding_state from cache for thread %s", thread_id)

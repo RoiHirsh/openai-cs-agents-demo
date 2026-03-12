@@ -3,17 +3,16 @@ from __future__ import annotations as _annotations
 import json
 import logging
 import os
-from typing import Any, Dict
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
-from chatkit.server import StreamingResult
 
 load_dotenv()
-from datetime import datetime, timezone
 
+from chatkit.server import StreamingResult
 import httpx
 from fastapi import Depends, FastAPI, Query, Request
-from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel

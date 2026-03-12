@@ -1,15 +1,14 @@
 from __future__ import annotations as _annotations
 
 import json
+import logging
 from datetime import datetime, timedelta, time, timezone
 
 try:
     import pytz
     PYTZ_AVAILABLE = True
-    print(f"[TOOLS MODULE] pytz imported successfully, version: {pytz.__version__}")
 except ImportError as e:
     PYTZ_AVAILABLE = False
-    print(f"[TOOLS MODULE] pytz import failed: {e}")
     try:
         from zoneinfo import ZoneInfo
     except ImportError:
@@ -23,8 +22,10 @@ from agents import RunContextWrapper, function_tool
 from chatkit.types import ProgressUpdateEvent
 
 from .context import AirlineAgentChatContext
-from .context_cache import set_lead_info, set_onboarding_state, get_onboarding_state
+from .context_cache import set_lead_info, set_onboarding_state
 from .scheduling import CALENDLY_BOOKING_URL, compute_scheduling_context
+
+logger = logging.getLogger(__name__)
 
 
 @function_tool(
@@ -44,7 +45,7 @@ async def get_scheduling_context(exclude_actions: list[str] | None = None) -> st
         now_utc, exclude_actions=exclude_actions, calendly_link=CALENDLY_BOOKING_URL
     )
     out = json.dumps(ctx)
-    print("[SCHEDULING TOOL] response:", out)
+    logger.debug("[SCHEDULING TOOL] response: %s", out)
     return out
 
 
@@ -90,7 +91,7 @@ async def update_onboarding_state(
     Returns:
         Confirmation message indicating the state was updated
     """
-    print(f"   [TOOL EXEC] update_onboarding_state(step_name='{step_name}', trading_experience='{trading_experience}', previous_broker='{previous_broker}', trading_type='{trading_type}', bot_preference='{bot_preference}', broker_preference='{broker_preference}', budget_confirmed={budget_confirmed}, budget_amount={budget_amount}, demo_offered={demo_offered}, instructions_provided={instructions_provided}, onboarding_complete={onboarding_complete}, has_broker_account={has_broker_account})")
+    logger.debug("[TOOL EXEC] update_onboarding_state(step_name=%r, trading_experience=%r, previous_broker=%r, trading_type=%r, bot_preference=%r, broker_preference=%r, budget_confirmed=%s, budget_amount=%s, demo_offered=%s, instructions_provided=%s, onboarding_complete=%s, has_broker_account=%s)", step_name, trading_experience, previous_broker, trading_type, bot_preference, broker_preference, budget_confirmed, budget_amount, demo_offered, instructions_provided, onboarding_complete, has_broker_account)
     
     ctx = run_context.context.state
     
@@ -105,60 +106,39 @@ async def update_onboarding_state(
     # Update completed_steps if step_name is provided
     if step_name and step_name not in ctx.onboarding_state["completed_steps"]:
         ctx.onboarding_state["completed_steps"].append(step_name)
-        print(f"      Added step '{step_name}' to completed_steps")
-    
+        logger.debug("Added step %r to completed_steps", step_name)
+
     # Update individual fields if provided
     if trading_experience is not None:
         ctx.onboarding_state["trading_experience"] = trading_experience
-        print(f"      Updated trading_experience: {trading_experience}")
-    
     if previous_broker is not None:
         ctx.onboarding_state["previous_broker"] = previous_broker
-        print(f"      Updated previous_broker: {previous_broker}")
-    
     if trading_type is not None:
         ctx.onboarding_state["trading_type"] = trading_type
-        print(f"      Updated trading_type: {trading_type}")
-    
     if bot_preference is not None:
         ctx.onboarding_state["bot_preference"] = bot_preference
-        print(f"      Updated bot_preference: {bot_preference}")
-    
     if broker_preference is not None:
         ctx.onboarding_state["broker_preference"] = broker_preference
-        print(f"      Updated broker_preference: {broker_preference}")
-    
     if budget_confirmed is not None:
         ctx.onboarding_state["budget_confirmed"] = budget_confirmed
-        print(f"      Updated budget_confirmed: {budget_confirmed}")
-    
     if budget_amount is not None:
         ctx.onboarding_state["budget_amount"] = budget_amount
-        print(f"      Updated budget_amount: {budget_amount}")
-    
     if demo_offered is not None:
         ctx.onboarding_state["demo_offered"] = demo_offered
-        print(f"      Updated demo_offered: {demo_offered}")
-    
     if instructions_provided is not None:
         ctx.onboarding_state["instructions_provided"] = instructions_provided
-        print(f"      Updated instructions_provided: {instructions_provided}")
-    
     if onboarding_complete is not None:
         ctx.onboarding_state["onboarding_complete"] = onboarding_complete
-        print(f"      Updated onboarding_complete: {onboarding_complete}")
-    
     if has_broker_account is not None:
         ctx.onboarding_state["has_broker_account"] = has_broker_account
-        print(f"      Updated has_broker_account: {has_broker_account}")
-    
+
     # Cache the onboarding_state for persistence across handoffs
     thread_id = None
     if hasattr(run_context.context, 'thread') and run_context.context.thread:
         thread_id = run_context.context.thread.id
         if thread_id:
             set_onboarding_state(thread_id, ctx.onboarding_state.copy())
-            print(f"      Cached onboarding_state for thread {thread_id}")
+            logger.debug("Cached onboarding_state for thread %s", thread_id)
     
     # Return confirmation
     completed_steps = ctx.onboarding_state.get("completed_steps", [])
@@ -182,10 +162,7 @@ async def update_lead_info(
 
     Typical usage: if user says "Actually I'm from Australia", call update_lead_info(country="Australia").
     """
-    print(
-        "   [TOOL EXEC] update_lead_info("
-        f"first_name={first_name!r}, email={email!r}, phone={phone!r}, country={country!r}, new_lead={new_lead!r})"
-    )
+    logger.debug("[TOOL EXEC] update_lead_info(first_name=%r, email=%r, phone=%r, country=%r, new_lead=%r)", first_name, email, phone, country, new_lead)
 
     ctx = run_context.context.state
 
@@ -214,7 +191,7 @@ async def update_lead_info(
                 "new_lead": ctx.new_lead,
             }
             set_lead_info(thread_id, lead_info_dict)
-            print(f"      Cached lead info for thread {thread_id}: {lead_info_dict}")
+            logger.debug("Cached lead info for thread %s: %s", thread_id, lead_info_dict)
 
     return (
         "Lead info updated successfully."

@@ -1,5 +1,6 @@
 from __future__ import annotations as _annotations
 
+import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,6 +9,8 @@ from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
 # Load environment variables
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Try importing FileSearchTool - adjust import path if needed
 try:
@@ -63,20 +66,30 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
 )
 
 
+_SCHEDULING_SKILL: str | None = None
+_ONBOARDING_SKILL: str | None = None
+
+
 def _load_scheduling_skill() -> str:
-    skill_path = Path(__file__).parent / "skills" / "scheduling" / "SKILL.md"
-    try:
-        return skill_path.read_text(encoding="utf-8")
-    except OSError:
-        return ""
+    global _SCHEDULING_SKILL
+    if _SCHEDULING_SKILL is None:
+        skill_path = Path(__file__).parent / "skills" / "scheduling" / "SKILL.md"
+        try:
+            _SCHEDULING_SKILL = skill_path.read_text(encoding="utf-8")
+        except OSError:
+            _SCHEDULING_SKILL = ""
+    return _SCHEDULING_SKILL
 
 
 def _load_onboarding_skill() -> str:
-    skill_path = Path(__file__).parent / "skills" / "onboarding" / "SKILL.md"
-    try:
-        return skill_path.read_text(encoding="utf-8")
-    except OSError:
-        return ""
+    global _ONBOARDING_SKILL
+    if _ONBOARDING_SKILL is None:
+        skill_path = Path(__file__).parent / "skills" / "onboarding" / "SKILL.md"
+        try:
+            _ONBOARDING_SKILL = skill_path.read_text(encoding="utf-8")
+        except OSError:
+            _ONBOARDING_SKILL = ""
+    return _ONBOARDING_SKILL
 
 
 def scheduling_instructions(
@@ -217,8 +230,7 @@ def triage_instructions(
     completed_steps = onboarding_state.get("completed_steps", [])
     onboarding_complete = onboarding_state.get("onboarding_complete", False)
     
-    # Debug print to verify state values
-    print(f"[DEBUG] Triage Agent - new_lead={new_lead}, first_name={ctx.first_name}, country={ctx.country}, onboarding_complete={onboarding_complete}")
+    logger.debug("[Triage] new_lead=%s, first_name=%s, country=%s, onboarding_complete=%s", new_lead, ctx.first_name, ctx.country, onboarding_complete)
     
     # Determine if we should route to onboarding
     # Note: Don't route if user has made a specific request (call/FAQ)
@@ -301,15 +313,15 @@ async def on_onboarding_handoff(context: RunContextWrapper[AirlineAgentChatConte
     if thread_id:
         restore_lead_info_to_context(thread_id, ctx_state)
         restore_onboarding_state_to_context(thread_id, ctx_state)
-        print(f"[DEBUG] Onboarding handoff - Restored context for thread {thread_id}")
-    
-    print(f"[DEBUG] Onboarding handoff - Context state: first_name={ctx_state.first_name}, country={ctx_state.country}, new_lead={ctx_state.new_lead}, email={ctx_state.email}, onboarding_state={ctx_state.onboarding_state}")
-    
+        logger.debug("[Onboarding handoff] Restored context for thread %s", thread_id)
+
+    logger.debug("[Onboarding handoff] first_name=%s, country=%s, new_lead=%s, email=%s, onboarding_state=%s", ctx_state.first_name, ctx_state.country, ctx_state.new_lead, ctx_state.email, ctx_state.onboarding_state)
+
     # Validate that critical context is present
     if not ctx_state.country or ctx_state.country == "Unknown":
-        print(f"[WARNING] Country is missing or Unknown during onboarding handoff!")
+        logger.warning("[Onboarding handoff] Country is missing or Unknown")
     if not ctx_state.first_name:
-        print(f"[WARNING] First name is missing during onboarding handoff!")
+        logger.warning("[Onboarding handoff] First name is missing")
 
 
 # Set up handoff relationships

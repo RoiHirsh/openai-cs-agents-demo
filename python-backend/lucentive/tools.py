@@ -1,10 +1,13 @@
 from __future__ import annotations as _annotations
 
 import json
+import logging
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from agents import function_tool
+
+logger = logging.getLogger(__name__)
 
 # Type definitions
 BrokerId = Literal["bybit", "vantage", "pu_prime"]
@@ -134,10 +137,10 @@ def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "OTHER"]:
 
 
 # Load country offers data
-_COUNTRY_OFFERS_DATA: dict[str, dict[str, any]] | None = None
+_COUNTRY_OFFERS_DATA: dict[str, dict[str, Any]] | None = None
 
 
-def _load_country_offers_data() -> dict[str, dict[str, any]]:
+def _load_country_offers_data() -> dict[str, dict[str, Any]]:
     """Load country offers data from JSON file. Cached after first load."""
     global _COUNTRY_OFFERS_DATA
     if _COUNTRY_OFFERS_DATA is not None:
@@ -151,18 +154,18 @@ def _load_country_offers_data() -> dict[str, dict[str, any]]:
     try:
         with open(json_file, "r", encoding="utf-8") as f:
             _COUNTRY_OFFERS_DATA = json.load(f)
-        print(f"      [INFO] Loaded country offers data from {json_file}")
+        logger.info("Loaded country offers data from %s", json_file)
         return _COUNTRY_OFFERS_DATA
     except FileNotFoundError:
-        print(f"      [ERROR] Country offers file not found: {json_file}")
+        logger.error("Country offers file not found: %s", json_file)
         _COUNTRY_OFFERS_DATA = {}
         return _COUNTRY_OFFERS_DATA
     except json.JSONDecodeError as e:
-        print(f"      [ERROR] Invalid JSON in country offers file: {e}")
+        logger.error("Invalid JSON in country offers file: %s", e)
         _COUNTRY_OFFERS_DATA = {}
         return _COUNTRY_OFFERS_DATA
     except Exception as e:
-        print(f"      [ERROR] Error loading country offers data: {e}")
+        logger.error("Error loading country offers data: %s", e)
         _COUNTRY_OFFERS_DATA = {}
         return _COUNTRY_OFFERS_DATA
 
@@ -219,7 +222,7 @@ async def get_broker_assets(
             "error": null or error message
         }
     """
-    print(f"   [TOOL EXEC] get_broker_assets(broker='{broker}', purpose='{purpose}', asset_type='{asset_type}', market='{market}')")
+    logger.debug("[TOOL EXEC] get_broker_assets(broker=%r, purpose=%r, asset_type=%r, market=%r)", broker, purpose, asset_type, market)
     
     # Normalize broker name
     broker_id = normalize_broker(broker)
@@ -232,9 +235,9 @@ async def get_broker_assets(
             "videos": [],
             "error": "UNSUPPORTED_BROKER"
         }
-        print(f"      [ERROR] Unsupported broker: {broker}")
+        logger.error("Unsupported broker: %s", broker)
         return json.dumps(result)
-    
+
     # Validate purpose
     valid_purposes: set[str] = {"registration", "copy_trade_start", "copy_trade_open_account", "copy_trade_connect"}
     purpose_lower = purpose.lower().strip()
@@ -247,7 +250,7 @@ async def get_broker_assets(
             "videos": [],
             "error": "UNSUPPORTED_PURPOSE"
         }
-        print(f"      [ERROR] Unsupported purpose: {purpose}")
+        logger.error("Unsupported purpose: %s", purpose)
         return json.dumps(result)
     
     # Cast to Purpose type for type checking
@@ -267,7 +270,7 @@ async def get_broker_assets(
             "videos": [],
             "error": "UNSUPPORTED_ASSET_TYPE"
         }
-        print(f"      [ERROR] Unsupported asset_type: {asset_type_str}")
+        logger.error("Unsupported asset_type: %s", asset_type_str)
         return json.dumps(result)
     
     # Get links for the given purpose
@@ -297,7 +300,7 @@ async def get_broker_assets(
         "error": None
     }
     
-    print(f"      [SUCCESS] Returning {len(links)} link(s) and {len(videos)} video(s) for {broker_id} (purpose={purpose_typed}, asset_type={asset_type_str})")
+    logger.debug("Returning %d link(s) and %d video(s) for %s (purpose=%s, asset_type=%s)", len(links), len(videos), broker_id, purpose_typed, asset_type_str)
     return json.dumps(result)
 
 
@@ -327,7 +330,7 @@ async def get_country_offers(country: str) -> str:
             "error": null or error message
         }
     """
-    print(f"   [TOOL EXEC] get_country_offers(country='{country}')")
+    logger.debug("[TOOL EXEC] get_country_offers(country=%r)", country)
     
     # Validate input
     if not country or not country.strip():
@@ -339,12 +342,12 @@ async def get_country_offers(country: str) -> str:
             "notes": [],
             "error": "MISSING_COUNTRY"
         }
-        print(f"      [ERROR] Country parameter is missing or empty")
+        logger.error("Country parameter is missing or empty")
         return json.dumps(result)
     
     # Normalize country
     normalized_group = normalize_country(country)
-    print(f"      [INFO] Input country: '{country}' -> Normalized group: '{normalized_group}'")
+    logger.debug("Input country: %r -> Normalized group: %r", country, normalized_group)
     
     # Load country offers data
     country_data = _load_country_offers_data()
@@ -359,7 +362,7 @@ async def get_country_offers(country: str) -> str:
             "notes": [],
             "error": "COUNTRY_GROUP_NOT_FOUND"
         }
-        print(f"      [ERROR] Country group '{normalized_group}' not found in data")
+        logger.error("Country group %r not found in data", normalized_group)
         return json.dumps(result)
     
     offers = country_data[normalized_group]
@@ -381,9 +384,9 @@ async def get_country_offers(country: str) -> str:
             "notes": [],
             "error": f"INVALID_DATA_SCHEMA: Missing keys: {', '.join(missing_keys)}"
         }
-        print(f"      [ERROR] Invalid data schema - missing keys: {missing_keys}")
+        logger.error("Invalid data schema - missing keys: %s", missing_keys)
         return json.dumps(result)
-    
+
     # Validate brokers structure
     if not isinstance(brokers, list):
         result = {
@@ -394,9 +397,9 @@ async def get_country_offers(country: str) -> str:
             "notes": [],
             "error": "INVALID_DATA_SCHEMA: brokers must be a list"
         }
-        print(f"      [ERROR] Invalid brokers structure - must be a list")
+        logger.error("Invalid brokers structure - must be a list")
         return json.dumps(result)
-    
+
     # Validate each broker has required fields
     for broker in brokers:
         if not isinstance(broker, dict):
@@ -408,7 +411,7 @@ async def get_country_offers(country: str) -> str:
                 "notes": [],
                 "error": "INVALID_DATA_SCHEMA: broker items must be objects"
             }
-            print(f"      [ERROR] Invalid broker structure - must be objects")
+            logger.error("Invalid broker structure - must be objects")
             return json.dumps(result)
         if "name" not in broker:
             result = {
@@ -419,7 +422,7 @@ async def get_country_offers(country: str) -> str:
                 "notes": [],
                 "error": "INVALID_DATA_SCHEMA: broker missing 'name' field"
             }
-            print(f"      [ERROR] Invalid broker structure - missing 'name' field")
+            logger.error("Invalid broker structure - missing 'name' field")
             return json.dumps(result)
     
     # Build result
@@ -432,10 +435,5 @@ async def get_country_offers(country: str) -> str:
         "error": None
     }
     
-    print(f"      [SUCCESS] Returning {len(bots)} bot(s) and {len(brokers)} broker(s) for {normalized_group}")
-    print(f"      [INFO] Bots: {', '.join(bots) if bots else 'none'}")
-    print(f"      [INFO] Brokers: {', '.join(b.get('name', 'Unknown') for b in brokers) if brokers else 'none'}")
-    if notes:
-        print(f"      [INFO] Notes: {len(notes)} note(s)")
-    
+    logger.debug("Returning %d bot(s) and %d broker(s) for %s", len(bots), len(brokers), normalized_group)
     return json.dumps(result)

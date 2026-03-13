@@ -167,10 +167,10 @@ def onboarding_instructions(
         current_step = "bot_recommendation"
     elif "broker_selection" not in completed_steps:
         current_step = "broker_selection"
-    elif "budget_check" not in completed_steps:
-        current_step = "budget_check"
     elif "profit_share_clarification" not in completed_steps:
         current_step = "profit_share_clarification"
+    elif "budget_check" not in completed_steps:
+        current_step = "budget_check"
     elif broker_preference and "has_broker_account" not in completed_steps:
         current_step = "has_broker_account"
     elif "instructions" not in completed_steps:

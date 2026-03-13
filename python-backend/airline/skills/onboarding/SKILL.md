@@ -48,7 +48,7 @@ If `broker_selection` is **not** in completed_steps and `bot_recommendation` **i
 1. Call **`get_country_offers(country)`** again to get the list of available brokers for their country.
 2. Use **only** the tool's `brokers` array and any `notes`. Do **not** repeat the bot list or mention the $500 minimum.
 3. **If the tool returns exactly one broker:** Present that broker and ask for **confirmation** to proceed (e.g. "For [country] we work with [broker name]. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<that broker name>")`**. There is no choice—only confirmation.
-4. **If the tool returns two or more brokers:** Suggest the **first broker** in the list as the default. Ask: "Would you like to continue with [first broker]? It's a reputable platform that we work with a lot." Wait for the user's response. If they confirm, use the first broker. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<their choice or default>")`**
+4. **If the tool returns two or more brokers:** List all available brokers for the country, then suggest the **first broker** in the list as the default. Ask: "In [country] we work with [list all brokers]. Would you like to continue with [first broker]?" Wait for the user's response. If they confirm, use the first broker. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<their choice or default>")`**
 5. Required: call the tool after they respond. Do not mix bots, brokers, and minimum capital in one message.
 
 ---
@@ -206,7 +206,7 @@ Use these as patterns. Adapt to the actual tool response and lead; reply in natu
 
 **Decision:** Suggest the first broker (Vantage) as default. User can confirm or pick another.
 
-**Example reply:** "Would you like to continue with Vantage? It's a reputable platform that we work with a lot."
+**Example reply:** "In [country] we work with Vantage and PU Prime. Would you like to continue with Vantage?"
 
 ---
 

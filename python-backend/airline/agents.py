@@ -41,12 +41,19 @@ except ImportError:
 
 MODEL = "gpt-5.2"
 
+PLAIN_TEXT_RULE = (
+    "FORMATTING: Always respond in plain text only. "
+    "Never use markdown (no asterisks for bold, no underscores for italic, no dashes for bullets, no # headers). "
+    "Never use emojis. Keep responses natural and conversational.\n"
+)
+
 
 investments_faq_agent = Agent[AirlineAgentChatContext](
     name="Investments FAQ Agent",
     model=MODEL,
     handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
     instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
+    {PLAIN_TEXT_RULE}
     You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.
     If you are speaking to a customer, you were likely transferred from the triage agent.
     
@@ -98,6 +105,7 @@ def scheduling_instructions(
     skill_content = _load_scheduling_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
+        f"{PLAIN_TEXT_RULE}"
         "FIRST RULE: When the user says yes/sure/ok/yes please to a callback, reply with ONLY: \"That's great, someone will give you a call in the next [timeframe].\" Do not ask for phone, timezone, or country code. Never.\n"
         "\n"
         "You are the Scheduling Agent. The user has asked to be called back and was handed off from Triage.\n"
@@ -173,6 +181,7 @@ def onboarding_instructions(
     skill_content = _load_onboarding_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
+        f"{PLAIN_TEXT_RULE}"
         "You are the Onboarding Agent. Your role is to guide new leads through the onboarding process step by step.\n"
         "\n"
         "Lead information (ALREADY PROVIDED - DO NOT ASK FOR THIS):\n"
@@ -254,6 +263,7 @@ def triage_instructions(
     
     return (
         f"{RECOMMENDED_PROMPT_PREFIX} "
+        f"{PLAIN_TEXT_RULE}"
         "You are a helpful triaging agent. Your role is to understand what the customer needs and route them to the appropriate specialist agent.\n\n"
         "IMPORTANT - USER CORRECTIONS:\n"
         "- If the user corrects a conversation variable (at minimum country), you must:\n"

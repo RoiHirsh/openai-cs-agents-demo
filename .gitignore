@@ -136,3 +136,7 @@ ui/.next/
 
 # Claude Code local state
 .claude/
+
+# Todo files
+todos.txt
+todo.md

@@ -33,7 +33,9 @@ Do not skip this tool call. The state must be updated programmatically so progre
 
 If `bot_recommendation` is **not** in completed_steps:
 
-1. Call **`get_country_offers(country)`** (no bot_preference) to get the full list of available bots for the country.
+**CRITICAL: The user's prior trading experience (`trading_type` from Phase 1) has NO relation to bot selection. Do NOT use it to infer or skip bot selection. Always call the tool and present the available bots regardless of what the user said they traded before.**
+
+1. Call **`get_country_offers(country)`** — no `bot_preference` argument. This gets the full list of available bots for the country.
 2. Use **only** the tool's `bots` array. Do **not** mention brokers, minimum capital, or links.
 3. **If the tool returns exactly one bot:** Present that bot and ask for **confirmation** to proceed (e.g. "For [country] we have a [bot name] trading bot available. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<that one bot>")`**. There is no choice—only confirmation.
 4. **If the tool returns two or more bots:** List all bots, suggest the **first** as default. Ask: "We have bots for [list all bots]. Would you like to continue with [first bot]?" Wait for the user's response. If they confirm, use the first bot. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<their choice or default>")`**
@@ -45,7 +47,7 @@ If `bot_recommendation` is **not** in completed_steps:
 
 If `broker_selection` is **not** in completed_steps and `bot_recommendation` **is** in completed_steps:
 
-1. Call **`get_country_offers(country, bot_preference=<selected bot>)`** — pass the user's selected bot. This returns **only the brokers that support that bot**. Do **not** call without bot_preference here.
+1. Call **`get_country_offers(country, bot_preference=<selected bot>)`** — pass the bot the user confirmed **in Phase 2a** (stored in `bot_preference` onboarding state). **Never use `trading_type` from Phase 1 as the bot_preference.** This returns only the brokers that support that bot.
 2. Use **only** the tool's `brokers` array and any `notes`. Do **not** repeat the bot list or mention the $500 minimum.
 3. **If the tool returns exactly one broker:** Present that broker and ask for **confirmation** to proceed (e.g. "For [country] we work with [broker name]. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<that broker name>")`**. There is no choice—only confirmation.
 4. **If the tool returns two or more brokers:** List all returned brokers, then suggest the **first** as default. Ask: "In [country] we work with [list all brokers]. Would you like to continue with [first broker]?" Wait for the user's response. If they confirm, use the first broker. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<their choice or default>")`**

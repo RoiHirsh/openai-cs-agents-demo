@@ -67,7 +67,7 @@ def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
     return None
 
 
-def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "OTHER"]:
+def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "UK", "OTHER"]:
     """Normalize country name to canonical country group."""
     if not country:
         return "OTHER"
@@ -76,6 +76,8 @@ def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "OTHER"]:
         return "AUSTRALIA"
     if country_normalized in ("canada", "ca", "can"):
         return "CANADA"
+    if country_normalized in ("united kingdom", "uk", "gb", "gbr", "great britain", "england", "scotland", "wales"):
+        return "UK"
     return "OTHER"
 
 

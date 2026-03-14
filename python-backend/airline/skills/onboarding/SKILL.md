@@ -38,7 +38,7 @@ If `bot_recommendation` is **not** in completed_steps:
 1. Call **`get_country_offers(country)`** — no `bot_preference` argument. This gets the full list of available bots for the country.
 2. Use **only** the tool's `bots` array. Do **not** mention brokers, minimum capital, or links.
 3. **If the tool returns exactly one bot:** Present that bot and ask for **confirmation** to proceed (e.g. "For [country] we have a [bot name] trading bot available. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<that one bot>")`**. There is no choice—only confirmation.
-4. **If the tool returns two or more bots:** List all bots, suggest the **first** as default. Ask: "We have bots for [list all bots]. Would you like to continue with [first bot]?" Wait for the user's response. If they confirm, use the first bot. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<their choice or default>")`**
+4. **If the tool returns two or more bots:** List all bots and ask the user which one they want. Ask: "We have bots for [list all bots]. Which one would you like to go with?" Wait for the user's response. Use their choice. When the choice is clear, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<their choice>")`**
 5. Do not proceed to brokers in this message.
 
 ---
@@ -50,7 +50,7 @@ If `broker_selection` is **not** in completed_steps and `bot_recommendation` **i
 1. Call **`get_country_offers(country, bot_preference=<selected bot>)`** — pass the bot the user confirmed **in Phase 2a** (stored in `bot_preference` onboarding state). **Never use `trading_type` from Phase 1 as the bot_preference.** This returns only the brokers that support that bot.
 2. Use **only** the tool's `brokers` array and any `notes`. Do **not** repeat the bot list or mention the $500 minimum.
 3. **If the tool returns exactly one broker:** Present that broker and ask for **confirmation** to proceed (e.g. "For [country] we work with [broker name]. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<that broker name>")`**. There is no choice—only confirmation.
-4. **If the tool returns two or more brokers:** List all returned brokers, then suggest the **first** as default. Ask: "In [country] we work with [list all brokers]. Would you like to continue with [first broker]?" Wait for the user's response. If they confirm, use the first broker. If they name a different one, use their choice. When the choice is clear, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<their choice or default>")`**
+4. **If the tool returns two or more brokers:** List all returned brokers and ask the user which one they want. Ask: "In [country] we work with [list all brokers]. Which one would you like to go with?" Wait for the user's response. Use their choice. When the choice is clear, call **`update_onboarding_state(step_name="broker_selection", broker_preference="<their choice>")`**
 5. Do not mix bots, brokers, and minimum capital in one message.
 
 ---
@@ -192,9 +192,9 @@ Use these as patterns. Adapt to the actual tool response and lead; reply in natu
 
 **Tool response (example):** `{"ok": true, "bots": ["Gold", "Silver"], "brokers": [...]}`
 
-**Decision:** Suggest the first bot (Gold) as default. User can confirm or pick another.
+**Decision:** Multiple bots available. Ask the user to choose — do not suggest a default.
 
-**Example reply:** "We have bots for Gold and Silver. Would you like to continue with Gold?"
+**Example reply:** "We have bots for Gold and Silver. Which one would you like to go with?"
 
 ---
 
@@ -214,9 +214,9 @@ Use these as patterns. Adapt to the actual tool response and lead; reply in natu
 **Call:** `get_country_offers("Germany", bot_preference="Gold")`
 **Tool response (example):** `{"ok": true, "brokers": [{"name": "Vantage", "bots": ["Crypto", "Gold"], "notes": []}, {"name": "PU Prime", "bots": ["Gold", "Silver", "Forex"], "notes": ["Gold/Silver only in cents; $500–$10,000 USD only"]}]}`
 
-**Decision:** Two brokers support Gold. Suggest the first (Vantage) as default.
+**Decision:** Multiple brokers support Gold. Ask the user to choose — do not suggest a default.
 
-**Example reply:** "In Germany we work with Vantage and PU Prime for Gold. Would you like to continue with Vantage?"
+**Example reply:** "In Germany we work with Vantage and PU Prime for Gold. Which one would you like to go with?"
 
 ---
 

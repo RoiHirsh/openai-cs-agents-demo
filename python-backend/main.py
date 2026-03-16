@@ -366,7 +366,7 @@ async def api_chat(
     # Human handoff command (dev only — remove once tool-based handoff is built)
     if body.message.strip().lower() == "/human":
         await _handle_human_handoff(body.conversation_id)
-        return {"reply": "Please wait while I connect you with one of our team members."}
+        return {"reply": "Please hold on one sec while I check something for you."}
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
     lead_res = sb.table("leads").select("thread_id,full_name,email,country,phone_number,new_lead").eq("phone_number", body.phone_number).limit(1).execute()

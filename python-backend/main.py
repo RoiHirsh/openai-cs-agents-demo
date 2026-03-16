@@ -189,17 +189,17 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
         logger.warning("[handoff] CHATWOOT_API_TOKEN not set")
         return {"ok": False, "error": "CHATWOOT_API_TOKEN not set"}
 
-    logger.info("[handoff] Starting handoff for conversation_id=%s", conversation_id)
+    print(f"[handoff] Starting handoff for conversation_id={conversation_id}", flush=True)
 
     async with httpx.AsyncClient() as client:
-        # Step 1: Set status to open
-        update_res = await client.patch(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
+        # Step 1: Toggle status to open via dedicated endpoint
+        toggle_res = await client.post(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/toggle_status",
             json={"status": "open"},
             headers={"api_access_token": chatwoot_token},
             timeout=10.0,
         )
-        logger.info("[handoff] Status update HTTP %s: %s", update_res.status_code, update_res.text)
+        print(f"[handoff] Toggle status HTTP {toggle_res.status_code}: {toggle_res.text}", flush=True)
 
         # Step 2: Assign human agent via dedicated assignments endpoint
         assign_res = await client.post(
@@ -208,7 +208,7 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
             headers={"api_access_token": chatwoot_token},
             timeout=10.0,
         )
-        logger.info("[handoff] Assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+        print(f"[handoff] Assignment HTTP {assign_res.status_code}: {assign_res.text}", flush=True)
 
         # Step 3: Add private note for the human agent
         note_res = await client.post(
@@ -221,7 +221,7 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
             headers={"api_access_token": chatwoot_token},
             timeout=10.0,
         )
-        logger.info("[handoff] Private note HTTP %s: %s", note_res.status_code, note_res.text)
+        print(f"[handoff] Private note HTTP {note_res.status_code}: {note_res.text}", flush=True)
 
     return {"ok": True}
 

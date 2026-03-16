@@ -182,6 +182,39 @@ _CHATWOOT_BASE = "https://chatwoot-chatwoot.spurtz.easypanel.host/api/v1/account
 _N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
 
 
+async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
+    """Trigger human handoff: open conversation, assign agent 1, add private note."""
+    chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
+    if not chatwoot_token:
+        logger.warning("[handoff] CHATWOOT_API_TOKEN not set")
+        return {"ok": False, "error": "CHATWOOT_API_TOKEN not set"}
+
+    async with httpx.AsyncClient() as client:
+        # Step 1: Set status to open and assign human agent
+        update_res = await client.patch(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
+            json={"status": "open", "assignee_id": 1},
+            headers={"api_access_token": chatwoot_token},
+            timeout=10.0,
+        )
+        logger.info("[handoff] Conversation update status: %s", update_res.status_code)
+
+        # Step 2: Add private note for the human agent
+        note_res = await client.post(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
+            json={
+                "content": "Handed off from AI agent. Please take over this conversation.",
+                "message_type": "outgoing",
+                "private": True,
+            },
+            headers={"api_access_token": chatwoot_token},
+            timeout=10.0,
+        )
+        logger.info("[handoff] Private note status: %s", note_res.status_code)
+
+    return {"ok": True}
+
+
 async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[str, Any]:
     """Full reset sequence for a lead. Dev-only (requires RESET_ENABLED=true)."""
     chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
@@ -329,6 +362,11 @@ async def api_chat(
     # Reset command (dev only)
     if os.getenv("RESET_ENABLED", "").lower() == "true" and body.message.strip().lower() == "/reset":
         return await _handle_reset(body.phone_number, sb, server)
+
+    # Human handoff command (dev only — remove once tool-based handoff is built)
+    if body.message.strip().lower() == "/human":
+        await _handle_human_handoff(body.conversation_id)
+        return {"reply": "Please wait while I connect you with one of our team members."}
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
     lead_res = sb.table("leads").select("thread_id,full_name,email,country,phone_number,new_lead").eq("phone_number", body.phone_number).limit(1).execute()

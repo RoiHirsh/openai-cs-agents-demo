@@ -189,17 +189,28 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
         logger.warning("[handoff] CHATWOOT_API_TOKEN not set")
         return {"ok": False, "error": "CHATWOOT_API_TOKEN not set"}
 
+    logger.info("[handoff] Starting handoff for conversation_id=%s", conversation_id)
+
     async with httpx.AsyncClient() as client:
-        # Step 1: Set status to open and assign human agent
+        # Step 1: Set status to open
         update_res = await client.patch(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
-            json={"status": "open", "assignee_id": 1},
+            json={"status": "open"},
             headers={"api_access_token": chatwoot_token},
             timeout=10.0,
         )
-        logger.info("[handoff] Conversation update status: %s", update_res.status_code)
+        logger.info("[handoff] Status update HTTP %s: %s", update_res.status_code, update_res.text)
 
-        # Step 2: Add private note for the human agent
+        # Step 2: Assign human agent via dedicated assignments endpoint
+        assign_res = await client.post(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
+            json={"assignee_id": 1},
+            headers={"api_access_token": chatwoot_token},
+            timeout=10.0,
+        )
+        logger.info("[handoff] Assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+
+        # Step 3: Add private note for the human agent
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
             json={
@@ -210,7 +221,7 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
             headers={"api_access_token": chatwoot_token},
             timeout=10.0,
         )
-        logger.info("[handoff] Private note status: %s", note_res.status_code)
+        logger.info("[handoff] Private note HTTP %s: %s", note_res.status_code, note_res.text)
 
     return {"ok": True}
 

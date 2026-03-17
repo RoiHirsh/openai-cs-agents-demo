@@ -46,6 +46,8 @@ PLAIN_TEXT_RULE = (
     "FORMATTING: Always respond in plain text only. "
     "Never use markdown (no asterisks for bold, no underscores for italic, no dashes for bullets, no # headers). "
     "Never use emojis. Keep responses natural and conversational.\n"
+    "CONVERSATION HISTORY: Some messages in the conversation history marked as 'assistant' may be prefixed with [Human Agent]: — "
+    "these were written by a human team member, not by you. Do not treat them as your own prior responses and do not reference them as things you said.\n"
 )
 
 

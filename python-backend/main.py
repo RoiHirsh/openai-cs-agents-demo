@@ -210,7 +210,16 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
         )
         print(f"[handoff] Assignment HTTP {assign_res.status_code}: {assign_res.text}", flush=True)
 
-        # Step 3: Apply label so human agents can spot the conversation
+        # Step 3: Set priority to high
+        priority_res = await client.patch(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
+            json={"priority": "high"},
+            headers={"api_access_token": chatwoot_token},
+            timeout=10.0,
+        )
+        print(f"[handoff] Priority HTTP {priority_res.status_code}: {priority_res.text}", flush=True)
+
+        # Step 4: Apply label so human agents can spot the conversation
         label_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/labels",
             json={"labels": ["jump_in_chat"]},

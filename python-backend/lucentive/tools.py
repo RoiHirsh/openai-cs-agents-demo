@@ -5,9 +5,15 @@ import logging
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from agents import function_tool
+from agents import RunContextWrapper, function_tool
 
 logger = logging.getLogger(__name__)
+
+# Import here to avoid circular dependency — chatwoot is a top-level module
+try:
+    from chatwoot import trigger_human_handoff as _trigger_human_handoff
+except ImportError:
+    _trigger_human_handoff = None
 
 # Type definitions
 BrokerId = Literal["bybit", "vantage", "pu_prime"]
@@ -233,3 +239,40 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
 
     logger.debug("Returning %d bot(s) and %d broker(s) for %s (bot_preference=%r)", len(all_bots), len(filtered_brokers), normalized_group, bot_preference)
     return json.dumps(result)
+
+
+@function_tool(
+    name_override="request_human_handoff",
+    description_override=(
+        "Hand off this conversation to a human agent. "
+        "Call this when you cannot find a clear answer in your knowledge base, "
+        "or when the situation requires human judgment (complaints, distrust, anger, requests to speak to a person). "
+        "After calling this tool, send the user a short natural message such as: "
+        "'Please hold on one sec while I check something for you.' Do not attempt to answer further."
+    ),
+)
+async def request_human_handoff(context: RunContextWrapper[Any]) -> str:
+    """
+    Triggers a full human handoff sequence in Chatwoot:
+    - Sets conversation status to open
+    - Assigns human agent
+    - Sets priority to high
+    - Applies jump_in_chat label
+    - Posts a private note for the human agent
+    """
+    conversation_id: str | None = None
+    try:
+        conversation_id = context.context.state.conversation_id
+    except AttributeError:
+        pass
+
+    if not conversation_id:
+        print("[handoff] request_human_handoff called but conversation_id is missing from context", flush=True)
+        return "handoff_failed: no conversation_id in context"
+
+    if _trigger_human_handoff is None:
+        print("[handoff] chatwoot module not available", flush=True)
+        return "handoff_failed: chatwoot module unavailable"
+
+    await _trigger_human_handoff(conversation_id)
+    return "handoff_complete"

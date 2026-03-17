@@ -33,11 +33,12 @@ from .tools import (
 
 # Import the new broker assets tool from lucentive module
 try:
-    from lucentive.tools import get_broker_assets, get_country_offers
+    from lucentive.tools import get_broker_assets, get_country_offers, request_human_handoff
 except ImportError:
     # Fallback if lucentive module not available
     get_broker_assets = None
     get_country_offers = None
+    request_human_handoff = None
 
 MODEL = "gpt-5.2"
 
@@ -48,33 +49,57 @@ PLAIN_TEXT_RULE = (
 )
 
 
+def faq_instructions(
+    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+) -> str:
+    handoff_skill = _load_handoff_skill()
+    return (
+        f"{RECOMMENDED_PROMPT_PREFIX}\n"
+        f"{PLAIN_TEXT_RULE}"
+        "You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.\n"
+        "If you are speaking to a customer, you were likely transferred from the triage agent.\n\n"
+        "CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.\n\n"
+        "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
+        "Use the following routine to support the customer:\n"
+        "1. First, check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
+        "2. If a question was asked, use the file_search tool silently in the background — do not mention it to the customer.\n"
+        "3. Read the search results and judge whether they clearly and directly answer the user's question. If yes, respond naturally. If no, follow the handoff skill below.\n"
+        "4. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'.\n"
+        "5. When done answering, return to the Triage Agent.\n\n"
+        "---\n"
+        "## Human Handoff Skill\n\n"
+        f"{handoff_skill}"
+    )
+
+
+_faq_tools = [FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"]
+if request_human_handoff is not None:
+    _faq_tools.append(request_human_handoff)
+
 investments_faq_agent = Agent[AirlineAgentChatContext](
     name="Investments FAQ Agent",
     model=MODEL,
     handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
-    instructions=f"""{RECOMMENDED_PROMPT_PREFIX}
-    {PLAIN_TEXT_RULE}
-    You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.
-    If you are speaking to a customer, you were likely transferred from the triage agent.
-    
-    CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.
-    
-    Important: You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.
-    
-    Use the following routine to support the customer:
-    1. First, check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.
-    2. If a question was asked, identify the specific question about investments, trading bots, or related topics.
-    3. Use the file_search tool to find the relevant information (use it silently in the background - do not mention it to the customer).
-    4. Respond to the customer naturally and conversationally with the answer. Answer as if you know this information personally - do not mention sources, knowledge bases, or that you "looked up" anything. Never say phrases like "the info provided says", "according to the knowledge base", or "based on the documentation".
-    5. If you cannot find relevant information, politely inform the customer that you don't have that information available right now, then hand off to the Triage Agent. This ensures that the next time around, the conversation will go back and start with the Triage Agent for proper follow-up handling.
-    6. When done, return to the Triage Agent.""",
-    tools=[FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"],
+    instructions=faq_instructions,
+    tools=_faq_tools,
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
 
 _SCHEDULING_SKILL: str | None = None
 _ONBOARDING_SKILL: str | None = None
+_HANDOFF_SKILL: str | None = None
+
+
+def _load_handoff_skill() -> str:
+    global _HANDOFF_SKILL
+    if _HANDOFF_SKILL is None:
+        skill_path = Path(__file__).parent / "skills" / "handoff" / "SKILL.md"
+        try:
+            _HANDOFF_SKILL = skill_path.read_text(encoding="utf-8")
+        except OSError:
+            _HANDOFF_SKILL = ""
+    return _HANDOFF_SKILL
 
 
 def _load_scheduling_skill() -> str:
@@ -231,7 +256,7 @@ onboarding_agent = Agent[AirlineAgentChatContext](
 
 
 def triage_instructions(
-    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext],
 ) -> str:
     ctx = run_context.context.state
     new_lead = ctx.new_lead or False
@@ -296,16 +321,23 @@ def triage_instructions(
         "- Do NOT ask for phone number or timezone. We already have them from the campaign.\n"
         "- Hand off immediately to the Scheduling Agent so it can send the confirmation and close the flow. Do not ask any questions.\n\n"
         "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
-        "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once."
+        "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once.\n\n"
+        "---\n"
+        "## Human Handoff Skill\n\n"
+        f"{_load_handoff_skill()}"
     )
 
+
+_triage_tools = [update_lead_info]
+if request_human_handoff is not None:
+    _triage_tools.append(request_human_handoff)
 
 triage_agent = Agent[AirlineAgentChatContext](
     name="Triage Agent",
     model=MODEL,
     handoff_description="Delegates requests to the right specialist agent (scheduling, investments FAQ, onboarding).",
     instructions=triage_instructions,
-    tools=[update_lead_info],
+    tools=_triage_tools,
     handoffs=[],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )

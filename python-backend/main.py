@@ -46,6 +46,7 @@ from airline.context import (
 )
 from server import AirlineServer
 from airline.context_cache import clear_thread_cache
+from chatwoot import trigger_human_handoff
 
 app = FastAPI()
 
@@ -182,66 +183,6 @@ _CHATWOOT_BASE = "https://chatwoot-chatwoot.spurtz.easypanel.host/api/v1/account
 _N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
 
 
-async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
-    """Trigger human handoff: open conversation, assign agent 1, add private note."""
-    chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
-    if not chatwoot_token:
-        logger.warning("[handoff] CHATWOOT_API_TOKEN not set")
-        return {"ok": False, "error": "CHATWOOT_API_TOKEN not set"}
-
-    print(f"[handoff] Starting handoff for conversation_id={conversation_id}", flush=True)
-
-    async with httpx.AsyncClient() as client:
-        # Step 1: Toggle status to open via dedicated endpoint
-        toggle_res = await client.post(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/toggle_status",
-            json={"status": "open"},
-            headers={"api_access_token": chatwoot_token},
-            timeout=10.0,
-        )
-        print(f"[handoff] Toggle status HTTP {toggle_res.status_code}: {toggle_res.text}", flush=True)
-
-        # Step 2: Assign human agent via dedicated assignments endpoint
-        assign_res = await client.post(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
-            json={"assignee_id": 1},
-            headers={"api_access_token": chatwoot_token},
-            timeout=10.0,
-        )
-        print(f"[handoff] Assignment HTTP {assign_res.status_code}: {assign_res.text}", flush=True)
-
-        # Step 3: Set priority to high
-        priority_res = await client.patch(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
-            json={"priority": "high"},
-            headers={"api_access_token": chatwoot_token},
-            timeout=10.0,
-        )
-        print(f"[handoff] Priority HTTP {priority_res.status_code}: {priority_res.text}", flush=True)
-
-        # Step 4: Apply label so human agents can spot the conversation
-        label_res = await client.post(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/labels",
-            json={"labels": ["jump_in_chat"]},
-            headers={"api_access_token": chatwoot_token},
-            timeout=10.0,
-        )
-        print(f"[handoff] Label HTTP {label_res.status_code}: {label_res.text}", flush=True)
-
-        # Step 4: Add private note for the human agent
-        note_res = await client.post(
-            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
-            json={
-                "content": "Handed off from AI agent. Please take over this conversation.",
-                "message_type": "outgoing",
-                "private": True,
-            },
-            headers={"api_access_token": chatwoot_token},
-            timeout=10.0,
-        )
-        print(f"[handoff] Private note HTTP {note_res.status_code}: {note_res.text}", flush=True)
-
-    return {"ok": True}
 
 
 async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[str, Any]:
@@ -392,9 +333,9 @@ async def api_chat(
     if os.getenv("RESET_ENABLED", "").lower() == "true" and body.message.strip().lower() == "/reset":
         return await _handle_reset(body.phone_number, sb, server)
 
-    # Human handoff command (dev only — remove once tool-based handoff is built)
+    # Human handoff command (dev only — kept as manual override)
     if body.message.strip().lower() == "/human":
-        await _handle_human_handoff(body.conversation_id)
+        await trigger_human_handoff(body.conversation_id)
         return {"reply": "Please hold on one sec while I check something for you."}
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
@@ -429,6 +370,10 @@ async def api_chat(
                 context=AirlineAgentContext(**stored_context) if stored_context else create_initial_context(),
                 current_agent_name=row.get("current_agent_name") or triage_agent.name,
             )
+
+    # 2b. Inject conversation_id into context so handoff tool can use it
+    if thread_id and thread_id in server._state:
+        server._state[thread_id].context.conversation_id = body.conversation_id
 
     # 3. Run the agent
     reply, new_thread_id = await server.process_plaintext_message(

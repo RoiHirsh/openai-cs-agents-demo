@@ -15,6 +15,8 @@ class AirlineAgentContext(BaseModel):
     new_lead: bool = False
     # Onboarding state tracking
     onboarding_state: dict | None = None
+    # Chatwoot conversation ID — populated per request, used by handoff tool
+    conversation_id: str | None = None
     # Structure: {
     #   "completed_steps": list[str],
     #   "trading_experience": str | None,

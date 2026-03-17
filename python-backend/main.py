@@ -210,7 +210,16 @@ async def _handle_human_handoff(conversation_id: str) -> Dict[str, Any]:
         )
         print(f"[handoff] Assignment HTTP {assign_res.status_code}: {assign_res.text}", flush=True)
 
-        # Step 3: Add private note for the human agent
+        # Step 3: Apply label so human agents can spot the conversation
+        label_res = await client.post(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/labels",
+            json={"labels": ["jump_in_chat"]},
+            headers={"api_access_token": chatwoot_token},
+            timeout=10.0,
+        )
+        print(f"[handoff] Label HTTP {label_res.status_code}: {label_res.text}", flush=True)
+
+        # Step 4: Add private note for the human agent
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
             json={

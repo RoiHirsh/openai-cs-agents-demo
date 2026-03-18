@@ -12,15 +12,8 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Try importing FileSearchTool - adjust import path if needed
-try:
-    from agents.tools import FileSearchTool
-except ImportError:
-    try:
-        from agents import FileSearchTool
-    except ImportError:
-        # Fallback: will use string-based tool configuration if needed
-        FileSearchTool = None
+# Removed: FileSearchTool / OpenAI vector store import.
+# Knowledge search now uses Supabase via knowledge_search.search_knowledge_tool.
 
 from .context import AirlineAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
@@ -39,6 +32,12 @@ except ImportError:
     get_broker_assets = None
     get_country_offers = None
     request_human_handoff = None
+
+# Supabase-backed knowledge search tool (replaces FileSearchTool)
+try:
+    from knowledge_search import search_knowledge_tool
+except ImportError:
+    search_knowledge_tool = None
 
 MODEL = "gpt-5.2"
 
@@ -64,7 +63,7 @@ def faq_instructions(
         "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
         "Use the following routine to support the customer:\n"
         "1. First, check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
-        "2. If a question was asked, use the file_search tool silently in the background — do not mention it to the customer.\n"
+        "2. If a question was asked, call the search_knowledge tool silently in the background — do not mention it to the customer.\n"
         "3. Read the search results and judge whether they clearly and directly answer the user's question. If yes, respond naturally. If no, follow the handoff skill below.\n"
         "4. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'.\n"
         "5. When done answering, return to the Triage Agent.\n\n"
@@ -74,7 +73,9 @@ def faq_instructions(
     )
 
 
-_faq_tools = [FileSearchTool(vector_store_ids=["vs_6943a96a15188191926339603da7e399"])] if FileSearchTool else ["file_search"]
+_faq_tools = []
+if search_knowledge_tool is not None:
+    _faq_tools.append(search_knowledge_tool)
 if request_human_handoff is not None:
     _faq_tools.append(request_human_handoff)
 

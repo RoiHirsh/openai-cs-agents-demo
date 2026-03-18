@@ -47,6 +47,7 @@ from airline.context import (
 from server import AirlineServer
 from airline.context_cache import clear_thread_cache
 from chatwoot import trigger_human_handoff
+from knowledge import router as knowledge_router
 
 app = FastAPI()
 
@@ -54,6 +55,8 @@ app = FastAPI()
 os.environ.setdefault("OPENAI_TRACING_DISABLED", "1")
 
 # CORS configuration (adjust as needed for deployment)
+_DASHBOARD_ORIGIN = os.environ.get("DASHBOARD_ORIGIN", "")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -65,11 +68,15 @@ app.add_middleware(
         r"http://127\.0\.0\.1:\d+",
         r"http://10\.\d+\.\d+\.\d+:\d+",
         r"http://192\.168\.\d+\.\d+:\d+",
+        # Dashboard Railway service (set DASHBOARD_ORIGIN env var in production)
+        *([_DASHBOARD_ORIGIN] if _DASHBOARD_ORIGIN else []),
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(knowledge_router)
 
 chat_server = AirlineServer()
 wa_thread_mapper = WhatsAppThreadMapper()

@@ -323,6 +323,26 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         # Ensure thread exists (create if missing).
         thread = await self._ensure_thread(thread_id, ctx)
 
+        # ── Handoff trigger check (runs before the AI agent) ─────────────────
+        # If the message semantically matches a handoff rule in Supabase, send
+        # the configured default response and trigger human handoff immediately.
+        try:
+            from knowledge_search import check_handoff_triggers
+            from chatwoot import trigger_human_handoff as _trigger_handoff
+            default_resp = check_handoff_triggers(user_text)
+            if default_resp:
+                conversation_id = None
+                state = self._state.get(thread.id)
+                if state and hasattr(state.context, "conversation_id"):
+                    conversation_id = state.context.conversation_id
+                if conversation_id:
+                    await _trigger_handoff(conversation_id)
+                logger.info("[knowledge] Handoff triggered for thread %s", thread.id)
+                return default_resp, thread.id
+        except Exception:
+            # Never block a message because the handoff check failed
+            logger.warning("[knowledge] Handoff check raised an exception", exc_info=True)
+
         # Run the normal `respond()` streaming loop but capture the final assistant text.
         input_user_message = _PlainTextUserMessage(user_text)
         last_assistant_text = ""

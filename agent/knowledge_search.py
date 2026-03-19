@@ -1,78 +1,80 @@
 """
-Semantic search helpers for the agent runtime.
+Semantic search and knowledge helpers for the agent runtime.
 
 Two entry points:
-  1. check_handoff_triggers(user_message) — called from process_plaintext_message
-     BEFORE the agent runs. If a trigger matches, the caller sends the default
-     response and triggers human handoff without ever running the AI agent.
+
+  1. get_handoff_scenarios() — returns the list of active handoff scenarios
+     from Supabase, cached in memory with a 5-minute TTL. Injected into the
+     agent system prompt at runtime so the agent uses its own judgment to match.
 
   2. search_knowledge_tool — an @function_tool for the FAQ agent to call when
      answering questions. Replaces the old OpenAI FileSearchTool / vector store.
 """
 from __future__ import annotations
 
-from typing import Optional
+import logging
+import time
 
 import openai
 from agents import function_tool
 
 from supabase_client import get_supabase_client
 
+logger = logging.getLogger(__name__)
+
 # ─── Tunable thresholds ───────────────────────────────────────────────────────
-# Adjust these constants to tune match sensitivity without hunting through logic.
 
-HANDOFF_THRESHOLD = 0.82   # similarity score to trigger a human handoff
-HANDOFF_COUNT     = 1      # only the top match is needed for handoff decisions
+QA_THRESHOLD = 0.78   # similarity score to inject a Q&A pair
+QA_COUNT     = 3      # inject up to this many matching pairs per message
 
-QA_THRESHOLD      = 0.78   # similarity score to inject a Q&A pair
-QA_COUNT          = 3      # inject up to this many matching pairs per message
+# ─── Handoff scenarios cache ──────────────────────────────────────────────────
+# Fetched from Supabase once and cached in memory. Refreshed every 5 minutes.
+# Injected into agent system prompt as plain text — no embedding/similarity used.
+
+HANDOFF_CACHE_TTL = 300  # seconds
+
+_handoff_scenarios: list[str] = []
+_handoff_fetched_at: float = 0.0
 
 
-# ─── Embedding helpers ────────────────────────────────────────────────────────
+def get_handoff_scenarios() -> list[str]:
+    """
+    Return the list of active handoff scenario descriptions from Supabase.
 
-def _embed_sync(text: str) -> list[float]:
-    """Synchronous embedding — used for handoff check (called outside agent runner)."""
-    client = openai.OpenAI()
-    response = client.embeddings.create(model="text-embedding-3-small", input=text)
-    return response.data[0].embedding
+    Uses an in-memory cache with a 5-minute TTL so the DB is not queried on
+    every message. On cache miss or expiry, fetches fresh data from Supabase.
+    Returns stale cache on fetch error so a DB hiccup never breaks the agent.
+    """
+    global _handoff_scenarios, _handoff_fetched_at
+    now = time.time()
+    if now - _handoff_fetched_at > HANDOFF_CACHE_TTL:
+        try:
+            sb = get_supabase_client()
+            result = (
+                sb.table("handoff_triggers")
+                .select("scenario")
+                .eq("active", True)
+                .order("created_at")
+                .execute()
+            )
+            _handoff_scenarios = [
+                row["scenario"] for row in result.data if row.get("scenario")
+            ]
+            _handoff_fetched_at = now
+            logger.debug("[knowledge] Refreshed handoff scenarios cache (%d rows)", len(_handoff_scenarios))
+        except Exception as exc:
+            logger.warning("[knowledge] Failed to refresh handoff scenarios: %s", exc)
+            # Keep stale cache — a DB hiccup should never break agent responses
+    return _handoff_scenarios
 
+
+# ─── Async embedding helper ───────────────────────────────────────────────────
 
 async def _embed_async(text: str) -> list[float]:
-    """Async embedding — used inside the agent runner (function_tool context)."""
+    """Async embedding used inside the agent runner (function_tool context)."""
     client = openai.AsyncOpenAI()
     response = await client.embeddings.create(model="text-embedding-3-small", input=text)
     return response.data[0].embedding
-
-
-# ─── Handoff check (synchronous, runs before agent) ──────────────────────────
-
-def check_handoff_triggers(user_message: str) -> Optional[str]:
-    """
-    Check whether the user message matches a handoff trigger in Supabase.
-
-    Returns the trigger's default_response string if matched, or None if no match.
-
-    Caller pattern:
-        default_resp = check_handoff_triggers(user_text)
-        if default_resp:
-            await trigger_human_handoff(conversation_id)
-            return default_resp, thread_id
-    """
-    try:
-        embedding = _embed_sync(user_message)
-        sb = get_supabase_client()
-        result = sb.rpc("match_handoff_triggers", {
-            "query_embedding": embedding,
-            "match_threshold": HANDOFF_THRESHOLD,
-            "match_count": HANDOFF_COUNT,
-        }).execute()
-        if result.data:
-            return result.data[0]["default_response"]
-    except Exception as exc:
-        # Never block a message because the handoff check failed
-        import logging
-        logging.getLogger(__name__).warning("[knowledge] handoff check failed: %s", exc)
-    return None
 
 
 # ─── Knowledge search tool (async, used by FAQ agent) ────────────────────────
@@ -115,6 +117,5 @@ async def search_knowledge_tool(query: str) -> str:
         return "\n".join(lines).strip()
 
     except Exception as exc:
-        import logging
-        logging.getLogger(__name__).warning("[knowledge] search failed: %s", exc)
+        logger.warning("[knowledge] search failed: %s", exc)
         return "Knowledge base search is temporarily unavailable."

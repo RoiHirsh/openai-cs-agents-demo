@@ -91,18 +91,28 @@ investments_faq_agent = Agent[AirlineAgentChatContext](
 
 _SCHEDULING_SKILL: str | None = None
 _ONBOARDING_SKILL: str | None = None
-_HANDOFF_SKILL: str | None = None
+_HANDOFF_SKILL_STATIC: str | None = None
 
 
 def _load_handoff_skill() -> str:
-    global _HANDOFF_SKILL
-    if _HANDOFF_SKILL is None:
+    global _HANDOFF_SKILL_STATIC
+    if _HANDOFF_SKILL_STATIC is None:
         skill_path = Path(__file__).parent / "skills" / "handoff" / "SKILL.md"
         try:
-            _HANDOFF_SKILL = skill_path.read_text(encoding="utf-8")
+            _HANDOFF_SKILL_STATIC = skill_path.read_text(encoding="utf-8")
         except OSError:
-            _HANDOFF_SKILL = ""
-    return _HANDOFF_SKILL
+            _HANDOFF_SKILL_STATIC = ""
+    try:
+        from knowledge_search import get_handoff_scenarios
+        scenarios = get_handoff_scenarios()
+        if scenarios:
+            lines = ["\n---\n## Specific Handoff Scenarios\n\nAlways hand off immediately in these specific situations:\n"]
+            for scenario in scenarios:
+                lines.append(f"- {scenario}")
+            return _HANDOFF_SKILL_STATIC + "\n" + "\n".join(lines)
+    except Exception:
+        pass
+    return _HANDOFF_SKILL_STATIC
 
 
 def _load_scheduling_skill() -> str:

@@ -106,9 +106,13 @@ def _load_handoff_skill() -> str:
         from knowledge_search import get_handoff_scenarios
         scenarios = get_handoff_scenarios()
         if scenarios:
-            lines = ["\n---\n## Specific Handoff Scenarios\n\nAlways hand off immediately in these specific situations:\n"]
-            for scenario in scenarios:
-                lines.append(f"- {scenario}")
+            lines = [
+                "\n---\n## Specific Handoff Scenarios\n\n"
+                "For each situation below: call `request_human_handoff`, then respond to the user "
+                "with exactly the message shown after the arrow. Do not paraphrase it.\n"
+            ]
+            for s in scenarios:
+                lines.append(f"- {s['scenario']} → \"{s['default_response']}\"")
             return _HANDOFF_SKILL_STATIC + "\n" + "\n".join(lines)
     except Exception:
         pass

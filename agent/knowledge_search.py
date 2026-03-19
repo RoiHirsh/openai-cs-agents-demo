@@ -33,13 +33,16 @@ QA_COUNT     = 3      # inject up to this many matching pairs per message
 
 HANDOFF_CACHE_TTL = 300  # seconds
 
-_handoff_scenarios: list[str] = []
+_handoff_scenarios: list[dict] = []
 _handoff_fetched_at: float = 0.0
 
+_DEFAULT_HANDOFF_RESPONSE = "Please wait one sec"
 
-def get_handoff_scenarios() -> list[str]:
+
+def get_handoff_scenarios() -> list[dict]:
     """
-    Return the list of active handoff scenario descriptions from Supabase.
+    Return the list of active handoff scenarios from Supabase, each as a dict
+    with 'scenario' and 'default_response' keys.
 
     Uses an in-memory cache with a 5-minute TTL so the DB is not queried on
     every message. On cache miss or expiry, fetches fresh data from Supabase.
@@ -52,13 +55,17 @@ def get_handoff_scenarios() -> list[str]:
             sb = get_supabase_client()
             result = (
                 sb.table("handoff_triggers")
-                .select("scenario")
+                .select("scenario,default_response")
                 .eq("active", True)
                 .order("created_at")
                 .execute()
             )
             _handoff_scenarios = [
-                row["scenario"] for row in result.data if row.get("scenario")
+                {
+                    "scenario": row["scenario"],
+                    "default_response": row.get("default_response") or _DEFAULT_HANDOFF_RESPONSE,
+                }
+                for row in result.data if row.get("scenario")
             ]
             _handoff_fetched_at = now
             logger.debug("[knowledge] Refreshed handoff scenarios cache (%d rows)", len(_handoff_scenarios))

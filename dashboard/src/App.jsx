@@ -405,7 +405,7 @@ function QATab() {
 
 // ─── Handoff Tab ──────────────────────────────────────────────────────────────
 
-const DEFAULT_RESPONSE = 'אחד רגע בבקשה 🙏'
+const DEFAULT_RESPONSE = 'Please wait one sec'
 
 function HandoffTab() {
   const [rows, setRows]           = useState([])

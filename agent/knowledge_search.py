@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Tunable thresholds ───────────────────────────────────────────────────────
 
-QA_THRESHOLD = 0.78   # similarity score to inject a Q&A pair
+QA_THRESHOLD = 0.72   # similarity score to inject a Q&A pair
 QA_COUNT     = 3      # inject up to this many matching pairs per message
 
 # ─── Handoff scenarios cache ──────────────────────────────────────────────────

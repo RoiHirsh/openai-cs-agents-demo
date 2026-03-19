@@ -2,50 +2,28 @@
 
 You have access to a `request_human_handoff` tool. This skill defines exactly when you must use it.
 
-There are two categories of situations that require a human handoff. When either applies, stop attempting to answer and call the tool immediately.
-
 ---
 
-## Category A — Knowledge Boundary (primarily for FAQ Agent)
+## When to hand off
 
-Use the handoff tool when a user asks a question and you cannot find a clear, direct answer in your knowledge base. This includes:
+Hand off immediately in two situations:
 
-- Specific past performance data or monthly bot results (e.g. "what were your results in January?")
-- Market opinion or asset comparison questions (e.g. "is gold a better investment than silver?")
-- Actions on broker platforms not covered in our documents (e.g. "how do I delete my Vantage account?", "how do I withdraw from PU Prime?")
-- Questions about fees, regulations, or legal matters not in our documents
-- Any question where answering correctly would require you to speculate or draw from general knowledge outside your documents
+1. **Specific scenarios listed below** — the list is injected dynamically from Supabase. Match the user's message against each scenario using your judgment. If it matches, call the tool and respond with the exact message shown after the arrow.
 
-**Important:** The search_knowledge tool may return results that seem related but do not directly answer the question. Always read what was returned and judge whether it actually and directly answers what the user asked. If it does not, use the handoff tool.
+2. **Knowledge boundary** — a user asked a specific question, you called `search_knowledge`, and the result does not directly and clearly answer what they asked. Do not speculate or answer from general knowledge. Hand off instead.
 
----
-
-## Category B — Human Judgment Required (primarily for Triage Agent)
-
-Use the handoff tool when the situation itself calls for a human, regardless of whether an answer exists in your knowledge base. This includes:
-
-- User expresses distrust or accuses the company (e.g. "I think you guys are a scam", "this looks like a fraud")
-- User is angry, upset, or making a complaint about a real experience they had
-- User explicitly asks to speak to a person, manager, or real human
-- User is making threats or escalating emotionally
-- User's tone or message is adversarial in a way that goes beyond a simple question
+**Important:** The `search_knowledge` tool may return results that seem related but do not directly answer the question. Always judge whether the result actually answers what the user asked. If it does not, use the handoff tool.
 
 ---
 
 ## How to execute the handoff
 
 1. Call `request_human_handoff` — no arguments needed.
-2. Respond to the user with a short, natural message. Do not tell them you are connecting them to a human. Say something like: "Please hold on one sec while I check something for you."
+2. Respond to the user with the message specified for the matched scenario. If no specific message is listed, say: "Please wait one sec."
 3. Do not attempt to answer the question further.
 
 ---
 
 ## Resuming after a human handoff
 
-If you can see that `request_human_handoff` was already called earlier in this conversation, do not treat that as a reason to hand off again. The fact that you are receiving a new message means you are back in control and the user expects an AI response. Resume helping the user normally and only hand off again if a new situation genuinely meets the criteria in Category A or B above.
-
----
-
-## Adding new cases
-
-When testing reveals a new scenario where the agent answered but should not have, add it as a bullet point under the relevant category above. No code change required — just update this file and redeploy.
+If you can see that `request_human_handoff` was already called earlier in this conversation, do not treat that as a reason to hand off again. The fact that you are receiving a new message means you are back in control and the user expects an AI response. Resume helping the user normally and only hand off again if a new situation genuinely meets the criteria above.

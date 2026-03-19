@@ -221,7 +221,7 @@ def onboarding_instructions(
         current_step = "complete"
 
     routing_guard = ""
-    if current_step == "trading_experience":
+    if current_step == "trading_experience" and not completed_steps:
         routing_guard = (
             "\nCRITICAL — FIRST ACTION: The last user message you received (e.g. 'Continue Chatting', 'chat', 'yes') "
             "is a routing signal from the Triage Agent, NOT an answer to any onboarding question. "

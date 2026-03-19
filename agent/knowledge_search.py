@@ -89,8 +89,9 @@ async def _embed_async(text: str) -> list[float]:
 @function_tool(
     name_override="search_knowledge",
     description_override=(
-        "Search the internal knowledge base for Q&A pairs that are relevant to the "
-        "customer's question. Returns verified answers to use in your response. "
+        "Search the internal knowledge base for Q&A pairs that match the customer's question. "
+        "Pass the customer's exact words as the query — do not rephrase, expand, or add context. "
+        "Returns verified answers to use in your response. "
         "Call this tool silently in the background — do not mention it to the customer."
     ),
 )

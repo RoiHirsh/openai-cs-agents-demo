@@ -85,6 +85,110 @@ function Modal({ title, fields, onSave, onClose, saving, error }) {
   )
 }
 
+// ─── Bulk Import Modal ────────────────────────────────────────────────────────
+
+function BulkImportModal({ title, placeholder, hint, parseRow, endpoint, onDone, onClose }) {
+  const [text, setText]       = useState('')
+  const [phase, setPhase]     = useState('input') // 'input' | 'importing' | 'done'
+  const [error, setError]     = useState('')
+  const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 })
+
+  async function handleImport() {
+    let raw
+    try {
+      raw = JSON.parse(text.trim())
+      if (!Array.isArray(raw)) throw new Error('Expected a JSON array [ ... ]')
+    } catch (e) {
+      setError('Invalid JSON: ' + e.message)
+      return
+    }
+
+    const valid = raw.map(parseRow).filter(Boolean)
+    const skipped = raw.length - valid.length
+
+    if (valid.length === 0) {
+      setError(`No valid rows found (${skipped} skipped due to validation). Check the format.`)
+      return
+    }
+
+    setPhase('importing')
+    setProgress({ done: 0, total: valid.length, failed: 0 })
+
+    let failed = 0
+    for (let i = 0; i < valid.length; i++) {
+      try {
+        await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(valid[i]) })
+      } catch {
+        failed++
+      }
+      setProgress({ done: i + 1, total: valid.length, failed })
+    }
+
+    onDone()
+    setPhase('done')
+    setProgress({ done: valid.length, total: valid.length, failed })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={phase === 'importing' ? undefined : onClose}>
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{title}</h2>
+          {phase !== 'importing' && (
+            <button className="modal-close" onClick={onClose}>✕</button>
+          )}
+        </div>
+
+        {phase === 'input' && (
+          <>
+            <p className="bulk-hint">{hint}</p>
+            <div className="field">
+              <textarea
+                value={text}
+                onChange={e => { setText(e.target.value); setError('') }}
+                rows={12}
+                placeholder={placeholder}
+                autoFocus
+              />
+            </div>
+            {error && <p className="field-error">{error}</p>}
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={onClose}>Cancel</button>
+              <button className="btn-primary" onClick={handleImport} disabled={!text.trim()}>
+                Import
+              </button>
+            </div>
+          </>
+        )}
+
+        {phase === 'importing' && (
+          <div className="bulk-progress">
+            <p>Importing {progress.done} of {progress.total}…</p>
+            <div className="progress-bar-wrap">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${(progress.done / progress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {phase === 'done' && (
+          <>
+            <p className="bulk-done">
+              Done — {progress.total - progress.failed} imported
+              {progress.failed > 0 ? `, ${progress.failed} failed` : ''}.
+            </p>
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={onClose}>Close</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── QA Tab ───────────────────────────────────────────────────────────────────
 
 function QATab() {
@@ -96,6 +200,8 @@ function QATab() {
   const [answer, setAnswer]     = useState('')
   const [saving, setSaving]     = useState(false)
   const [modalError, setModalError] = useState('')
+  const [search, setSearch]     = useState('')
+  const [showBulk, setShowBulk] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -111,6 +217,13 @@ function QATab() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const filtered = search.trim()
+    ? rows.filter(r =>
+        r.question.toLowerCase().includes(search.toLowerCase()) ||
+        r.answer.toLowerCase().includes(search.toLowerCase())
+      )
+    : rows
 
   function openAdd() {
     setQuestion(''); setAnswer(''); setModalError('')
@@ -165,11 +278,38 @@ function QATab() {
     }
   }
 
+  function parseQARow(r) {
+    const q = (r.question || '').trim()
+    const a = (r.answer || '').trim()
+    if (q.length < 10 || a.length < 10) return null
+    return { question: q, answer: a }
+  }
+
   return (
     <div className="tab-content">
+      <div className="search-bar">
+        <input
+          className="search-input"
+          type="text"
+          placeholder="Search questions or answers…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="search-clear" onClick={() => setSearch('')} title="Clear">×</button>
+        )}
+      </div>
+
       <div className="tab-toolbar">
-        <span className="row-count">{rows.length} entries</span>
-        <button className="btn-primary" onClick={openAdd}>+ Add Question</button>
+        <span className="row-count">
+          {search.trim()
+            ? `${filtered.length} of ${rows.length} entries`
+            : `${rows.length} entries`}
+        </span>
+        <div className="toolbar-actions">
+          <button className="btn-outline" onClick={() => setShowBulk(true)}>Bulk Import</button>
+          <button className="btn-primary" onClick={openAdd}>+ Add Question</button>
+        </div>
       </div>
 
       {loading && <p className="status-msg">Loading…</p>}
@@ -178,8 +318,11 @@ function QATab() {
       {!loading && !fetchError && rows.length === 0 && (
         <p className="status-msg">No Q&A pairs yet. Add your first one above.</p>
       )}
+      {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && (
+        <p className="status-msg">No matches for "{search}".</p>
+      )}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <table className="data-table">
           <thead>
             <tr>
@@ -190,7 +333,7 @@ function QATab() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => (
+            {filtered.map(row => (
               <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
                 <td className="cell-truncate">{row.question}</td>
                 <td className="cell-truncate">{row.answer}</td>
@@ -244,6 +387,18 @@ function QATab() {
           }
         />
       )}
+
+      {showBulk && (
+        <BulkImportModal
+          title="Bulk Import Q&A Pairs"
+          hint='Paste a JSON array. Each item must have "question" and "answer" (min 10 chars each).'
+          placeholder={'[\n  { "question": "What is the minimum deposit?", "answer": "The minimum deposit is $500." },\n  { "question": "...", "answer": "..." }\n]'}
+          parseRow={parseQARow}
+          endpoint="/knowledge/qa"
+          onDone={load}
+          onClose={() => setShowBulk(false)}
+        />
+      )}
     </div>
   )
 }
@@ -261,6 +416,8 @@ function HandoffTab() {
   const [defResp, setDefResp]     = useState(DEFAULT_RESPONSE)
   const [saving, setSaving]       = useState(false)
   const [modalError, setModalError] = useState('')
+  const [search, setSearch]       = useState('')
+  const [showBulk, setShowBulk]   = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -276,6 +433,10 @@ function HandoffTab() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const filtered = search.trim()
+    ? rows.filter(r => r.scenario.toLowerCase().includes(search.toLowerCase()))
+    : rows
 
   function openAdd() {
     setScenario(''); setDefResp(DEFAULT_RESPONSE); setModalError('')
@@ -336,11 +497,37 @@ function HandoffTab() {
     }
   }
 
+  function parseHandoffRow(r) {
+    const s = (r.scenario || '').trim()
+    if (s.length < 10) return null
+    return { scenario: s, default_response: (r.default_response || DEFAULT_RESPONSE).trim() }
+  }
+
   return (
     <div className="tab-content">
+      <div className="search-bar">
+        <input
+          className="search-input"
+          type="text"
+          placeholder="Search scenarios…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="search-clear" onClick={() => setSearch('')} title="Clear">×</button>
+        )}
+      </div>
+
       <div className="tab-toolbar">
-        <span className="row-count">{rows.length} rules</span>
-        <button className="btn-primary" onClick={openAdd}>+ Add Handoff Rule</button>
+        <span className="row-count">
+          {search.trim()
+            ? `${filtered.length} of ${rows.length} rules`
+            : `${rows.length} rules`}
+        </span>
+        <div className="toolbar-actions">
+          <button className="btn-outline" onClick={() => setShowBulk(true)}>Bulk Import</button>
+          <button className="btn-primary" onClick={openAdd}>+ Add Handoff Rule</button>
+        </div>
       </div>
 
       {loading && <p className="status-msg">Loading…</p>}
@@ -349,8 +536,11 @@ function HandoffTab() {
       {!loading && !fetchError && rows.length === 0 && (
         <p className="status-msg">No handoff rules yet. Add your first one above.</p>
       )}
+      {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && (
+        <p className="status-msg">No matches for "{search}".</p>
+      )}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <table className="data-table">
           <thead>
             <tr>
@@ -361,7 +551,7 @@ function HandoffTab() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => (
+            {filtered.map(row => (
               <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
                 <td className="cell-truncate">{row.scenario}</td>
                 <td className="cell-truncate">{row.default_response}</td>
@@ -412,6 +602,18 @@ function HandoffTab() {
               </div>
             </>
           }
+        />
+      )}
+
+      {showBulk && (
+        <BulkImportModal
+          title="Bulk Import Handoff Rules"
+          hint='Paste a JSON array. Each item must have "scenario" (min 10 chars). "default_response" is optional.'
+          placeholder={'[\n  { "scenario": "User asks about a withdrawal problem or payment issue" },\n  { "scenario": "..." }\n]'}
+          parseRow={parseHandoffRow}
+          endpoint="/knowledge/handoff"
+          onDone={load}
+          onClose={() => setShowBulk(false)}
         />
       )}
     </div>

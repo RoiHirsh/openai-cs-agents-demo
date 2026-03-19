@@ -116,11 +116,55 @@
   flex: 1;
 }
 
+/* ── Search bar ──────────────────────────────────────────────────────────── */
+
+.search-bar {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 9px 36px 9px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #1a1a2e;
+}
+
+.search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #aaa;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.search-clear:hover { color: #333; }
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
 .tab-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .row-count {
@@ -229,6 +273,62 @@
 }
 
 .btn-icon:hover { background: #f0f0f0; }
+
+.btn-outline {
+  background: #fff;
+  color: #1a1a2e;
+  border: 1px solid #1a1a2e;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-outline:hover { background: #f0f0f4; }
+
+/* ── Bulk import modal ───────────────────────────────────────────────────── */
+
+.modal-wide {
+  width: 640px;
+}
+
+.bulk-hint {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.bulk-progress {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  text-align: center;
+  color: #555;
+}
+
+.progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #1a1a2e;
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.bulk-done {
+  text-align: center;
+  color: #2e7d32;
+  font-weight: 500;
+  padding: 12px 0;
+}
 
 .btn-logout {
   background: transparent;

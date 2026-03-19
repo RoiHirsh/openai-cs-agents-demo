@@ -23,15 +23,6 @@ from supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
-from twilio_whatsapp import (
-    WhatsAppMessageCoalescer,
-    WhatsAppThreadMapper,
-    build_public_request_url,
-    load_twilio_whatsapp_config,
-    send_whatsapp_message,
-    validate_twilio_signature,
-)
-
 from airline.agents import (
     investments_faq_agent,
     onboarding_agent,
@@ -79,8 +70,6 @@ app.add_middleware(
 app.include_router(knowledge_router)
 
 chat_server = AirlineServer()
-wa_thread_mapper = WhatsAppThreadMapper()
-wa_coalescer = WhatsAppMessageCoalescer()
 
 
 def get_server() -> AirlineServer:
@@ -408,95 +397,6 @@ async def api_chat(
 
     return {"reply": reply}
 
-
-@app.post("/twilio/whatsapp/webhook")
-async def twilio_whatsapp_webhook(
-    request: Request,
-    server: AirlineServer = Depends(get_server),
-) -> Response:
-    """
-    Twilio WhatsApp inbound webhook.
-
-    We validate the Twilio signature (when configured), then enqueue the message
-    in the coalescer. The coalescer waits DEBOUNCE_SECONDS after the last message
-    (debounce), runs the agent once with all messages combined, and sends one reply.
-    If a new message arrives while the agent is running, we cancel and re-debounce
-    with the full batch so the user gets a single response per burst.
-    """
-    cfg = load_twilio_whatsapp_config()
-    try:
-        form = await request.form()
-        wa_from = str(form.get("From") or "")
-        body = str(form.get("Body") or "")
-        # `To` is the Twilio WhatsApp number that received the message (e.g. sandbox number).
-        wa_to = str(form.get("To") or "")
-        message_sid = str(form.get("MessageSid") or "")
-
-        if not wa_from or not body:
-            return Response(
-                content=json.dumps({"ok": False, "error": "Missing From/Body"}),
-                status_code=400,
-                media_type="application/json",
-            )
-
-        # Optional signature validation (recommended for deployed public URL).
-        if cfg.auth_token and cfg.public_base_url:
-            signature = request.headers.get("X-Twilio-Signature")
-            full_url = build_public_request_url(
-                public_base_url=cfg.public_base_url,
-                path=request.url.path,
-                query_params=dict(request.query_params),
-            )
-            if not validate_twilio_signature(
-                auth_token=cfg.auth_token,
-                signature_header=signature,
-                full_url=full_url,
-                form_params=form,
-            ):
-                return Response(
-                    content=json.dumps({"ok": False, "error": "Invalid signature"}),
-                    status_code=403,
-                    media_type="application/json",
-                )
-
-        # Enqueue message; coalescer will debounce, then run agent once and send reply.
-        async def flush_callback(wa_from_arg: str, combined_text: str) -> None:
-            thread_id = wa_thread_mapper.get(wa_from_arg)
-            assistant_text, new_thread_id = await server.process_plaintext_message(
-                thread_id=thread_id,
-                user_text=combined_text,
-                request_context={"request": None},
-            )
-            wa_thread_mapper.set(wa_from_arg, new_thread_id)
-            if cfg.account_sid and cfg.auth_token:
-                send_whatsapp_message(
-                    account_sid=cfg.account_sid,
-                    auth_token=cfg.auth_token,
-                    to=wa_from_arg,
-                    body=assistant_text or "(no response)",
-                    whatsapp_from=cfg.whatsapp_from or wa_to or None,
-                    messaging_service_sid=cfg.messaging_service_sid,
-                )
-
-        await wa_coalescer.add_message(wa_from, body, flush_callback)
-
-        return Response(
-            content=json.dumps(
-                {
-                    "ok": True,
-                    "message_sid": message_sid,
-                }
-            ),
-            status_code=200,
-            media_type="application/json",
-        )
-    except Exception:
-        logger.exception("Unhandled exception in /twilio/whatsapp/webhook")
-        return Response(
-            content=json.dumps({"ok": False, "error": "Internal server error"}),
-            status_code=500,
-            media_type="application/json",
-        )
 
 
 __all__ = [

@@ -6,5 +6,4 @@ uvicorn
 python-dotenv
 httpx
 pytz
-twilio
 supabase

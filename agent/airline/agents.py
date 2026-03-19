@@ -220,10 +220,20 @@ def onboarding_instructions(
     else:
         current_step = "complete"
 
+    routing_guard = ""
+    if current_step == "trading_experience":
+        routing_guard = (
+            "\nCRITICAL — FIRST ACTION: The last user message you received (e.g. 'Continue Chatting', 'chat', 'yes') "
+            "is a routing signal from the Triage Agent, NOT an answer to any onboarding question. "
+            "You must respond by asking ONLY: \"Do you have prior trading experience?\" "
+            "Do not call any tool, do not record any state, do not infer any answer. Just ask the question.\n"
+        )
+
     skill_content = _load_onboarding_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
+        f"{routing_guard}"
         "You are the Onboarding Agent. Your role is to guide new leads through the onboarding process step by step.\n"
         "\n"
         "Lead information (ALREADY PROVIDED - DO NOT ASK FOR THIS):\n"

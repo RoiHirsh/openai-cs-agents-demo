@@ -19,6 +19,8 @@ We already have the lead's **name** and **country** from the campaign. **Do not 
 
 If `trading_experience` is **not** in completed_steps:
 
+**CRITICAL:** The message that transferred you here ("Continue Chatting", "chat", "yes", or any routing phrase) is a signal from the triage flow — it is **not** an answer to any onboarding question. Always ask the trading experience question first and wait for the user's actual answer before recording anything.
+
 1. **Message 1:** Ask only: **"Do you have prior trading experience?"**
 2. **If NO:** Call `update_onboarding_state(step_name="trading_experience", trading_experience="no")` and move to Phase 2 (bot recommendation).
 3. **If YES:** Do **not** call `update_onboarding_state` yet. Send **message 2a only**: **"Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?"** Wait for the user's response.

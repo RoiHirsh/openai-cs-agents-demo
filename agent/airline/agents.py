@@ -1,19 +1,17 @@
 from __future__ import annotations as _annotations
 
 import logging
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from agents import Agent, RunContextWrapper, handoff
+from agents import Agent, FileSearchTool, RunContextWrapper, handoff
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-# Removed: FileSearchTool / OpenAI vector store import.
-# Knowledge search now uses Supabase via knowledge_search.search_knowledge_tool.
 
 from .context import AirlineAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
@@ -33,11 +31,7 @@ except ImportError:
     get_country_offers = None
     request_human_handoff = None
 
-# Supabase-backed knowledge search tool (replaces FileSearchTool)
-try:
-    from knowledge_search import search_knowledge_tool
-except ImportError:
-    search_knowledge_tool = None
+_VECTOR_STORE_ID = os.environ.get("OPENAI_VECTOR_STORE_ID", "")
 
 MODEL = "gpt-5.2"
 
@@ -63,9 +57,9 @@ def faq_instructions(
         "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
         "Use the following routine to support the customer:\n"
         "1. First, check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
-        "2. If a question was asked, call the search_knowledge tool silently in the background — do not mention it to the customer.\n"
-        "3. Read the search results and judge whether they clearly and directly answer the user's question. If yes, respond naturally. If no, follow the handoff skill below.\n"
-        "4. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'.\n"
+        "2. Search your knowledge base for a relevant answer. If found, respond naturally and confidently.\n"
+        "3. If no relevant answer is found in the knowledge base, follow the handoff skill below.\n"
+        "4. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n"
         "5. When done answering, return to the Triage Agent.\n\n"
         "---\n"
         "## Human Handoff Skill\n\n"
@@ -74,8 +68,8 @@ def faq_instructions(
 
 
 _faq_tools = []
-if search_knowledge_tool is not None:
-    _faq_tools.append(search_knowledge_tool)
+if _VECTOR_STORE_ID:
+    _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
 if request_human_handoff is not None:
     _faq_tools.append(request_human_handoff)
 

@@ -131,6 +131,31 @@ Only after Step 8 is fully confirmed:
 
 ---
 
+## Step 10 — Dashboard: Search Field
+
+Add a search/filter field at the top of both the Knowledge Base tab and the Handoff Rules tab so the team can quickly find and edit existing entries.
+
+- [ ] Knowledge Base tab: text input that filters the displayed Q&A list in real time by question or answer text (client-side, no API call needed)
+- [ ] Handoff Rules tab: same — filters by scenario text
+- [ ] Clear button (×) to reset the filter
+- [ ] No results state: show "No matches" message when filter returns nothing
+- [ ] Search is case-insensitive
+
+---
+
+## Step 11 — Dashboard: Bulk Import
+
+Add a "Bulk Import" button on each tab that lets the team paste or upload a list of entries instead of adding them one by one.
+
+- [ ] Knowledge Base tab: button opens a modal — user pastes JSON array of `[{ "question": "...", "answer": "..." }]` or CSV with two columns (question, answer)
+- [ ] Handoff Rules tab: same — accepts JSON array of `[{ "scenario": "..." }]` or single-column CSV
+- [ ] Validate each row before submitting (min 10 chars on required fields, skip blanks)
+- [ ] Submit all rows sequentially to the existing POST endpoints; show progress count ("Importing 3 of 20...")
+- [ ] On completion: show success summary ("18 imported, 2 skipped") and refresh the list
+- [ ] On partial failure: continue importing remaining rows, report which failed at the end
+
+---
+
 ## Environment Variables Reference
 
 | Variable | Service | Notes |

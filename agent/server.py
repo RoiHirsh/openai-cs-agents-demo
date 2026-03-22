@@ -793,7 +793,7 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             state.guardrails = checks
-            refusal = "Sorry, I can only answer questions related to financing trading bot services and related topics."
+            refusal = "I'm not able to help with that."
             state.input_items.append({"role": "assistant", "content": refusal})
             yield ThreadItemDoneEvent(
                 item=AssistantMessageItem(

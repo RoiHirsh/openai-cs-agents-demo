@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 from .context import LucentiveAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
-from .guardrails import jailbreak_guardrail, relevance_guardrail
+from .guardrails import jailbreak_guardrail
 from .tools import (
     get_broker_assets,
     get_country_offers,
@@ -126,7 +126,7 @@ investments_faq_agent = Agent[LucentiveAgentChatContext](
     handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
     instructions=faq_instructions,
     tools=_faq_tools,
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    input_guardrails=[jailbreak_guardrail],
 )
 
 
@@ -171,7 +171,7 @@ scheduling_agent = Agent[LucentiveAgentChatContext](
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
     tools=[get_scheduling_context, request_human_handoff],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    input_guardrails=[jailbreak_guardrail],
 )
 
 
@@ -271,7 +271,7 @@ onboarding_agent = Agent[LucentiveAgentChatContext](
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
     tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state, request_human_handoff],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    input_guardrails=[jailbreak_guardrail],
 )
 
 
@@ -352,7 +352,7 @@ triage_agent = Agent[LucentiveAgentChatContext](
     instructions=triage_instructions,
     tools=[update_lead_info, request_human_handoff],
     handoffs=[],
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+    input_guardrails=[jailbreak_guardrail],
 )
 
 

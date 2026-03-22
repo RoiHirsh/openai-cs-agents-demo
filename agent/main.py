@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from chatkit.types import ThreadMetadata
 from server import ConversationState
-from supabase_client import get_supabase_client
+from integrations.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ from lucentive.context import (
 )
 from server import LucentiveServer
 from lucentive.context_cache import clear_thread_cache
-from chatwoot import trigger_human_handoff
-from knowledge import router as knowledge_router
+from integrations.chatwoot import trigger_human_handoff
+from knowledge.knowledge import router as knowledge_router
 
 app = FastAPI()
 
@@ -175,7 +175,7 @@ async def health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
-from chatwoot import _CHATWOOT_BASE  # single source of truth
+from integrations.chatwoot import _CHATWOOT_BASE  # single source of truth
 
 _N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
 

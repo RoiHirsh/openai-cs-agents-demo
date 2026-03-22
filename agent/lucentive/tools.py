@@ -14,7 +14,7 @@ from .scheduling import CALENDLY_BOOKING_URL, compute_scheduling_context
 
 # Import here to avoid circular dependency — chatwoot is a top-level module
 try:
-    from chatwoot import trigger_human_handoff as _trigger_human_handoff
+    from integrations.chatwoot import trigger_human_handoff as _trigger_human_handoff
 except ImportError:
     _trigger_human_handoff = None
 

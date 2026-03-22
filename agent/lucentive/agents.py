@@ -50,7 +50,7 @@ def _load_handoff_skill() -> str:
         except OSError:
             _HANDOFF_SKILL_STATIC = ""
     try:
-        from knowledge_search import get_handoff_scenarios
+        from knowledge.knowledge_search import get_handoff_scenarios
         scenarios = get_handoff_scenarios()
         if scenarios:
             lines = [

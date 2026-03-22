@@ -17,7 +17,7 @@ import openai
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 
-from supabase_client import get_supabase_client
+from integrations.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

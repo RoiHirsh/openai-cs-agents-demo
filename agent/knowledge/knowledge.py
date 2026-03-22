@@ -10,11 +10,13 @@ from __future__ import annotations
 import io
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import openai
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 
 from integrations.supabase_client import get_supabase_client
@@ -48,21 +50,37 @@ def _embed(text: str) -> List[float]:
 # Vector store sync
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _sync_qa_vector_store() -> None:
+def _poll_vector_store_file(
+    client: openai.OpenAI,
+    vector_store_id: str,
+    file_id: str,
+    timeout: int = 30,
+    interval: float = 1.0,
+) -> None:
+    """Poll until the vector store file status is 'completed' or raise on failure/timeout."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        vf = client.vector_stores.files.retrieve(file_id, vector_store_id=vector_store_id)
+        if vf.status == "completed":
+            return
+        if vf.status == "failed":
+            detail = getattr(vf, "last_error", None)
+            raise RuntimeError(f"Vector store file indexing failed: {detail}")
+        time.sleep(interval)
+    raise TimeoutError(f"Vector store file {file_id} did not complete indexing within {timeout}s")
+
+
+def _sync_qa_vector_store() -> Dict[str, Any]:
     """
     Fetch all active qa_pairs from Supabase, build a single plain-text file,
     replace the existing file in the OpenAI vector store with it.
 
-    Steps:
-      1. Fetch all active rows.
-      2. Build file content (Q+A for each row).
-      3. List + delete all existing files attached to the vector store.
-      4. Upload the new file and attach it to the vector store.
+    Returns {"synced": True} on success or {"synced": False, "sync_error": "..."} on failure.
     """
     vector_store_id = os.environ.get("OPENAI_VECTOR_STORE_ID", "")
     if not vector_store_id:
         logger.warning("[knowledge] OPENAI_VECTOR_STORE_ID not set — skipping vector store sync")
-        return
+        return {"synced": True, "sync_error": None}
 
     sb = get_supabase_client()
     rows = sb.table("qa_pairs").select("question,answer").eq("active", True).order("created_at").execute().data
@@ -89,14 +107,20 @@ def _sync_qa_vector_store() -> None:
     except Exception as exc:
         logger.warning("[knowledge] Failed to delete old vector store files: %s", exc)
 
-    # Upload new file and attach to vector store
-    file_bytes = content.encode("utf-8")
-    uploaded = client.files.create(
-        file=("knowledge_base.txt", io.BytesIO(file_bytes), "text/plain"),
-        purpose="assistants",
-    )
-    client.vector_stores.files.create(vector_store_id, file_id=uploaded.id)
-    logger.info("[knowledge] Vector store %s synced — %d Q&A pairs, file %s", vector_store_id, len(rows), uploaded.id)
+    # Upload new file, attach to vector store, and wait for indexing to complete
+    try:
+        file_bytes = content.encode("utf-8")
+        uploaded = client.files.create(
+            file=("knowledge_base.txt", io.BytesIO(file_bytes), "text/plain"),
+            purpose="assistants",
+        )
+        client.vector_stores.files.create(vector_store_id, file_id=uploaded.id)
+        _poll_vector_store_file(client, vector_store_id, uploaded.id)
+        logger.info("[knowledge] Vector store %s synced — %d Q&A pairs, file %s", vector_store_id, len(rows), uploaded.id)
+        return {"synced": True, "sync_error": None}
+    except Exception as exc:
+        logger.error("[knowledge] Vector store sync failed: %s", exc, exc_info=True)
+        return {"synced": False, "sync_error": str(exc)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -142,18 +166,22 @@ def list_qa_pairs() -> List[Dict[str, Any]]:
 
 
 @router.post("/qa", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
-def create_qa_pair(body: QAPairCreate) -> Dict[str, Any]:
+def create_qa_pair(body: QAPairCreate, response: Response) -> Dict[str, Any]:
     sb = get_supabase_client()
     res = sb.table("qa_pairs").insert({
         "question": body.question,
         "answer": body.answer,
     }).execute()
-    _sync_qa_vector_store()
-    return res.data[0]
+    sync = _sync_qa_vector_store()
+    row = res.data[0]
+    if not sync["synced"]:
+        response.status_code = status.HTTP_207_MULTI_STATUS
+        return {**row, "synced": False, "sync_error": sync["sync_error"]}
+    return {**row, "synced": True, "sync_error": None}
 
 
 @router.put("/qa/{row_id}", response_model=Dict[str, Any])
-def update_qa_pair(row_id: UUID, body: QAPairUpdate) -> Dict[str, Any]:
+def update_qa_pair(row_id: UUID, body: QAPairUpdate, response: Response) -> Dict[str, Any]:
     sb = get_supabase_client()
     updates: Dict[str, Any] = {}
 
@@ -170,15 +198,25 @@ def update_qa_pair(row_id: UUID, body: QAPairUpdate) -> Dict[str, Any]:
     res = sb.table("qa_pairs").update(updates).eq("id", str(row_id)).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Row not found")
-    _sync_qa_vector_store()
-    return res.data[0]
+    sync = _sync_qa_vector_store()
+    row = res.data[0]
+    if not sync["synced"]:
+        response.status_code = status.HTTP_207_MULTI_STATUS
+        return {**row, "synced": False, "sync_error": sync["sync_error"]}
+    return {**row, "synced": True, "sync_error": None}
 
 
-@router.delete("/qa/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_qa_pair(row_id: UUID) -> None:
+@router.delete("/qa/{row_id}")
+def delete_qa_pair(row_id: UUID) -> Response:
     sb = get_supabase_client()
     sb.table("qa_pairs").delete().eq("id", str(row_id)).execute()
-    _sync_qa_vector_store()
+    sync = _sync_qa_vector_store()
+    if not sync["synced"]:
+        return JSONResponse(
+            status_code=status.HTTP_207_MULTI_STATUS,
+            content={"deleted": True, "synced": False, "sync_error": sync["sync_error"]},
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ── handoff_triggers ─────────────────────────────────────────────────────────

@@ -134,6 +134,7 @@ def scheduling_instructions(
     run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
 ) -> str:
     skill_content = _load_scheduling_skill()
+    handoff_skill = _load_handoff_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
@@ -158,6 +159,9 @@ def scheduling_instructions(
         "## Scheduling skill\n"
         "\n"
         f"{skill_content}"
+        "\n\n---\n"
+        "## Human Handoff Skill\n\n"
+        f"{handoff_skill}"
     )
 
 
@@ -219,6 +223,7 @@ def onboarding_instructions(
         )
 
     skill_content = _load_onboarding_skill()
+    handoff_skill = _load_handoff_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
@@ -254,6 +259,9 @@ def onboarding_instructions(
         "## Onboarding skill\n"
         "\n"
         f"{skill_content}"
+        "\n\n---\n"
+        "## Human Handoff Skill\n\n"
+        f"{handoff_skill}"
     )
 
 

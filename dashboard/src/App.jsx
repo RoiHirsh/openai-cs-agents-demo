@@ -204,6 +204,7 @@ function QATab() {
   const [answer, setAnswer]         = useState('')
   const [saving, setSaving]         = useState(false)
   const [modalError, setModalError] = useState('')
+  const [syncWarning, setSyncWarning] = useState('')
   const [search, setSearch]         = useState('')
   const [showBulk, setShowBulk]     = useState(false)
 
@@ -231,26 +232,38 @@ function QATab() {
     const q = question.trim(), a = answer.trim()
     if (q.length < 10) { setModalError('Question must be at least 10 characters'); return }
     if (a.length < 10) { setModalError('Answer must be at least 10 characters'); return }
-    setSaving(true); setModalError('')
+    setSaving(true); setModalError(''); setSyncWarning('')
     try {
+      let result
       if (modal.mode === 'add') {
-        await apiFetch('/knowledge/qa', { method: 'POST', body: JSON.stringify({ question: q, answer: a }) })
+        result = await apiFetch('/knowledge/qa', { method: 'POST', body: JSON.stringify({ question: q, answer: a }) })
       } else {
-        await apiFetch(`/knowledge/qa/${modal.row.id}`, { method: 'PUT', body: JSON.stringify({ question: q, answer: a }) })
+        result = await apiFetch(`/knowledge/qa/${modal.row.id}`, { method: 'PUT', body: JSON.stringify({ question: q, answer: a }) })
       }
       closeModal(); await load()
+      if (result?.synced === false) setSyncWarning(`Saved, but FAQ knowledge base sync failed: ${result.sync_error}`)
     } catch (e) { setModalError(e.message) }
     finally { setSaving(false) }
   }
 
   async function handleToggle(row) {
-    try { await apiFetch(`/knowledge/qa/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) }); await load() }
+    setSyncWarning('')
+    try {
+      const result = await apiFetch(`/knowledge/qa/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) })
+      await load()
+      if (result?.synced === false) setSyncWarning(`Saved, but FAQ knowledge base sync failed: ${result.sync_error}`)
+    }
     catch (e) { alert(e.message) }
   }
 
   async function handleDelete(row) {
     if (!confirm(`Delete this Q&A pair?\n\n"${row.question.slice(0, 80)}"`)) return
-    try { await apiFetch(`/knowledge/qa/${row.id}`, { method: 'DELETE' }); await load() }
+    setSyncWarning('')
+    try {
+      const result = await apiFetch(`/knowledge/qa/${row.id}`, { method: 'DELETE' })
+      await load()
+      if (result?.synced === false) setSyncWarning(`Deleted, but FAQ knowledge base sync failed: ${result.sync_error}`)
+    }
     catch (e) { alert(e.message) }
   }
 
@@ -276,6 +289,7 @@ function QATab() {
 
       {loading && <p className="status-msg">Loading…</p>}
       {fetchError && <p className="status-msg error">{fetchError}</p>}
+      {syncWarning && <p className="status-msg warning">{syncWarning} <button className="btn-link" onClick={() => setSyncWarning('')}>Dismiss</button></p>}
       {!loading && !fetchError && rows.length === 0 && <p className="status-msg">No Q&A pairs yet.</p>}
       {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && <p className="status-msg">No matches for "{search}".</p>}
 

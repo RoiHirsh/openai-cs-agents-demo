@@ -167,6 +167,27 @@
   gap: 8px;
 }
 
+.toolbar-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar-filters select {
+  padding: 6px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.toolbar-filters select:focus {
+  outline: none;
+  border-color: #1a1a2e;
+}
+
 .row-count {
   font-size: 13px;
   color: #888;

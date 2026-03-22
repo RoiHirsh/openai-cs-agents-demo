@@ -476,6 +476,7 @@ function BrokerAssetsTab() {
   const [search, setSearch]         = useState('')
   const [filterBroker, setFilterBroker]   = useState('all')
   const [filterPurpose, setFilterPurpose] = useState('all')
+  const [filterType, setFilterType]       = useState('all')
   const [filterBot, setFilterBot]         = useState('all')
   const [brokerOptions, setBrokerOptions] = useState([])
 
@@ -509,13 +510,14 @@ function BrokerAssetsTab() {
   }, [])
 
   const filtered = rows.filter(r => {
-    const matchesBroker  = filterBroker  === 'all' || r.broker  === filterBroker
-    const matchesPurpose = filterPurpose === 'all' || r.purpose === filterPurpose
+    const matchesBroker  = filterBroker  === 'all' || r.broker      === filterBroker
+    const matchesPurpose = filterPurpose === 'all' || r.purpose     === filterPurpose
+    const matchesType    = filterType    === 'all' || r.asset_type  === filterType
     const matchesBot     = filterBot     === 'all' || (filterBot === '_generic' ? !r.bot : r.bot === filterBot)
     const matchesSearch  = !search.trim() ||
       r.title.toLowerCase().includes(search.toLowerCase()) ||
       r.url.toLowerCase().includes(search.toLowerCase())
-    return matchesBroker && matchesPurpose && matchesBot && matchesSearch
+    return matchesBroker && matchesPurpose && matchesType && matchesBot && matchesSearch
   })
 
   function openAdd() {
@@ -576,6 +578,10 @@ function BrokerAssetsTab() {
           <select value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)}>
             <option value="all">All purposes</option>
             {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <option value="all">All types</option>
+            {ASSET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           <select value={filterBot} onChange={e => setFilterBot(e.target.value)}>
             <option value="all">All bots</option>
@@ -683,6 +689,7 @@ function CountryOffersTab() {
   const [search, setSearch]         = useState('')
   const [filterCountry, setFilterCountry] = useState('all')
   const [filterBroker, setFilterBroker]   = useState('all')
+  const [filterBot, setFilterBot]         = useState('all')
 
   const [brokerOptions, setBrokerOptions]           = useState([])
   const [countryGroupOptions, setCountryGroupOptions] = useState([])
@@ -722,11 +729,12 @@ function CountryOffersTab() {
   const filtered = rows.filter(r => {
     const matchesCountry = filterCountry === 'all' || r.country_group === filterCountry
     const matchesBroker  = filterBroker  === 'all' || r.broker_name  === filterBroker
+    const matchesBot     = filterBot     === 'all' || (r.bots || []).includes(filterBot)
     const matchesSearch  = !search.trim() ||
       r.country_group.toLowerCase().includes(search.toLowerCase()) ||
       r.broker_name.toLowerCase().includes(search.toLowerCase()) ||
       (r.bots || []).some(b => b.toLowerCase().includes(search.toLowerCase()))
-    return matchesCountry && matchesBroker && matchesSearch
+    return matchesCountry && matchesBroker && matchesBot && matchesSearch
   })
 
   function toggleBot(botName) {
@@ -806,6 +814,10 @@ function CountryOffersTab() {
           <select value={filterBroker} onChange={e => setFilterBroker(e.target.value)}>
             <option value="all">All brokers</option>
             {uniqueBrokers.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select value={filterBot} onChange={e => setFilterBot(e.target.value)}>
+            <option value="all">All bots</option>
+            {botOptions.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
           </select>
           <span className="row-count">{filtered.length} of {rows.length} entries</span>
         </div>
@@ -909,6 +921,7 @@ function BrokersTab() {
   const [modal, setModal]           = useState(null)
   const [saving, setSaving]         = useState(false)
   const [modalError, setModalError] = useState('')
+  const [search, setSearch]         = useState('')
 
   const [fBrokerId, setFBrokerId]       = useState('')
   const [fDisplayName, setFDisplayName] = useState('')
@@ -961,22 +974,35 @@ function BrokersTab() {
     catch (e) { alert(e.message) }
   }
 
+  const filtered = search.trim()
+    ? rows.filter(r =>
+        r.broker_id.toLowerCase().includes(search.toLowerCase()) ||
+        r.display_name.toLowerCase().includes(search.toLowerCase()) ||
+        (r.aliases || []).some(a => a.toLowerCase().includes(search.toLowerCase()))
+      )
+    : rows
+
   return (
     <div className="tab-content">
+      <div className="search-bar">
+        <input className="search-input" type="text" placeholder="Search brokers…" value={search} onChange={e => setSearch(e.target.value)} />
+        {search && <button className="search-clear" onClick={() => setSearch('')} title="Clear">×</button>}
+      </div>
       <div className="tab-toolbar">
-        <span className="row-count">{rows.length} brokers</span>
+        <span className="row-count">{search.trim() ? `${filtered.length} of ${rows.length} brokers` : `${rows.length} brokers`}</span>
         <button className="btn-primary" onClick={openAdd}>+ Add Broker</button>
       </div>
 
       {loading && <p className="status-msg">Loading…</p>}
       {fetchError && <p className="status-msg error">{fetchError}</p>}
       {!loading && !fetchError && rows.length === 0 && <p className="status-msg">No brokers yet.</p>}
+      {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && <p className="status-msg">No matches for "{search}".</p>}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <table className="data-table">
           <thead><tr><th>ID (slug)</th><th>Display Name</th><th>Aliases</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            {rows.map(row => (
+            {filtered.map(row => (
               <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
                 <td><code>{row.broker_id}</code></td>
                 <td>{row.display_name}</td>
@@ -1037,6 +1063,7 @@ function CountriesTab() {
   const [modal, setModal]           = useState(null)
   const [saving, setSaving]         = useState(false)
   const [modalError, setModalError] = useState('')
+  const [search, setSearch]         = useState('')
 
   const [fName, setFName]       = useState('')
   const [fAliases, setFAliases] = useState('')
@@ -1083,22 +1110,34 @@ function CountriesTab() {
     catch (e) { alert(e.message) }
   }
 
+  const filtered = search.trim()
+    ? rows.filter(r =>
+        r.name.toLowerCase().includes(search.toLowerCase()) ||
+        (r.aliases || []).some(a => a.toLowerCase().includes(search.toLowerCase()))
+      )
+    : rows
+
   return (
     <div className="tab-content">
+      <div className="search-bar">
+        <input className="search-input" type="text" placeholder="Search countries…" value={search} onChange={e => setSearch(e.target.value)} />
+        {search && <button className="search-clear" onClick={() => setSearch('')} title="Clear">×</button>}
+      </div>
       <div className="tab-toolbar">
-        <span className="row-count">{rows.length} country groups</span>
+        <span className="row-count">{search.trim() ? `${filtered.length} of ${rows.length} country groups` : `${rows.length} country groups`}</span>
         <button className="btn-primary" onClick={openAdd}>+ Add Country</button>
       </div>
 
       {loading && <p className="status-msg">Loading…</p>}
       {fetchError && <p className="status-msg error">{fetchError}</p>}
       {!loading && !fetchError && rows.length === 0 && <p className="status-msg">No country groups yet.</p>}
+      {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && <p className="status-msg">No matches for "{search}".</p>}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <table className="data-table">
           <thead><tr><th>Name</th><th>Aliases</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            {rows.map(row => (
+            {filtered.map(row => (
               <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
                 <td><strong>{row.name}</strong></td>
                 <td className="cell-truncate">{(row.aliases || []).join(', ')}</td>
@@ -1151,6 +1190,7 @@ function BotsTab() {
   const [modal, setModal]           = useState(null)
   const [saving, setSaving]         = useState(false)
   const [modalError, setModalError] = useState('')
+  const [search, setSearch]         = useState('')
   const [fName, setFName]           = useState('')
 
   const load = useCallback(async () => {
@@ -1191,22 +1231,31 @@ function BotsTab() {
     catch (e) { alert(e.message) }
   }
 
+  const filtered = search.trim()
+    ? rows.filter(r => r.name.toLowerCase().includes(search.toLowerCase()))
+    : rows
+
   return (
     <div className="tab-content">
+      <div className="search-bar">
+        <input className="search-input" type="text" placeholder="Search bots…" value={search} onChange={e => setSearch(e.target.value)} />
+        {search && <button className="search-clear" onClick={() => setSearch('')} title="Clear">×</button>}
+      </div>
       <div className="tab-toolbar">
-        <span className="row-count">{rows.length} bots</span>
+        <span className="row-count">{search.trim() ? `${filtered.length} of ${rows.length} bots` : `${rows.length} bots`}</span>
         <button className="btn-primary" onClick={openAdd}>+ Add Bot</button>
       </div>
 
       {loading && <p className="status-msg">Loading…</p>}
       {fetchError && <p className="status-msg error">{fetchError}</p>}
       {!loading && !fetchError && rows.length === 0 && <p className="status-msg">No bots yet.</p>}
+      {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && <p className="status-msg">No matches for "{search}".</p>}
 
-      {rows.length > 0 && (
+      {filtered.length > 0 && (
         <table className="data-table">
           <thead><tr><th>Bot Name</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            {rows.map(row => (
+            {filtered.map(row => (
               <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
                 <td>{row.name}</td>
                 <td><span className={`badge ${row.active ? 'badge-active' : 'badge-inactive'}`}>{row.active ? 'Active' : 'Inactive'}</span></td>

@@ -620,6 +620,376 @@ function HandoffTab() {
   )
 }
 
+// ─── Broker Assets Tab ────────────────────────────────────────────────────────
+
+const BROKERS   = ['bybit', 'vantage', 'pu_prime']
+const PURPOSES  = ['registration', 'copy_trade_open_account', 'copy_trade_connect', 'copy_trade_start']
+const ASSET_TYPES = ['link', 'video']
+const COUNTRY_GROUPS = ['AUSTRALIA', 'CANADA', 'UK', 'OTHER']
+
+function BrokerAssetsTab() {
+  const [rows, setRows]             = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [fetchError, setFetch]      = useState('')
+  const [modal, setModal]           = useState(null)
+  const [saving, setSaving]         = useState(false)
+  const [modalError, setModalError] = useState('')
+  const [filterBroker, setFilterBroker]   = useState('all')
+  const [filterPurpose, setFilterPurpose] = useState('all')
+
+  // form fields
+  const [fBroker, setFBroker]       = useState('bybit')
+  const [fPurpose, setFPurpose]     = useState('registration')
+  const [fAssetType, setFAssetType] = useState('link')
+  const [fTitle, setFTitle]         = useState('')
+  const [fUrl, setFUrl]             = useState('')
+  const [fOrder, setFOrder]         = useState(0)
+
+  const load = useCallback(async () => {
+    setLoading(true); setFetch('')
+    try { setRows(await apiFetch('/knowledge/broker-assets')) }
+    catch (e) { setFetch(e.message) }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const filtered = rows.filter(r =>
+    (filterBroker  === 'all' || r.broker  === filterBroker) &&
+    (filterPurpose === 'all' || r.purpose === filterPurpose)
+  )
+
+  function openAdd() {
+    setFBroker('bybit'); setFPurpose('registration'); setFAssetType('link')
+    setFTitle(''); setFUrl(''); setFOrder(0); setModalError('')
+    setModal({ mode: 'add' })
+  }
+
+  function openEdit(row) {
+    setFBroker(row.broker); setFPurpose(row.purpose); setFAssetType(row.asset_type)
+    setFTitle(row.title); setFUrl(row.url); setFOrder(row.sort_order ?? 0); setModalError('')
+    setModal({ mode: 'edit', row })
+  }
+
+  async function handleSave() {
+    const t = fTitle.trim(), u = fUrl.trim()
+    if (!t) { setModalError('Title is required'); return }
+    if (!u) { setModalError('URL is required'); return }
+    setSaving(true); setModalError('')
+    const payload = { broker: fBroker, purpose: fPurpose, asset_type: fAssetType, title: t, url: u, sort_order: fOrder }
+    try {
+      if (modal.mode === 'add') {
+        await apiFetch('/knowledge/broker-assets', { method: 'POST', body: JSON.stringify(payload) })
+      } else {
+        await apiFetch(`/knowledge/broker-assets/${modal.row.id}`, { method: 'PUT', body: JSON.stringify(payload) })
+      }
+      setModal(null); await load()
+    } catch (e) { setModalError(e.message) }
+    finally { setSaving(false) }
+  }
+
+  async function handleToggle(row) {
+    try {
+      await apiFetch(`/knowledge/broker-assets/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) })
+      await load()
+    } catch (e) { alert(e.message) }
+  }
+
+  async function handleDelete(row) {
+    if (!confirm(`Delete "${row.title}"?`)) return
+    try { await apiFetch(`/knowledge/broker-assets/${row.id}`, { method: 'DELETE' }); await load() }
+    catch (e) { alert(e.message) }
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="tab-toolbar">
+        <div className="toolbar-filters">
+          <select value={filterBroker} onChange={e => setFilterBroker(e.target.value)}>
+            <option value="all">All brokers</option>
+            {BROKERS.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)}>
+            <option value="all">All purposes</option>
+            {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <span className="row-count">{filtered.length} of {rows.length} assets</span>
+        </div>
+        <button className="btn-primary" onClick={openAdd}>+ Add Asset</button>
+      </div>
+
+      {loading && <p className="status-msg">Loading…</p>}
+      {fetchError && <p className="status-msg error">{fetchError}</p>}
+      {!loading && !fetchError && rows.length === 0 && (
+        <p className="status-msg">No broker assets yet.</p>
+      )}
+
+      {filtered.length > 0 && (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Broker</th>
+              <th>Purpose</th>
+              <th>Type</th>
+              <th>Title</th>
+              <th>URL</th>
+              <th>Order</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(row => (
+              <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
+                <td>{row.broker}</td>
+                <td>{row.purpose}</td>
+                <td>{row.asset_type}</td>
+                <td className="cell-truncate">{row.title}</td>
+                <td className="cell-truncate"><a href={row.url} target="_blank" rel="noreferrer">{row.url}</a></td>
+                <td>{row.sort_order}</td>
+                <td>
+                  <span className={`badge ${row.active ? 'badge-active' : 'badge-inactive'}`}>
+                    {row.active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="cell-actions">
+                  <button className="btn-icon" title="Edit" onClick={() => openEdit(row)}>✏️</button>
+                  <button className="btn-icon" title={row.active ? 'Deactivate' : 'Activate'} onClick={() => handleToggle(row)}>
+                    {row.active ? '🔴' : '🟢'}
+                  </button>
+                  <button className="btn-icon" title="Delete" onClick={() => handleDelete(row)}>🗑️</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {modal && (
+        <Modal
+          title={modal.mode === 'add' ? 'Add Broker Asset' : 'Edit Broker Asset'}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+          saving={saving}
+          error={modalError}
+          fields={
+            <>
+              <div className="field">
+                <label>Broker</label>
+                <select value={fBroker} onChange={e => { setFBroker(e.target.value); setModalError('') }}>
+                  {BROKERS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Purpose</label>
+                <select value={fPurpose} onChange={e => { setFPurpose(e.target.value); setModalError('') }}>
+                  {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Type</label>
+                <select value={fAssetType} onChange={e => { setFAssetType(e.target.value); setModalError('') }}>
+                  {ASSET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Title</label>
+                <input type="text" value={fTitle} onChange={e => { setFTitle(e.target.value); setModalError('') }} placeholder="e.g. Bybit link for sign up" autoFocus />
+              </div>
+              <div className="field">
+                <label>URL</label>
+                <input type="text" value={fUrl} onChange={e => { setFUrl(e.target.value); setModalError('') }} placeholder="https://…" />
+              </div>
+              <div className="field">
+                <label>Sort order <span className="label-hint">(lower = first)</span></label>
+                <input type="number" value={fOrder} onChange={e => { setFOrder(Number(e.target.value)); setModalError('') }} min={0} />
+              </div>
+            </>
+          }
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Country Offers Tab ───────────────────────────────────────────────────────
+
+function CountryOffersTab() {
+  const [rows, setRows]             = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [fetchError, setFetch]      = useState('')
+  const [modal, setModal]           = useState(null)
+  const [saving, setSaving]         = useState(false)
+  const [modalError, setModalError] = useState('')
+
+  // form fields
+  const [fGroup, setFGroup]               = useState('OTHER')
+  const [fBroker, setFBroker]             = useState('')
+  const [fBots, setFBots]                 = useState('')           // comma-separated
+  const [fBrokerNotes, setFBrokerNotes]   = useState('')           // newline-separated
+  const [fGroupNotes, setFGroupNotes]     = useState('')           // newline-separated
+  const [fOrder, setFOrder]               = useState(0)
+
+  const load = useCallback(async () => {
+    setLoading(true); setFetch('')
+    try { setRows(await apiFetch('/knowledge/country-offers')) }
+    catch (e) { setFetch(e.message) }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  function openAdd() {
+    setFGroup('OTHER'); setFBroker(''); setFBots(''); setFBrokerNotes(''); setFGroupNotes(''); setFOrder(0); setModalError('')
+    setModal({ mode: 'add' })
+  }
+
+  function openEdit(row) {
+    setFGroup(row.country_group); setFBroker(row.broker_name)
+    setFBots((row.bots || []).join(', '))
+    setFBrokerNotes((row.broker_notes || []).join('\n'))
+    setFGroupNotes((row.group_notes || []).join('\n'))
+    setFOrder(row.sort_order ?? 0); setModalError('')
+    setModal({ mode: 'edit', row })
+  }
+
+  function parseList(str) {
+    return str.split('\n').map(s => s.trim()).filter(Boolean)
+  }
+
+  async function handleSave() {
+    const b = fBroker.trim()
+    if (!b) { setModalError('Broker name is required'); return }
+    setSaving(true); setModalError('')
+    const payload = {
+      country_group: fGroup,
+      broker_name: b,
+      bots: fBots.split(',').map(s => s.trim()).filter(Boolean),
+      broker_notes: parseList(fBrokerNotes),
+      group_notes: parseList(fGroupNotes),
+      sort_order: fOrder,
+    }
+    try {
+      if (modal.mode === 'add') {
+        await apiFetch('/knowledge/country-offers', { method: 'POST', body: JSON.stringify(payload) })
+      } else {
+        await apiFetch(`/knowledge/country-offers/${modal.row.id}`, { method: 'PUT', body: JSON.stringify(payload) })
+      }
+      setModal(null); await load()
+    } catch (e) { setModalError(e.message) }
+    finally { setSaving(false) }
+  }
+
+  async function handleToggle(row) {
+    try {
+      await apiFetch(`/knowledge/country-offers/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) })
+      await load()
+    } catch (e) { alert(e.message) }
+  }
+
+  async function handleDelete(row) {
+    if (!confirm(`Delete ${row.country_group} / ${row.broker_name}?`)) return
+    try { await apiFetch(`/knowledge/country-offers/${row.id}`, { method: 'DELETE' }); await load() }
+    catch (e) { alert(e.message) }
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="tab-toolbar">
+        <span className="row-count">{rows.length} entries</span>
+        <button className="btn-primary" onClick={openAdd}>+ Add Entry</button>
+      </div>
+
+      {loading && <p className="status-msg">Loading…</p>}
+      {fetchError && <p className="status-msg error">{fetchError}</p>}
+      {!loading && !fetchError && rows.length === 0 && (
+        <p className="status-msg">No country offers yet.</p>
+      )}
+
+      {rows.length > 0 && (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Broker</th>
+              <th>Bots</th>
+              <th>Broker Notes</th>
+              <th>Group Notes</th>
+              <th>Order</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(row => (
+              <tr key={row.id} className={row.active ? '' : 'row-inactive'}>
+                <td>{row.country_group}</td>
+                <td>{row.broker_name}</td>
+                <td className="cell-truncate">{(row.bots || []).join(', ')}</td>
+                <td className="cell-truncate">{(row.broker_notes || []).join('; ')}</td>
+                <td className="cell-truncate">{(row.group_notes || []).join('; ')}</td>
+                <td>{row.sort_order}</td>
+                <td>
+                  <span className={`badge ${row.active ? 'badge-active' : 'badge-inactive'}`}>
+                    {row.active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="cell-actions">
+                  <button className="btn-icon" title="Edit" onClick={() => openEdit(row)}>✏️</button>
+                  <button className="btn-icon" title={row.active ? 'Deactivate' : 'Activate'} onClick={() => handleToggle(row)}>
+                    {row.active ? '🔴' : '🟢'}
+                  </button>
+                  <button className="btn-icon" title="Delete" onClick={() => handleDelete(row)}>🗑️</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {modal && (
+        <Modal
+          title={modal.mode === 'add' ? 'Add Country Entry' : 'Edit Country Entry'}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+          saving={saving}
+          error={modalError}
+          fields={
+            <>
+              <div className="field">
+                <label>Country Group</label>
+                <select value={fGroup} onChange={e => { setFGroup(e.target.value); setModalError('') }}>
+                  {COUNTRY_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Broker Name</label>
+                <input type="text" value={fBroker} onChange={e => { setFBroker(e.target.value); setModalError('') }} placeholder="e.g. Vantage" autoFocus />
+              </div>
+              <div className="field">
+                <label>Bots <span className="label-hint">(comma-separated)</span></label>
+                <input type="text" value={fBots} onChange={e => { setFBots(e.target.value); setModalError('') }} placeholder="e.g. Gold, Crypto" />
+              </div>
+              <div className="field">
+                <label>Broker Notes <span className="label-hint">(one per line)</span></label>
+                <textarea value={fBrokerNotes} onChange={e => { setFBrokerNotes(e.target.value); setModalError('') }} rows={3} placeholder="e.g. Gold/Silver only in cents" />
+              </div>
+              <div className="field">
+                <label>Group Notes <span className="label-hint">(one per line, shown for all brokers in this country)</span></label>
+                <textarea value={fGroupNotes} onChange={e => { setFGroupNotes(e.target.value); setModalError('') }} rows={3} />
+              </div>
+              <div className="field">
+                <label>Sort order <span className="label-hint">(lower = first)</span></label>
+                <input type="number" value={fOrder} onChange={e => { setFOrder(Number(e.target.value)); setModalError('') }} min={0} />
+              </div>
+            </>
+          }
+        />
+      )}
+    </div>
+  )
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -641,22 +1011,16 @@ export default function App() {
       </header>
 
       <nav className="tab-nav">
-        <button
-          className={`tab-btn ${tab === 'qa' ? 'active' : ''}`}
-          onClick={() => setTab('qa')}
-        >
-          Knowledge Base
-        </button>
-        <button
-          className={`tab-btn ${tab === 'handoff' ? 'active' : ''}`}
-          onClick={() => setTab('handoff')}
-        >
-          Handoff Rules
-        </button>
+        <button className={`tab-btn ${tab === 'qa'      ? 'active' : ''}`} onClick={() => setTab('qa')}>Knowledge Base</button>
+        <button className={`tab-btn ${tab === 'handoff' ? 'active' : ''}`} onClick={() => setTab('handoff')}>Handoff Rules</button>
+        <button className={`tab-btn ${tab === 'brokers' ? 'active' : ''}`} onClick={() => setTab('brokers')}>Broker Links</button>
+        <button className={`tab-btn ${tab === 'country' ? 'active' : ''}`} onClick={() => setTab('country')}>Country Offers</button>
       </nav>
 
       {tab === 'qa'      && <QATab />}
       {tab === 'handoff' && <HandoffTab />}
+      {tab === 'brokers' && <BrokerAssetsTab />}
+      {tab === 'country' && <CountryOffersTab />}
     </div>
   )
 }

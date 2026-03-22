@@ -2,8 +2,8 @@ from __future__ import annotations as _annotations
 
 import json
 import logging
+import time
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Literal, Optional
 
 from agents import RunContextWrapper, function_tool
@@ -28,42 +28,76 @@ AssetType = Literal["videos", "links", "all"]
 Market = Literal["crypto", "gold", "silver", "forex"]
 AssetItem = dict[str, str]  # {title: str, url: str}
 
-# ─── Data loaders ─────────────────────────────────────────────────────────────
+# ─── Data loaders (Supabase-backed, 5-min TTL cache) ──────────────────────────
 
-_BROKER_ASSETS_DATA: dict[str, Any] | None = None
-_COUNTRY_OFFERS_DATA: dict[str, dict[str, Any]] | None = None
+_CACHE_TTL = 300  # seconds
+
+_BROKER_ASSETS_CACHE: dict[str, Any] | None = None
+_BROKER_ASSETS_CACHE_TIME: float = 0
+
+_COUNTRY_OFFERS_CACHE: dict[str, dict[str, Any]] | None = None
+_COUNTRY_OFFERS_CACHE_TIME: float = 0
 
 
 def _load_broker_assets_data() -> dict[str, Any]:
-    """Load broker assets (links + videos) from JSON file. Cached after first load."""
-    global _BROKER_ASSETS_DATA
-    if _BROKER_ASSETS_DATA is not None:
-        return _BROKER_ASSETS_DATA
-    json_file = Path(__file__).parent / "knowledge" / "broker_assets.json"
+    """Load broker assets from Supabase. Reconstructs the nested dict used by get_broker_assets."""
+    global _BROKER_ASSETS_CACHE, _BROKER_ASSETS_CACHE_TIME
+    now = time.time()
+    if _BROKER_ASSETS_CACHE is not None and now - _BROKER_ASSETS_CACHE_TIME < _CACHE_TTL:
+        return _BROKER_ASSETS_CACHE
     try:
-        with open(json_file, "r", encoding="utf-8") as f:
-            _BROKER_ASSETS_DATA = json.load(f)
-        logger.info("Loaded broker assets from %s", json_file)
+        from integrations.supabase_client import get_supabase_client
+        sb = get_supabase_client()
+        rows = sb.table("broker_assets").select("broker,purpose,asset_type,title,url").eq("active", True).order("sort_order").execute().data
+        data: dict[str, Any] = {}
+        for row in rows:
+            b, p, at = row["broker"], row["purpose"], row["asset_type"]
+            asset = {"title": row["title"], "url": row["url"]}
+            data.setdefault(b, {})
+            data[b].setdefault(p, {"links": [], "videos": []})
+            if at == "link":
+                data[b][p]["links"].append(asset)
+            elif at == "video":
+                data[b][p]["videos"].append(asset)
+        _BROKER_ASSETS_CACHE = data
+        _BROKER_ASSETS_CACHE_TIME = now
+        logger.info("Loaded broker assets from Supabase (%d rows)", len(rows))
     except Exception as e:
-        logger.error("Error loading broker assets: %s", e)
-        _BROKER_ASSETS_DATA = {}
-    return _BROKER_ASSETS_DATA
+        logger.error("Error loading broker assets from Supabase: %s", e)
+        if _BROKER_ASSETS_CACHE is None:
+            _BROKER_ASSETS_CACHE = {}
+    return _BROKER_ASSETS_CACHE  # type: ignore[return-value]
 
 
 def _load_country_offers_data() -> dict[str, dict[str, Any]]:
-    """Load country offers data from JSON file. Cached after first load."""
-    global _COUNTRY_OFFERS_DATA
-    if _COUNTRY_OFFERS_DATA is not None:
-        return _COUNTRY_OFFERS_DATA
-    json_file = Path(__file__).parent / "knowledge" / "country_offers.json"
+    """Load country offers from Supabase. Reconstructs the nested dict used by get_country_offers."""
+    global _COUNTRY_OFFERS_CACHE, _COUNTRY_OFFERS_CACHE_TIME
+    now = time.time()
+    if _COUNTRY_OFFERS_CACHE is not None and now - _COUNTRY_OFFERS_CACHE_TIME < _CACHE_TTL:
+        return _COUNTRY_OFFERS_CACHE
     try:
-        with open(json_file, "r", encoding="utf-8") as f:
-            _COUNTRY_OFFERS_DATA = json.load(f)
-        logger.info("Loaded country offers data from %s", json_file)
+        from integrations.supabase_client import get_supabase_client
+        sb = get_supabase_client()
+        rows = sb.table("country_offers").select("country_group,broker_name,bots,broker_notes,group_notes").eq("active", True).order("sort_order").execute().data
+        data: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            group = row["country_group"]
+            data.setdefault(group, {"brokers": [], "notes": []})
+            data[group]["brokers"].append({
+                "name": row["broker_name"],
+                "bots": row["bots"] or [],
+                "notes": row["broker_notes"] or [],
+            })
+            if row["group_notes"] and not data[group]["notes"]:
+                data[group]["notes"] = row["group_notes"]
+        _COUNTRY_OFFERS_CACHE = data
+        _COUNTRY_OFFERS_CACHE_TIME = now
+        logger.info("Loaded country offers from Supabase (%d rows)", len(rows))
     except Exception as e:
-        logger.error("Error loading country offers data: %s", e)
-        _COUNTRY_OFFERS_DATA = {}
-    return _COUNTRY_OFFERS_DATA
+        logger.error("Error loading country offers from Supabase: %s", e)
+        if _COUNTRY_OFFERS_CACHE is None:
+            _COUNTRY_OFFERS_CACHE = {}
+    return _COUNTRY_OFFERS_CACHE  # type: ignore[return-value]
 
 
 # ─── Normalisation helpers ────────────────────────────────────────────────────

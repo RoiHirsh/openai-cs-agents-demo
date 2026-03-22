@@ -228,3 +228,127 @@ def update_handoff_trigger(row_id: UUID, body: HandoffTriggerUpdate) -> Dict[str
 def delete_handoff_trigger(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("handoff_triggers").delete().eq("id", str(row_id)).execute()
+
+
+# ── broker_assets ─────────────────────────────────────────────────────────────
+
+class BrokerAssetCreate(BaseModel):
+    broker: str
+    purpose: str
+    asset_type: str
+    title: str
+    url: str
+    sort_order: int = 0
+
+
+class BrokerAssetUpdate(BaseModel):
+    broker: Optional[str] = None
+    purpose: Optional[str] = None
+    asset_type: Optional[str] = None
+    title: Optional[str] = None
+    url: Optional[str] = None
+    sort_order: Optional[int] = None
+    active: Optional[bool] = None
+
+
+@router.get("/broker-assets", response_model=List[Dict[str, Any]])
+def list_broker_assets() -> List[Dict[str, Any]]:
+    sb = get_supabase_client()
+    res = sb.table("broker_assets").select("*").order("broker").order("purpose").order("sort_order").execute()
+    return res.data
+
+
+@router.post("/broker-assets", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+def create_broker_asset(body: BrokerAssetCreate) -> Dict[str, Any]:
+    sb = get_supabase_client()
+    res = sb.table("broker_assets").insert({
+        "broker": body.broker,
+        "purpose": body.purpose,
+        "asset_type": body.asset_type,
+        "title": body.title,
+        "url": body.url,
+        "sort_order": body.sort_order,
+    }).execute()
+    return res.data[0]
+
+
+@router.put("/broker-assets/{row_id}", response_model=Dict[str, Any])
+def update_broker_asset(row_id: UUID, body: BrokerAssetUpdate) -> Dict[str, Any]:
+    sb = get_supabase_client()
+    updates: Dict[str, Any] = {
+        k: v for k, v in body.model_dump().items() if v is not None
+    }
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    res = sb.table("broker_assets").update(updates).eq("id", str(row_id)).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Row not found")
+    return res.data[0]
+
+
+@router.delete("/broker-assets/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_broker_asset(row_id: UUID) -> None:
+    sb = get_supabase_client()
+    sb.table("broker_assets").delete().eq("id", str(row_id)).execute()
+
+
+# ── country_offers ────────────────────────────────────────────────────────────
+
+class CountryOfferCreate(BaseModel):
+    country_group: str
+    broker_name: str
+    bots: List[str] = []
+    broker_notes: List[str] = []
+    group_notes: List[str] = []
+    sort_order: int = 0
+
+
+class CountryOfferUpdate(BaseModel):
+    country_group: Optional[str] = None
+    broker_name: Optional[str] = None
+    bots: Optional[List[str]] = None
+    broker_notes: Optional[List[str]] = None
+    group_notes: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+    active: Optional[bool] = None
+
+
+@router.get("/country-offers", response_model=List[Dict[str, Any]])
+def list_country_offers() -> List[Dict[str, Any]]:
+    sb = get_supabase_client()
+    res = sb.table("country_offers").select("*").order("country_group").order("sort_order").execute()
+    return res.data
+
+
+@router.post("/country-offers", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+def create_country_offer(body: CountryOfferCreate) -> Dict[str, Any]:
+    sb = get_supabase_client()
+    res = sb.table("country_offers").insert({
+        "country_group": body.country_group,
+        "broker_name": body.broker_name,
+        "bots": body.bots,
+        "broker_notes": body.broker_notes,
+        "group_notes": body.group_notes,
+        "sort_order": body.sort_order,
+    }).execute()
+    return res.data[0]
+
+
+@router.put("/country-offers/{row_id}", response_model=Dict[str, Any])
+def update_country_offer(row_id: UUID, body: CountryOfferUpdate) -> Dict[str, Any]:
+    sb = get_supabase_client()
+    updates: Dict[str, Any] = {
+        k: v for k, v in body.model_dump().items() if v is not None
+    }
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    res = sb.table("country_offers").update(updates).eq("id", str(row_id)).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Row not found")
+    return res.data[0]
+
+
+@router.delete("/country-offers/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_country_offer(row_id: UUID) -> None:
+    sb = get_supabase_client()
+    sb.table("country_offers").delete().eq("id", str(row_id)).execute()

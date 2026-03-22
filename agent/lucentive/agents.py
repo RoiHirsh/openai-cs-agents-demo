@@ -8,28 +8,21 @@ from dotenv import load_dotenv
 from agents import Agent, FileSearchTool, RunContextWrapper, handoff
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
-# Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-from .context import AirlineAgentChatContext
+from .context import LucentiveAgentChatContext
 from .context_cache import restore_lead_info_to_context, restore_onboarding_state_to_context
 from .guardrails import jailbreak_guardrail, relevance_guardrail
 from .tools import (
+    get_broker_assets,
+    get_country_offers,
     get_scheduling_context,
+    request_human_handoff,
     update_lead_info,
     update_onboarding_state,
 )
-
-# Import the new broker assets tool from lucentive module
-try:
-    from lucentive.tools import get_broker_assets, get_country_offers, request_human_handoff
-except ImportError:
-    # Fallback if lucentive module not available
-    get_broker_assets = None
-    get_country_offers = None
-    request_human_handoff = None
 
 _VECTOR_STORE_ID = os.environ.get("OPENAI_VECTOR_STORE_ID", "")
 
@@ -42,46 +35,6 @@ PLAIN_TEXT_RULE = (
     "CONVERSATION HISTORY: Some messages in the conversation history marked as 'assistant' may be prefixed with [Human Agent]: — "
     "these were written by a human team member, not by you. Do not treat them as your own prior responses and do not reference them as things you said.\n"
 )
-
-
-def faq_instructions(
-    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
-) -> str:
-    handoff_skill = _load_handoff_skill()
-    return (
-        f"{RECOMMENDED_PROMPT_PREFIX}\n"
-        f"{PLAIN_TEXT_RULE}"
-        "You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.\n"
-        "If you are speaking to a customer, you were likely transferred from the triage agent.\n\n"
-        "CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.\n\n"
-        "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
-        "Use the following routine to support the customer:\n"
-        "1. Check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
-        "2. ALWAYS call the file_search tool first — every time, without exception — before making any decision.\n"
-        "3. If file_search returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what the knowledge base says. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
-        "4. If file_search returns nothing relevant: follow the handoff skill below.\n"
-        "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
-        "---\n"
-        "## Human Handoff Skill\n\n"
-        f"{handoff_skill}"
-    )
-
-
-_faq_tools = []
-if _VECTOR_STORE_ID:
-    _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
-if request_human_handoff is not None:
-    _faq_tools.append(request_human_handoff)
-
-investments_faq_agent = Agent[AirlineAgentChatContext](
-    name="Investments FAQ Agent",
-    model=MODEL,
-    handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
-    instructions=faq_instructions,
-    tools=_faq_tools,
-    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
-)
-
 
 _SCHEDULING_SKILL: str | None = None
 _ONBOARDING_SKILL: str | None = None
@@ -135,8 +88,46 @@ def _load_onboarding_skill() -> str:
     return _ONBOARDING_SKILL
 
 
+def faq_instructions(
+    run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
+) -> str:
+    handoff_skill = _load_handoff_skill()
+    return (
+        f"{RECOMMENDED_PROMPT_PREFIX}\n"
+        f"{PLAIN_TEXT_RULE}"
+        "You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.\n"
+        "If you are speaking to a customer, you were likely transferred from the triage agent.\n\n"
+        "CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.\n\n"
+        "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
+        "Use the following routine to support the customer:\n"
+        "1. Check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
+        "2. ALWAYS call the file_search tool first — every time, without exception — before making any decision.\n"
+        "3. If file_search returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what the knowledge base says. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
+        "4. If file_search returns nothing relevant: follow the handoff skill below.\n"
+        "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
+        "---\n"
+        "## Human Handoff Skill\n\n"
+        f"{handoff_skill}"
+    )
+
+
+_faq_tools = []
+if _VECTOR_STORE_ID:
+    _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
+_faq_tools.append(request_human_handoff)
+
+investments_faq_agent = Agent[LucentiveAgentChatContext](
+    name="Investments FAQ Agent",
+    model=MODEL,
+    handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
+    instructions=faq_instructions,
+    tools=_faq_tools,
+    input_guardrails=[relevance_guardrail, jailbreak_guardrail],
+)
+
+
 def scheduling_instructions(
-    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+    run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
 ) -> str:
     skill_content = _load_scheduling_skill()
     return (
@@ -166,7 +157,7 @@ def scheduling_instructions(
     )
 
 
-scheduling_agent = Agent[AirlineAgentChatContext](
+scheduling_agent = Agent[LucentiveAgentChatContext](
     name="Scheduling Agent",
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
@@ -177,7 +168,7 @@ scheduling_agent = Agent[AirlineAgentChatContext](
 
 
 def onboarding_instructions(
-    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext]
+    run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
 ) -> str:
     ctx = run_context.context.state
     country = ctx.country or "Unknown"
@@ -262,39 +253,32 @@ def onboarding_instructions(
     )
 
 
-onboarding_agent = Agent[AirlineAgentChatContext](
+onboarding_agent = Agent[LucentiveAgentChatContext](
     name="Onboarding Agent",
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[
-        tool
-        for tool in [get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state]
-        if tool is not None
-    ],  # Add tools if available
+    tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
 
 def triage_instructions(
-    run_context: RunContextWrapper[AirlineAgentChatContext], agent: Agent[AirlineAgentChatContext],
+    run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext],
 ) -> str:
     ctx = run_context.context.state
     new_lead = ctx.new_lead or False
     onboarding_state = ctx.onboarding_state or {}
     completed_steps = onboarding_state.get("completed_steps", [])
     onboarding_complete = onboarding_state.get("onboarding_complete", False)
-    
+
     logger.debug("[Triage] new_lead=%s, first_name=%s, country=%s, onboarding_complete=%s", new_lead, ctx.first_name, ctx.country, onboarding_complete)
-    
-    # Determine if we should route to onboarding
-    # Note: Don't route if user has made a specific request (call/FAQ)
-    # This will be handled by the agent's natural language understanding
+
     should_route_to_onboarding = (
-        new_lead and 
+        new_lead and
         not onboarding_complete
     )
-    
+
     onboarding_instruction = ""
     if should_route_to_onboarding:
         onboarding_instruction = (
@@ -306,7 +290,7 @@ def triage_instructions(
             "- Only override this default if there's a specific request (call or FAQ question) - those take priority.\n"
             "- The goal is to be proactive and make things moving by routing to onboarding by default.\n"
         )
-    
+
     return (
         f"{RECOMMENDED_PROMPT_PREFIX} "
         f"{PLAIN_TEXT_RULE}"
@@ -349,30 +333,24 @@ def triage_instructions(
     )
 
 
-_triage_tools = [update_lead_info]
-if request_human_handoff is not None:
-    _triage_tools.append(request_human_handoff)
-
-triage_agent = Agent[AirlineAgentChatContext](
+triage_agent = Agent[LucentiveAgentChatContext](
     name="Triage Agent",
     model=MODEL,
     handoff_description="Delegates requests to the right specialist agent (scheduling, investments FAQ, onboarding).",
     instructions=triage_instructions,
-    tools=_triage_tools,
+    tools=[update_lead_info, request_human_handoff],
     handoffs=[],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
 
-async def on_onboarding_handoff(context: RunContextWrapper[AirlineAgentChatContext]) -> None:
+async def on_onboarding_handoff(context: RunContextWrapper[LucentiveAgentChatContext]) -> None:
     """Ensure lead info and onboarding state are preserved when handing off to the onboarding agent."""
     ctx_state = context.context.state
-    # Get thread ID from the context
     thread_id = None
     if hasattr(context.context, 'thread') and context.context.thread:
         thread_id = context.context.thread.id
-    
-    # CRITICAL: Restore lead info from cache if context was reset during handoff
+
     if thread_id:
         restore_lead_info_to_context(thread_id, ctx_state)
         restore_onboarding_state_to_context(thread_id, ctx_state)
@@ -380,7 +358,6 @@ async def on_onboarding_handoff(context: RunContextWrapper[AirlineAgentChatConte
 
     logger.debug("[Onboarding handoff] first_name=%s, country=%s, new_lead=%s, email=%s, onboarding_state=%s", ctx_state.first_name, ctx_state.country, ctx_state.new_lead, ctx_state.email, ctx_state.onboarding_state)
 
-    # Validate that critical context is present
     if not ctx_state.country or ctx_state.country == "Unknown":
         logger.warning("[Onboarding handoff] Country is missing or Unknown")
     if not ctx_state.first_name:

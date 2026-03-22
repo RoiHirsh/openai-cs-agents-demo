@@ -2,12 +2,15 @@ from __future__ import annotations as _annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
 from agents import RunContextWrapper, function_tool
 
-logger = logging.getLogger(__name__)
+from .context import LucentiveAgentChatContext
+from .context_cache import set_lead_info, set_onboarding_state
+from .scheduling import CALENDLY_BOOKING_URL, compute_scheduling_context
 
 # Import here to avoid circular dependency — chatwoot is a top-level module
 try:
@@ -15,16 +18,18 @@ try:
 except ImportError:
     _trigger_human_handoff = None
 
-# Type definitions
+logger = logging.getLogger(__name__)
+
+# ─── Type definitions ─────────────────────────────────────────────────────────
+
 BrokerId = Literal["bybit", "vantage", "pu_prime"]
 Purpose = Literal["registration", "copy_trade_start", "copy_trade_open_account", "copy_trade_connect"]
 AssetType = Literal["videos", "links", "all"]
 Market = Literal["crypto", "gold", "silver", "forex"]
-
-# Asset item structure
 AssetItem = dict[str, str]  # {title: str, url: str}
 
-# Cached data
+# ─── Data loaders ─────────────────────────────────────────────────────────────
+
 _BROKER_ASSETS_DATA: dict[str, Any] | None = None
 _COUNTRY_OFFERS_DATA: dict[str, dict[str, Any]] | None = None
 
@@ -60,6 +65,8 @@ def _load_country_offers_data() -> dict[str, dict[str, Any]]:
         _COUNTRY_OFFERS_DATA = {}
     return _COUNTRY_OFFERS_DATA
 
+
+# ─── Normalisation helpers ────────────────────────────────────────────────────
 
 def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
     """Normalize broker name to canonical form."""
@@ -99,6 +106,168 @@ def pick_copy_trade_link_by_market(links: list[AssetItem], market: Optional[str]
     return links[:1] if links else []
 
 
+# ─── Scheduling tool ──────────────────────────────────────────────────────────
+
+@function_tool(
+    name_override="get_scheduling_context",
+    description_override=(
+        "Get current scheduling context: day, open/closed, why, which offers are available (20 min, 2–4 hours, Calendly), "
+        "and reasons when an offer is unavailable. Use this context to respond in natural language; do not copy-paste messages."
+    ),
+)
+async def get_scheduling_context(exclude_actions: list[str] | None = None) -> str:
+    """
+    Returns scheduling context only (no user-facing messages).
+    Agent must use status_reason and reason_* to explain in natural language.
+    """
+    now_utc = datetime.now(timezone.utc)
+    ctx = compute_scheduling_context(
+        now_utc, exclude_actions=exclude_actions, calendly_link=CALENDLY_BOOKING_URL
+    )
+    out = json.dumps(ctx)
+    logger.debug("[SCHEDULING TOOL] response: %s", out)
+    return out
+
+
+# ─── Onboarding tools ─────────────────────────────────────────────────────────
+
+@function_tool(
+    name_override="update_onboarding_state",
+    description_override="Update the onboarding state to track progress through the onboarding flow. Call this after each step is completed to persist the state."
+)
+async def update_onboarding_state(
+    run_context: RunContextWrapper[LucentiveAgentChatContext],
+    step_name: str | None = None,
+    trading_experience: str | None = None,
+    previous_broker: str | None = None,
+    trading_type: str | None = None,
+    bot_preference: str | None = None,
+    broker_preference: str | None = None,
+    budget_confirmed: bool | None = None,
+    budget_amount: float | None = None,
+    demo_offered: bool | None = None,
+    instructions_provided: bool | None = None,
+    onboarding_complete: bool | None = None,
+    has_broker_account: bool | None = None,
+) -> str:
+    """
+    Update the onboarding state in the context.
+
+    Args:
+        step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "broker_selection", "budget_check", "profit_share_clarification", "has_broker_account", "instructions")
+        trading_experience: User's trading experience level (e.g., "yes", "no", "beginner", "experienced")
+        previous_broker: Name of the broker the user previously used (if any)
+        trading_type: Type of trading the user did (e.g., "stocks", "forex", "crypto", "futures")
+        bot_preference: User's chosen bot type from step 2a (e.g., "Gold", "Forex", "Crypto")
+        broker_preference: User's chosen broker from step 2b (e.g., "Vantage", "PU Prime")
+        budget_confirmed: Whether the user confirmed they have the minimum budget (True/False)
+        budget_amount: The budget amount the user mentioned (if any)
+        demo_offered: Whether a demo account was offered (True/False)
+        instructions_provided: Whether instructions have been provided (True/False)
+        onboarding_complete: Whether onboarding is fully complete - user has opened account AND set up copy trading (True/False)
+        has_broker_account: Whether the user already has an account with the selected broker (True/False); used to skip registration when True
+    """
+    logger.debug("[TOOL EXEC] update_onboarding_state(step_name=%r, trading_experience=%r, previous_broker=%r, trading_type=%r, bot_preference=%r, broker_preference=%r, budget_confirmed=%s, budget_amount=%s, demo_offered=%s, instructions_provided=%s, onboarding_complete=%s, has_broker_account=%s)", step_name, trading_experience, previous_broker, trading_type, bot_preference, broker_preference, budget_confirmed, budget_amount, demo_offered, instructions_provided, onboarding_complete, has_broker_account)
+
+    ctx = run_context.context.state
+
+    if ctx.onboarding_state is None:
+        ctx.onboarding_state = {}
+    if "completed_steps" not in ctx.onboarding_state:
+        ctx.onboarding_state["completed_steps"] = []
+
+    if step_name and step_name not in ctx.onboarding_state["completed_steps"]:
+        ctx.onboarding_state["completed_steps"].append(step_name)
+        logger.debug("Added step %r to completed_steps", step_name)
+
+    if trading_experience is not None:
+        ctx.onboarding_state["trading_experience"] = trading_experience
+    if previous_broker is not None:
+        ctx.onboarding_state["previous_broker"] = previous_broker
+    if trading_type is not None:
+        ctx.onboarding_state["trading_type"] = trading_type
+    if bot_preference is not None:
+        ctx.onboarding_state["bot_preference"] = bot_preference
+    if broker_preference is not None:
+        ctx.onboarding_state["broker_preference"] = broker_preference
+    if budget_confirmed is not None:
+        ctx.onboarding_state["budget_confirmed"] = budget_confirmed
+    if budget_amount is not None:
+        ctx.onboarding_state["budget_amount"] = budget_amount
+    if demo_offered is not None:
+        ctx.onboarding_state["demo_offered"] = demo_offered
+    if instructions_provided is not None:
+        ctx.onboarding_state["instructions_provided"] = instructions_provided
+    if onboarding_complete is not None:
+        ctx.onboarding_state["onboarding_complete"] = onboarding_complete
+    if has_broker_account is not None:
+        ctx.onboarding_state["has_broker_account"] = has_broker_account
+
+    thread_id = None
+    if hasattr(run_context.context, 'thread') and run_context.context.thread:
+        thread_id = run_context.context.thread.id
+        if thread_id:
+            set_onboarding_state(thread_id, ctx.onboarding_state.copy())
+            logger.debug("Cached onboarding_state for thread %s", thread_id)
+
+    completed_steps = ctx.onboarding_state.get("completed_steps", [])
+    return f"Onboarding state updated successfully. Completed steps: {', '.join(completed_steps) if completed_steps else 'none'}"
+
+
+@function_tool(
+    name_override="update_lead_info",
+    description_override="Update lead info fields (e.g. country) in the conversation context so the UI variables reflect user corrections."
+)
+async def update_lead_info(
+    run_context: RunContextWrapper[LucentiveAgentChatContext],
+    first_name: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    country: str | None = None,
+    new_lead: bool | None = None,
+) -> str:
+    """
+    Update lead info fields in the context (and cache) so user corrections persist across handoffs.
+
+    Typical usage: if user says "Actually I'm from Australia", call update_lead_info(country="Australia").
+    """
+    logger.debug("[TOOL EXEC] update_lead_info(first_name=%r, email=%r, phone=%r, country=%r, new_lead=%r)", first_name, email, phone, country, new_lead)
+
+    ctx = run_context.context.state
+
+    if first_name is not None and first_name.strip():
+        ctx.first_name = first_name.strip()
+    if email is not None and email.strip():
+        ctx.email = email.strip()
+    if phone is not None and phone.strip():
+        ctx.phone = phone.strip()
+    if country is not None and country.strip():
+        ctx.country = country.strip()
+    if new_lead is not None:
+        ctx.new_lead = bool(new_lead)
+
+    thread_id = None
+    if hasattr(run_context.context, "thread") and run_context.context.thread:
+        thread_id = run_context.context.thread.id
+        if thread_id:
+            lead_info_dict = {
+                "first_name": ctx.first_name,
+                "email": ctx.email,
+                "phone": ctx.phone,
+                "country": ctx.country,
+                "new_lead": ctx.new_lead,
+            }
+            set_lead_info(thread_id, lead_info_dict)
+            logger.debug("Cached lead info for thread %s: %s", thread_id, lead_info_dict)
+
+    return (
+        "Lead info updated successfully."
+        f" first_name={ctx.first_name!r}, country={ctx.country!r}, new_lead={ctx.new_lead!r}"
+    )
+
+
+# ─── Broker / country tools ───────────────────────────────────────────────────
+
 @function_tool(
     name_override="get_broker_assets",
     description_override="Return broker referral/registration links and optional tutorial videos for a given broker and onboarding purpose. Always returns links (primary) and videos (optional helpers) together."
@@ -118,9 +287,6 @@ async def get_broker_assets(
                 "copy_trade_open_account", "copy_trade_connect"
         asset_type: "all" (default), "links", or "videos"
         market: Optional market for copy_trade_connect - "crypto", "gold", "silver", "forex"
-
-    Returns:
-        JSON string with links and videos for the given broker/purpose.
     """
     logger.debug("[TOOL EXEC] get_broker_assets(broker=%r, purpose=%r, asset_type=%r, market=%r)", broker, purpose, asset_type, market)
 
@@ -177,15 +343,9 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
     """
     Get available trading bots and brokers for a given country.
 
-    Bots are derived from the union of all brokers' supported bots.
-    When bot_preference is provided, only brokers that support that bot are returned.
-
     Args:
         country: Country name or code (case-insensitive).
         bot_preference: Optional bot name to filter brokers (e.g., "Gold", "Crypto").
-
-    Returns:
-        JSON string with bots (full list) and brokers (filtered if bot_preference given).
     """
     logger.debug("[TOOL EXEC] get_country_offers(country=%r, bot_preference=%r)", country, bot_preference)
 
@@ -212,7 +372,6 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
         if not isinstance(broker, dict) or "name" not in broker or "bots" not in broker:
             return json.dumps({"ok": False, "normalized_country_group": normalized_group, "bots": [], "brokers": [], "notes": [], "error": "INVALID_DATA_SCHEMA: each broker must have 'name' and 'bots' fields"})
 
-    # Derive full bot list from union of all brokers' bots (preserving order of first appearance)
     seen: set[str] = set()
     all_bots: list[str] = []
     for broker in brokers:
@@ -221,7 +380,6 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
                 seen.add(bot)
                 all_bots.append(bot)
 
-    # Filter brokers by bot_preference if provided
     if bot_preference:
         bot_lower = bot_preference.strip().lower()
         filtered_brokers = [b for b in brokers if any(bot.lower() == bot_lower for bot in b.get("bots", []))]
@@ -240,6 +398,8 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
     logger.debug("Returning %d bot(s) and %d broker(s) for %s (bot_preference=%r)", len(all_bots), len(filtered_brokers), normalized_group, bot_preference)
     return json.dumps(result)
 
+
+# ─── Human handoff tool ───────────────────────────────────────────────────────
 
 @function_tool(
     name_override="request_human_handoff",
@@ -267,11 +427,11 @@ async def request_human_handoff(context: RunContextWrapper[Any]) -> str:
         pass
 
     if not conversation_id:
-        print("[handoff] request_human_handoff called but conversation_id is missing from context", flush=True)
+        logger.warning("[handoff] request_human_handoff called but conversation_id is missing from context")
         return "handoff_failed: no conversation_id in context"
 
     if _trigger_human_handoff is None:
-        print("[handoff] chatwoot module not available", flush=True)
+        logger.warning("[handoff] chatwoot module not available")
         return "handoff_failed: chatwoot module unavailable"
 
     await _trigger_human_handoff(conversation_id)

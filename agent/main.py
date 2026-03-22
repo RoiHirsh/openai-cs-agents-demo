@@ -23,20 +23,20 @@ from supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
-from airline.agents import (
+from lucentive.agents import (
     investments_faq_agent,
     onboarding_agent,
     scheduling_agent,
     triage_agent,
 )
-from airline.context import (
-    AirlineAgentChatContext,
-    AirlineAgentContext,
+from lucentive.context import (
+    LucentiveAgentChatContext,
+    LucentiveAgentContext,
     create_initial_context,
     public_context,
 )
-from server import AirlineServer
-from airline.context_cache import clear_thread_cache
+from server import LucentiveServer
+from lucentive.context_cache import clear_thread_cache
 from chatwoot import trigger_human_handoff
 from knowledge import router as knowledge_router
 
@@ -69,16 +69,16 @@ app.add_middleware(
 
 app.include_router(knowledge_router)
 
-chat_server = AirlineServer()
+chat_server = LucentiveServer()
 
 
-def get_server() -> AirlineServer:
+def get_server() -> LucentiveServer:
     return chat_server
 
 
 @app.post("/chatkit")
 async def chatkit_endpoint(
-    request: Request, server: AirlineServer = Depends(get_server)
+    request: Request, server: LucentiveServer = Depends(get_server)
 ) -> Response:
     try:
         payload = await request.body()
@@ -100,7 +100,7 @@ async def chatkit_endpoint(
 @app.get("/chatkit/state")
 async def chatkit_state(
     thread_id: str = Query(...),
-    server: AirlineServer = Depends(get_server),
+    server: LucentiveServer = Depends(get_server),
 ) -> Dict[str, Any]:
     try:
         return await server.snapshot(thread_id, {"request": None})
@@ -116,7 +116,7 @@ async def chatkit_bootstrap(
     phone: Optional[str] = Query(None),
     country: Optional[str] = Query(None),
     new_lead: bool = Query(False),
-    server: AirlineServer = Depends(get_server),
+    server: LucentiveServer = Depends(get_server),
 ) -> Dict[str, Any]:
     try:
         context = {
@@ -145,7 +145,7 @@ async def chatkit_bootstrap(
 @app.get("/chatkit/state/stream")
 async def chatkit_state_stream(
     thread_id: str = Query(...),
-    server: AirlineServer = Depends(get_server),
+    server: LucentiveServer = Depends(get_server),
 ):
     try:
         thread = await server.ensure_thread(thread_id, {"request": None})
@@ -175,13 +175,14 @@ async def health_check() -> Dict[str, str]:
     return {"status": "healthy"}
 
 
-_CHATWOOT_BASE = "https://chatwoot-chatwoot.spurtz.easypanel.host/api/v1/accounts/1"
+from chatwoot import _CHATWOOT_BASE  # single source of truth
+
 _N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
 
 
 
 
-async def _handle_reset(phone_number: str, sb, server: AirlineServer) -> Dict[str, Any]:
+async def _handle_reset(phone_number: str, sb, server: LucentiveServer) -> Dict[str, Any]:
     """Full reset sequence for a lead. Dev-only (requires RESET_ENABLED=true)."""
     chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
 
@@ -321,7 +322,7 @@ class ApiChatRequest(BaseModel):
 @app.post("/api/chat")
 async def api_chat(
     body: ApiChatRequest,
-    server: AirlineServer = Depends(get_server),
+    server: LucentiveServer = Depends(get_server),
 ) -> Dict[str, Any]:
     sb = get_supabase_client()
 
@@ -363,7 +364,7 @@ async def api_chat(
             stored_context = row.get("context")
             server._state[thread_id] = ConversationState(
                 input_items=row.get("input_items") or [],
-                context=AirlineAgentContext(**stored_context) if stored_context else create_initial_context(),
+                context=LucentiveAgentContext(**stored_context) if stored_context else create_initial_context(),
                 current_agent_name=row.get("current_agent_name") or triage_agent.name,
             )
 
@@ -400,8 +401,8 @@ async def api_chat(
 
 
 __all__ = [
-    "AirlineAgentChatContext",
-    "AirlineAgentContext",
+    "LucentiveAgentChatContext",
+    "LucentiveAgentContext",
     "app",
     "chat_server",
     "create_initial_context",

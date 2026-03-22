@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import time
 import logging
 from dataclasses import dataclass, field
@@ -40,8 +39,8 @@ from chatkit.types import (
 )
 from chatkit.store import NotFoundError
 
-from airline.context import AirlineAgentChatContext, AirlineAgentContext, create_initial_context, public_context
-from airline.context_cache import (
+from lucentive.context import LucentiveAgentChatContext, LucentiveAgentContext, create_initial_context, public_context
+from lucentive.context_cache import (
     get_lead_info_cache,
     set_lead_info,
     restore_lead_info_to_context,
@@ -49,7 +48,7 @@ from airline.context_cache import (
     set_onboarding_state,
     restore_onboarding_state_to_context,
 )
-from airline.agents import (
+from lucentive.agents import (
     investments_faq_agent,
     onboarding_agent,
     scheduling_agent,
@@ -255,13 +254,13 @@ def _parse_tool_args(raw_args: Any) -> Any:
 @dataclass
 class ConversationState:
     input_items: List[Any] = field(default_factory=list)
-    context: AirlineAgentContext = field(default_factory=create_initial_context)
+    context: LucentiveAgentContext = field(default_factory=create_initial_context)
     current_agent_name: str = triage_agent.name
     events: List[AgentEvent] = field(default_factory=list)
     guardrails: List[GuardrailCheck] = field(default_factory=list)
 
 
-class AirlineServer(ChatKitServer[dict[str, Any]]):
+class LucentiveServer(ChatKitServer[dict[str, Any]]):
     def __init__(self) -> None:
         self.store = MemoryStore()
         super().__init__(self.store)
@@ -374,11 +373,11 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     }
                     self._lead_info_cache[thread.id] = lead_info_dict
                     set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
-                    print(f"[DEBUG] Updated lead info for thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+                    logger.debug("[ensure_thread] Updated lead info for thread %s: first_name=%s, country=%s, new_lead=%s", thread.id, state.context.first_name, state.context.country, state.context.new_lead)
                 else:
                     # Even if no lead_info in context, restore from cache if available
                     restore_lead_info_to_context(thread.id, state.context)
-                    print(f"[DEBUG] Loaded existing thread {thread.id} - restored from cache: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+                    logger.debug("[ensure_thread] Loaded existing thread %s - restored from cache: first_name=%s, country=%s, new_lead=%s", thread.id, state.context.first_name, state.context.country, state.context.new_lead)
                 return thread
             except NotFoundError:
                 pass
@@ -408,7 +407,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             }
             self._lead_info_cache[new_thread.id] = lead_info_dict
             set_lead_info(new_thread.id, lead_info_dict)  # Also update module-level cache
-            print(f"[DEBUG] Set lead info for new thread {new_thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+            logger.debug("[ensure_thread] Set lead info for new thread %s: first_name=%s, country=%s, new_lead=%s", new_thread.id, state.context.first_name, state.context.country, state.context.new_lead)
         return new_thread
 
     async def ensure_thread(self, thread_id: Optional[str], context: dict[str, Any]) -> ThreadMetadata:
@@ -475,39 +474,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             if isinstance(item, MessageOutputItem):
                 text = self._truncate(ItemHelpers.text_message_output(item))
                 
-                # Print agent message to terminal
-                print(f"\n[AGENT MESSAGE]")
-                print(f"   Agent: {item.agent.name}")
-                if item.agent.name == "Scheduling Agent":
-                    try:
-                        safe = text[:500].encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8", errors="replace")
-                        print(f"   [SCHEDULING AGENT] said: {safe}")
-                    except Exception:
-                        print(f"   [SCHEDULING AGENT] said: (see Message above)")
-                # Safely encode text for Windows console compatibility
-                # Get console encoding or default to utf-8
-                console_encoding = sys.stdout.encoding or 'utf-8'
-                try:
-                    # Truncate text first
-                    truncated = text[:200] + ('...' if len(text) > 200 else '')
-                    # Encode to console encoding with error handling
-                    safe_text = truncated.encode(console_encoding, errors='replace').decode(console_encoding, errors='replace')
-                    try:
-                        print(f"   Message: {safe_text}")
-                    except UnicodeEncodeError:
-                        # If print still fails, use ASCII fallback
-                        safe_text = truncated.encode('ascii', errors='replace').decode('ascii', errors='replace')
-                        print(f"   Message: {safe_text}")
-                except (UnicodeEncodeError, UnicodeDecodeError):
-                    # Ultimate fallback: replace all problematic characters with ASCII
-                    truncated = text[:200] + ('...' if len(text) > 200 else '')
-                    safe_text = truncated.encode('ascii', errors='replace').decode('ascii', errors='replace')
-                    try:
-                        print(f"   Message: {safe_text}")
-                    except UnicodeEncodeError:
-                        # Last resort: just print a message that encoding failed
-                        print(f"   Message: [Text contains unsupported characters - message truncated]")
-                print()
+                logger.debug("[agent message] agent=%s msg=%s", item.agent.name, text[:200])
                 
                 events.append(
                     AgentEvent(
@@ -522,12 +489,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 from_agent = item.source_agent
                 to_agent = item.target_agent
                 
-                # Print handoff information to terminal
-                print(f"\n{'='*60}")
-                print(f"[AGENT HANDOFF]")
-                print(f"   From: {from_agent.name}")
-                print(f"   To:   {to_agent.name}")
-                print(f"{'='*60}\n")
+                logger.debug("[handoff] %s -> %s", from_agent.name, to_agent.name)
                 
                 events.append(
                     AgentEvent(
@@ -572,20 +534,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 raw_args = getattr(item.raw_item, "arguments", None)
                 parsed_args = _parse_tool_args(raw_args)
                 
-                # Print tool call information to terminal
-                print(f"\n{'-'*60}")
-                print(f"[TOOL CALL]")
-                print(f"   Agent: {item.agent.name}")
-                print(f"   Tool:  {tool_name}")
-                if parsed_args:
-                    try:
-                        args_str = self._truncate(str(parsed_args), limit=500)
-                        print(f"   Args:  {args_str}")
-                    except UnicodeEncodeError:
-                        # Fallback: encode with errors='replace' to handle Unicode characters
-                        args_str = str(parsed_args)[:500].encode('utf-8', errors='replace').decode('utf-8', errors='replace')
-                        print(f"   Args:  {args_str}")
-                print(f"{'-'*60}\n")
+                logger.debug("[tool call] agent=%s tool=%s args=%s", item.agent.name, tool_name, self._truncate(str(parsed_args), limit=300) if parsed_args else "")
                 
                 ev = AgentEvent(
                     id=uuid4().hex,
@@ -597,28 +546,13 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 )
                 events.append(ev)
             elif isinstance(item, ToolCallOutputItem):
-                # Print tool output information to terminal
-                output_str = str(item.output)
-                if active_agent == "Scheduling Agent":
-                    try:
-                        safe = output_str[:500].encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8", errors="replace")
-                        print(f"   [SCHEDULING TOOL] response: {safe}")
-                    except Exception:
-                        pass
-                try:
-                    safe_output = self._truncate(output_str, limit=300)
-                    print(f"   [TOOL RESULT] {safe_output}")
-                except UnicodeEncodeError:
-                    # Fallback: encode with errors='replace' to handle Unicode characters
-                    safe_output = output_str[:300].encode('utf-8', errors='replace').decode('utf-8', errors='replace')
-                    print(f"   [TOOL RESULT] {safe_output}")
-                print()
+                logger.debug("[tool result] %s", self._truncate(str(item.output), limit=300))
                 
                 ev = AgentEvent(
                     id=uuid4().hex,
                     type="tool_output",
                     agent=item.agent.name,
-                    content=self._truncate(output_str),
+                    content=self._truncate(str(item.output)),
                     metadata={"tool_result": self._truncate(item.output)},
                     timestamp=now_ms,
                 )
@@ -679,7 +613,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     state.context.country = cached_lead_info["country"]
                 if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
                     state.context.new_lead = cached_lead_info["new_lead"]
-                print(f"[DEBUG] Restored lead info from cache for thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+                logger.debug("[respond] Restored lead info from cache for thread %s: first_name=%s, country=%s, new_lead=%s", thread.id, state.context.first_name, state.context.country, state.context.new_lead)
             
             # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
             # This handles the case where ChatKit creates a new thread or cached thread has null values
@@ -697,7 +631,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                         # Cache for this thread too so it persists
                         self._lead_info_cache[thread.id] = cached_lead_info.copy()
                         set_lead_info(thread.id, cached_lead_info.copy())
-                        print(f"[DEBUG] Copied valid lead info from thread {cached_thread_id} to thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}")
+                        logger.debug("[respond] Copied valid lead info from thread %s to thread %s: first_name=%s, country=%s", cached_thread_id, thread.id, state.context.first_name, state.context.country)
                         break
                 # Fallback to preserved values if cache doesn't exist
                 if preserved_first_name and not state.context.first_name:
@@ -711,7 +645,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                 if preserved_new_lead is True and state.context.new_lead is False:
                     state.context.new_lead = True
         
-        print(f"[DEBUG] Before Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}")
+        logger.debug("[respond] Before Runner - first_name=%s, country=%s, new_lead=%s", state.context.first_name, state.context.country, state.context.new_lead)
         
         user_text = ""
         if input_user_message is not None:
@@ -760,12 +694,12 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     # Cache for this thread too so it persists
                     self._lead_info_cache[thread.id] = cached_lead_info.copy()
                     set_lead_info(thread.id, cached_lead_info.copy())
-                    print(f"[DEBUG] Before Runner - Copied valid lead info from thread {cached_thread_id} to thread {thread.id}: first_name={state.context.first_name}, country={state.context.country}")
+                    logger.debug("[respond] Before Runner - Copied lead info from thread %s to thread %s: first_name=%s, country=%s", cached_thread_id, thread.id, state.context.first_name, state.context.country)
                     break
         
         previous_context = public_context(state.context)
         
-        chat_context = AirlineAgentChatContext(
+        chat_context = LucentiveAgentChatContext(
             thread=thread,
             store=self.store,
             request_context=context,
@@ -792,17 +726,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     "user_text": user_text[:200] if isinstance(user_text, str) else "",
                 },
             )
-            print(f"\n{'#'*60}")
-            print(f"[AGENT ACTIVE] {current_agent.name}")
-            if user_text:
-                try:
-                    safe_user_text = user_text[:100] + ('...' if len(user_text) > 100 else '')
-                    print(f"   User Message: {safe_user_text}")
-                except UnicodeEncodeError:
-                    # Fallback: encode with errors='replace' to handle Unicode characters
-                    safe_user_text = user_text[:100].encode('utf-8', errors='replace').decode('utf-8', errors='replace') + ('...' if len(user_text) > 100 else '')
-                    print(f"   User Message: {safe_user_text}")
-            print(f"{'#'*60}\n")
+            logger.debug("[respond] agent=%s user_text=%s", current_agent.name, user_text[:100] if user_text else "")
             
             result = Runner.run_streamed(
                 current_agent,
@@ -995,7 +919,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         # is updated with any changes from chat_context.state
         if chat_context.state is not state.context:
             # If they're different objects (shouldn't happen, but be safe), sync the state
-            print(f"[WARNING] chat_context.state is not the same object as state.context - syncing...")
+            logger.warning("[respond] chat_context.state is not the same object as state.context — syncing")
             # Copy all fields from chat_context.state to state.context
             for field_name in state.context.model_fields.keys():
                 if hasattr(chat_context.state, field_name):
@@ -1047,8 +971,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
             self._onboarding_state_cache[thread.id] = state.context.onboarding_state.copy()
             set_onboarding_state(thread.id, state.context.onboarding_state.copy())
         
-        # Debug: Print context state to verify it's preserved
-        print(f"[DEBUG] After Runner - Context state: first_name={state.context.first_name}, country={state.context.country}, new_lead={state.context.new_lead}, email={state.context.email}, onboarding_state={state.context.onboarding_state}")
+        logger.debug("[respond] After Runner - first_name=%s, country=%s, new_lead=%s, email=%s, onboarding_state=%s", state.context.first_name, state.context.country, state.context.new_lead, state.context.email, state.context.onboarding_state)
 
         new_context = public_context(state.context)
         changes = {k: new_context[k] for k in new_context if previous_context.get(k) != new_context[k]}

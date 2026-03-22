@@ -4,7 +4,7 @@ from chatkit.agents import AgentContext
 from pydantic import BaseModel
 
 
-class AirlineAgentContext(BaseModel):
+class LucentiveAgentContext(BaseModel):
     """Context for Lucentive Club customer service agents."""
 
     # Lead information fields
@@ -32,27 +32,25 @@ class AirlineAgentContext(BaseModel):
     # }
 
 
-class AirlineAgentChatContext(AgentContext[dict]):
+class LucentiveAgentChatContext(AgentContext[dict]):
     """
     AgentContext wrapper used during ChatKit runs.
-    Holds the persisted AirlineAgentContext in `state`.
+    Holds the persisted LucentiveAgentContext in `state`.
     """
 
-    state: AirlineAgentContext
+    state: LucentiveAgentContext
 
 
-def create_initial_context() -> AirlineAgentContext:
+def create_initial_context() -> LucentiveAgentContext:
     """
-    Factory for a new AirlineAgentContext.
+    Factory for a new LucentiveAgentContext.
     Starts empty; values are populated during the conversation.
     """
-    ctx = AirlineAgentContext()
-    return ctx
+    return LucentiveAgentContext()
 
 
-def public_context(ctx: AirlineAgentContext) -> dict:
+def public_context(ctx: LucentiveAgentContext) -> dict:
     """
     Return a filtered view of the context for UI display.
     """
-    data = ctx.model_dump()
-    return data
+    return ctx.model_dump()

@@ -1,9 +1,12 @@
 """Chatwoot API helpers shared across the application."""
 from __future__ import annotations
 
+import logging
 import os
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 _CHATWOOT_BASE = "https://chatwoot-chatwoot.spurtz.easypanel.host/api/v1/accounts/1"
 
@@ -19,10 +22,10 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
     """
     chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
     if not chatwoot_token:
-        print("[handoff] CHATWOOT_API_TOKEN not set", flush=True)
+        logger.warning("[handoff] CHATWOOT_API_TOKEN not set")
         return {"ok": False, "error": "CHATWOOT_API_TOKEN not set"}
 
-    print(f"[handoff] Starting handoff for conversation_id={conversation_id}", flush=True)
+    logger.info("[handoff] Starting handoff for conversation_id=%s", conversation_id)
 
     async with httpx.AsyncClient() as client:
         headers = {"api_access_token": chatwoot_token}
@@ -33,7 +36,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             headers=headers,
             timeout=10.0,
         )
-        print(f"[handoff] Toggle status HTTP {toggle_res.status_code}: {toggle_res.text}", flush=True)
+        logger.debug("[handoff] Toggle status HTTP %s: %s", toggle_res.status_code, toggle_res.text)
 
         assign_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
@@ -41,7 +44,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             headers=headers,
             timeout=10.0,
         )
-        print(f"[handoff] Assignment HTTP {assign_res.status_code}: {assign_res.text}", flush=True)
+        logger.debug("[handoff] Assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
 
         priority_res = await client.patch(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
@@ -49,7 +52,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             headers=headers,
             timeout=10.0,
         )
-        print(f"[handoff] Priority HTTP {priority_res.status_code}: {priority_res.text}", flush=True)
+        logger.debug("[handoff] Priority HTTP %s: %s", priority_res.status_code, priority_res.text)
 
         label_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/labels",
@@ -57,7 +60,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             headers=headers,
             timeout=10.0,
         )
-        print(f"[handoff] Label HTTP {label_res.status_code}: {label_res.text}", flush=True)
+        logger.debug("[handoff] Label HTTP %s: %s", label_res.status_code, label_res.text)
 
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
@@ -69,6 +72,6 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             headers=headers,
             timeout=10.0,
         )
-        print(f"[handoff] Private note HTTP {note_res.status_code}: {note_res.text}", flush=True)
+        logger.debug("[handoff] Private note HTTP %s: %s", note_res.status_code, note_res.text)
 
     return {"ok": True}

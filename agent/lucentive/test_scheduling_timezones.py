@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 class TestSchedulingTimezoneWindow(unittest.TestCase):
     def _compute(self, now_utc: datetime) -> dict:
         # Import lazily so tests don't require app bootstrapping.
-        from airline.scheduling import compute_call_availability_status
+        from lucentive.scheduling import compute_call_availability_status
 
         self.assertIsNotNone(now_utc.tzinfo)
         out = compute_call_availability_status(now_utc)
@@ -44,4 +44,3 @@ class TestSchedulingTimezoneWindow(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

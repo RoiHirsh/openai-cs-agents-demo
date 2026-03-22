@@ -162,7 +162,7 @@ scheduling_agent = Agent[LucentiveAgentChatContext](
     model=MODEL,
     handoff_description="Handles call scheduling requests and suggests available call times.",
     instructions=scheduling_instructions,
-    tools=[get_scheduling_context],
+    tools=[get_scheduling_context, request_human_handoff],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 
@@ -258,7 +258,7 @@ onboarding_agent = Agent[LucentiveAgentChatContext](
     model=MODEL,
     handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
     instructions=onboarding_instructions,
-    tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state],
+    tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state, request_human_handoff],
     input_guardrails=[relevance_guardrail, jailbreak_guardrail],
 )
 

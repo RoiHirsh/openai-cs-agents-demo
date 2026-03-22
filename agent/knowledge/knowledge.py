@@ -35,17 +35,6 @@ def _require_dashboard_key(x_dashboard_key: Optional[str] = Header(default=None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Embedding helper (used by handoff_triggers)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _embed(text: str) -> List[float]:
-    """Generate a 1536-dimension embedding using OpenAI text-embedding-3-small."""
-    client = openai.OpenAI()
-    response = client.embeddings.create(model="text-embedding-3-small", input=text)
-    return response.data[0].embedding
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Vector store sync
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -212,12 +201,10 @@ def list_handoff_triggers() -> List[Dict[str, Any]]:
 
 @router.post("/handoff", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 def create_handoff_trigger(body: HandoffTriggerCreate) -> Dict[str, Any]:
-    embedding = _embed(body.scenario)
     sb = get_supabase_client()
     res = sb.table("handoff_triggers").insert({
         "scenario": body.scenario,
         "default_response": body.default_response,
-        "embedding": embedding,
     }).execute()
     return res.data[0]
 
@@ -229,7 +216,6 @@ def update_handoff_trigger(row_id: UUID, body: HandoffTriggerUpdate) -> Dict[str
 
     if body.scenario is not None:
         updates["scenario"] = body.scenario
-        updates["embedding"] = _embed(body.scenario)  # regenerate when scenario changes
     if body.default_response is not None:
         updates["default_response"] = body.default_response
     if body.active is not None:

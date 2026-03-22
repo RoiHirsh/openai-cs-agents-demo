@@ -23,6 +23,31 @@ The FAQ agent is instructed to: run file_search → reply to user → then hand 
 4. **Audit all agent instructions for handoff ordering rules:**
    Ensure every agent that is supposed to reply before handing off has clear, unambiguous language that the model consistently follows.
 
+5. **Triage instructions missing organization context:**
+   The Triage agent introduction says "You are a helpful triaging agent. Your role is to understand what the customer needs..." — there is no mention of Lucentive Club, what the company does, or what the expected journey looks like for a lead. This may cause the agent to lack the grounding needed to make smart routing decisions. Consider adding a brief company/product context block at the top of the Triage instructions.
+
+6. **Remove stale UI variable update comment from Triage instructions:**
+   The Triage instructions include a note about calling `update_lead_info` so that "the UI variables panel updates." This was relevant when the project used an open-source web interface that no longer exists. The comment is now confusing and should be removed or replaced with a simpler reason (e.g. "to persist the corrected value to the database").
+
+7. **Triage routing: refine trigger for Scheduling Agent to match actual WhatsApp button text:**
+   The routing rule currently says: *"Scheduling Agent: When customer says 'call' or explicitly requests a call."* The WhatsApp template button was changed to "Arrange a call" — not "call". Update the trigger description to match, e.g. *"When customer says 'arrange a call', 'call', or explicitly requests a phone conversation."*
+
+8. **Triage routing: broaden FAQ trigger to include general questions about Lucentive Club:**
+   The current FAQ routing rule lists specific topics (trading bots, stocks, fees, profit splits, setup process). It should also catch general questions about the company, the service, how it works, or anything that doesn't fit a specific flow — the principle being: if it sounds like a question, send it to FAQ. FAQ will answer if it can, and hand off to a human if it can't.
+
+9. **Audit and refactor all agent instruction prompts — remove redundancy, improve structure:**
+   Each agent's instructions have grown organically through trial and error and now contain redundant rules, contradictory emphasis, and ad-hoc patches layered on top of each other. Do a clean read-through of every agent's instructions and rewrite them with intention:
+   - Remove duplicate or near-duplicate rules
+   - Sort content by priority — what the agent must always do first, before edge cases and exceptions
+   - Identify rules that were added as workarounds for bugs that may now be fixed, and remove them if no longer needed
+   - Ensure the tone and structure is consistent across all agents
+
+10. **Decide tool ownership per agent based on the chosen orchestration model:**
+   Currently `update_lead_info` is held by both Triage and Onboarding. This needs to be revisited once the handoff graph is decided:
+   - If all specialists always return to Triage (hub-and-spoke), only Triage needs `update_lead_info` since it's the only agent that persists state between flows.
+   - If agents can operate independently and hand off directly to each other, each agent that can mutate lead data needs the tool.
+   Same logic applies to `request_human_handoff`, `get_country_offers`, `get_broker_assets`, and any future tools — tool ownership should follow directly from the orchestration structure, not be decided ad hoc.
+
 ---
 
 ## [ ] Agent flow resilience — keep agents on track when users deviate

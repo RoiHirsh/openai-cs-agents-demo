@@ -101,9 +101,12 @@ def faq_instructions(
         "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
         "Use the following routine to support the customer:\n"
         "1. Check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
-        "2. ALWAYS call the file_search tool first — every time, without exception — before making any decision.\n"
-        "3. If file_search returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what the knowledge base says. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
-        "4. If file_search returns nothing relevant: call `request_human_handoff` and say \"Please wait one sec while I check something for you.\"\n"
+        "2. Decide which tool fits the question:\n"
+        "   - Country/availability questions (e.g. 'what do you have in Israel', 'what bots are available in Canada') → call `get_country_offers` directly.\n"
+        "   - Investment/trading knowledge questions (e.g. fees, profit split, how bots work, minimum deposit) → call `file_search`.\n"
+        "   - If unsure, call `file_search` first.\n"
+        "3. If the tool returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what was returned. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
+        "4. If NEITHER tool returns a useful answer: call `request_human_handoff` and say \"Please wait one sec while I check something for you.\"\n"
         "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
         "---\n"
         "## Human Handoff Skill\n\n"
@@ -114,6 +117,7 @@ def faq_instructions(
 _faq_tools = []
 if _VECTOR_STORE_ID:
     _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
+_faq_tools.append(get_country_offers)
 _faq_tools.append(request_human_handoff)
 
 investments_faq_agent = Agent[LucentiveAgentChatContext](

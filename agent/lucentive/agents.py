@@ -103,7 +103,7 @@ def faq_instructions(
         "1. Check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent.\n"
         "2. ALWAYS call the file_search tool first — every time, without exception — before making any decision.\n"
         "3. If file_search returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what the knowledge base says. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
-        "4. If file_search returns nothing relevant: follow the handoff skill below.\n"
+        "4. If file_search returns nothing relevant: call `request_human_handoff` and say \"Please wait one sec while I check something for you.\"\n"
         "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
         "---\n"
         "## Human Handoff Skill\n\n"

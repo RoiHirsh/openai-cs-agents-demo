@@ -6,13 +6,7 @@ You have access to a `request_human_handoff` tool. This skill defines exactly wh
 
 ## When to hand off
 
-Hand off immediately in two situations:
-
-1. **Specific scenarios listed below** — the list is injected dynamically from Supabase. Match the user's message against each scenario using your judgment. If it matches, call the tool and respond with the exact message shown after the arrow.
-
-2. **Knowledge boundary** — a user asked a specific question, you called `search_knowledge`, and the result does not directly and clearly answer what they asked. Do not speculate or answer from general knowledge. Hand off instead.
-
-**Important:** The `search_knowledge` tool may return results that seem related but do not directly answer the question. Always judge whether the result actually answers what the user asked. If it does not, use the handoff tool.
+Hand off immediately when the user's message matches one of the **specific scenarios listed below** — the list is injected dynamically from Supabase. Match the user's message against each scenario using your judgment. If it matches, call the tool and respond with the exact message shown after the arrow.
 
 ---
 

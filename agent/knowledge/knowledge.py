@@ -15,8 +15,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import openai
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
 from pydantic import BaseModel, field_validator
 
 from integrations.supabase_client import get_supabase_client
@@ -70,17 +69,16 @@ def _poll_vector_store_file(
     raise TimeoutError(f"Vector store file {file_id} did not complete indexing within {timeout}s")
 
 
-def _sync_qa_vector_store() -> Dict[str, Any]:
+def _sync_qa_vector_store() -> None:
     """
     Fetch all active qa_pairs from Supabase, build a single plain-text file,
     replace the existing file in the OpenAI vector store with it.
-
-    Returns {"synced": True} on success or {"synced": False, "sync_error": "..."} on failure.
+    Runs in the background — logs success or failure, does not raise.
     """
     vector_store_id = os.environ.get("OPENAI_VECTOR_STORE_ID", "")
     if not vector_store_id:
         logger.warning("[knowledge] OPENAI_VECTOR_STORE_ID not set — skipping vector store sync")
-        return {"synced": True, "sync_error": None}
+        return
 
     sb = get_supabase_client()
     rows = sb.table("qa_pairs").select("question,answer").eq("active", True).order("created_at").execute().data
@@ -117,10 +115,8 @@ def _sync_qa_vector_store() -> Dict[str, Any]:
         client.vector_stores.files.create(vector_store_id, file_id=uploaded.id)
         _poll_vector_store_file(client, vector_store_id, uploaded.id)
         logger.info("[knowledge] Vector store %s synced — %d Q&A pairs, file %s", vector_store_id, len(rows), uploaded.id)
-        return {"synced": True, "sync_error": None}
     except Exception as exc:
         logger.error("[knowledge] Vector store sync failed: %s", exc, exc_info=True)
-        return {"synced": False, "sync_error": str(exc)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -166,22 +162,18 @@ def list_qa_pairs() -> List[Dict[str, Any]]:
 
 
 @router.post("/qa", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
-def create_qa_pair(body: QAPairCreate, response: Response) -> Dict[str, Any]:
+def create_qa_pair(body: QAPairCreate, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     sb = get_supabase_client()
     res = sb.table("qa_pairs").insert({
         "question": body.question,
         "answer": body.answer,
     }).execute()
-    sync = _sync_qa_vector_store()
-    row = res.data[0]
-    if not sync["synced"]:
-        response.status_code = status.HTTP_207_MULTI_STATUS
-        return {**row, "synced": False, "sync_error": sync["sync_error"]}
-    return {**row, "synced": True, "sync_error": None}
+    background_tasks.add_task(_sync_qa_vector_store)
+    return res.data[0]
 
 
 @router.put("/qa/{row_id}", response_model=Dict[str, Any])
-def update_qa_pair(row_id: UUID, body: QAPairUpdate, response: Response) -> Dict[str, Any]:
+def update_qa_pair(row_id: UUID, body: QAPairUpdate, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     sb = get_supabase_client()
     updates: Dict[str, Any] = {}
 
@@ -198,25 +190,15 @@ def update_qa_pair(row_id: UUID, body: QAPairUpdate, response: Response) -> Dict
     res = sb.table("qa_pairs").update(updates).eq("id", str(row_id)).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Row not found")
-    sync = _sync_qa_vector_store()
-    row = res.data[0]
-    if not sync["synced"]:
-        response.status_code = status.HTTP_207_MULTI_STATUS
-        return {**row, "synced": False, "sync_error": sync["sync_error"]}
-    return {**row, "synced": True, "sync_error": None}
+    background_tasks.add_task(_sync_qa_vector_store)
+    return res.data[0]
 
 
-@router.delete("/qa/{row_id}")
-def delete_qa_pair(row_id: UUID) -> Response:
+@router.delete("/qa/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_qa_pair(row_id: UUID, background_tasks: BackgroundTasks) -> None:
     sb = get_supabase_client()
     sb.table("qa_pairs").delete().eq("id", str(row_id)).execute()
-    sync = _sync_qa_vector_store()
-    if not sync["synced"]:
-        return JSONResponse(
-            status_code=status.HTTP_207_MULTI_STATUS,
-            content={"deleted": True, "synced": False, "sync_error": sync["sync_error"]},
-        )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    background_tasks.add_task(_sync_qa_vector_store)
 
 
 # ── handoff_triggers ─────────────────────────────────────────────────────────

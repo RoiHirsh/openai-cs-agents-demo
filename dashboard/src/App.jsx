@@ -204,7 +204,7 @@ function QATab() {
   const [answer, setAnswer]         = useState('')
   const [saving, setSaving]         = useState(false)
   const [modalError, setModalError] = useState('')
-  const [syncWarning, setSyncWarning] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
   const [search, setSearch]         = useState('')
   const [showBulk, setShowBulk]     = useState(false)
 
@@ -228,41 +228,44 @@ function QATab() {
   function openEdit(row) { setQuestion(row.question); setAnswer(row.answer); setModalError(''); setModal({ mode: 'edit', row }) }
   function closeModal() { setModal(null) }
 
+  function showSuccess(msg) {
+    setSuccessMsg(msg)
+    setTimeout(() => setSuccessMsg(''), 3000)
+  }
+
   async function handleSave() {
     const q = question.trim(), a = answer.trim()
     if (q.length < 10) { setModalError('Question must be at least 10 characters'); return }
     if (a.length < 10) { setModalError('Answer must be at least 10 characters'); return }
-    setSaving(true); setModalError(''); setSyncWarning('')
+    setSaving(true); setModalError('')
     try {
-      let result
       if (modal.mode === 'add') {
-        result = await apiFetch('/knowledge/qa', { method: 'POST', body: JSON.stringify({ question: q, answer: a }) })
+        await apiFetch('/knowledge/qa', { method: 'POST', body: JSON.stringify({ question: q, answer: a }) })
+        showSuccess('Question added successfully')
       } else {
-        result = await apiFetch(`/knowledge/qa/${modal.row.id}`, { method: 'PUT', body: JSON.stringify({ question: q, answer: a }) })
+        await apiFetch(`/knowledge/qa/${modal.row.id}`, { method: 'PUT', body: JSON.stringify({ question: q, answer: a }) })
+        showSuccess('Question updated successfully')
       }
       closeModal(); await load()
-      if (result?.synced === false) setSyncWarning(`Saved, but FAQ knowledge base sync failed: ${result.sync_error}`)
     } catch (e) { setModalError(e.message) }
     finally { setSaving(false) }
   }
 
   async function handleToggle(row) {
-    setSyncWarning('')
     try {
-      const result = await apiFetch(`/knowledge/qa/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) })
+      await apiFetch(`/knowledge/qa/${row.id}`, { method: 'PUT', body: JSON.stringify({ active: !row.active }) })
       await load()
-      if (result?.synced === false) setSyncWarning(`Saved, but FAQ knowledge base sync failed: ${result.sync_error}`)
+      showSuccess(row.active ? 'Question deactivated' : 'Question activated')
     }
     catch (e) { alert(e.message) }
   }
 
   async function handleDelete(row) {
     if (!confirm(`Delete this Q&A pair?\n\n"${row.question.slice(0, 80)}"`)) return
-    setSyncWarning('')
     try {
-      const result = await apiFetch(`/knowledge/qa/${row.id}`, { method: 'DELETE' })
+      await apiFetch(`/knowledge/qa/${row.id}`, { method: 'DELETE' })
       await load()
-      if (result?.synced === false) setSyncWarning(`Deleted, but FAQ knowledge base sync failed: ${result.sync_error}`)
+      showSuccess('Question deleted')
     }
     catch (e) { alert(e.message) }
   }
@@ -289,7 +292,7 @@ function QATab() {
 
       {loading && <p className="status-msg">Loading…</p>}
       {fetchError && <p className="status-msg error">{fetchError}</p>}
-      {syncWarning && <p className="status-msg warning">{syncWarning} <button className="btn-link" onClick={() => setSyncWarning('')}>Dismiss</button></p>}
+      {successMsg && <p className="status-msg success">{successMsg}</p>}
       {!loading && !fetchError && rows.length === 0 && <p className="status-msg">No Q&A pairs yet.</p>}
       {!loading && !fetchError && rows.length > 0 && filtered.length === 0 && <p className="status-msg">No matches for "{search}".</p>}
 

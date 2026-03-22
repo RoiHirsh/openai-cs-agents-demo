@@ -15,7 +15,7 @@ from uuid import UUID
 
 import openai
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from integrations.supabase_client import get_supabase_client
 
@@ -238,7 +238,15 @@ class BrokerAssetCreate(BaseModel):
     asset_type: str
     title: str
     url: str
+    bot: Optional[str] = None
     sort_order: int = 0
+
+    @field_validator("broker", "purpose", "asset_type", "title", "url")
+    @classmethod
+    def must_be_non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("This field is required")
+        return v.strip()
 
 
 class BrokerAssetUpdate(BaseModel):
@@ -247,6 +255,7 @@ class BrokerAssetUpdate(BaseModel):
     asset_type: Optional[str] = None
     title: Optional[str] = None
     url: Optional[str] = None
+    bot: Optional[str] = None
     sort_order: Optional[int] = None
     active: Optional[bool] = None
 
@@ -267,6 +276,7 @@ def create_broker_asset(body: BrokerAssetCreate) -> Dict[str, Any]:
         "asset_type": body.asset_type,
         "title": body.title,
         "url": body.url,
+        "bot": body.bot or None,
         "sort_order": body.sort_order,
     }).execute()
     return res.data[0]
@@ -301,6 +311,20 @@ class CountryOfferCreate(BaseModel):
     broker_notes: List[str] = []
     group_notes: List[str] = []
     sort_order: int = 0
+
+    @field_validator("country_group", "broker_name")
+    @classmethod
+    def must_be_non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("This field is required")
+        return v.strip()
+
+    @field_validator("bots")
+    @classmethod
+    def must_have_at_least_one_bot(cls, v: List[str]) -> List[str]:
+        if not v:
+            raise ValueError("At least one bot must be selected")
+        return v
 
 
 class CountryOfferUpdate(BaseModel):

@@ -46,11 +46,11 @@ def _load_broker_assets_data() -> dict[str, Any]:
     try:
         from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
-        rows = sb.table("broker_assets").select("broker,purpose,asset_type,title,url").eq("active", True).order("sort_order").execute().data
+        rows = sb.table("broker_assets").select("broker,purpose,asset_type,title,url,bot").eq("active", True).order("sort_order").execute().data
         data: dict[str, Any] = {}
         for row in rows:
             b, p, at = row["broker"], row["purpose"], row["asset_type"]
-            asset = {"title": row["title"], "url": row["url"]}
+            asset = {"title": row["title"], "url": row["url"], "bot": row.get("bot")}
             data.setdefault(b, {})
             data[b].setdefault(p, {"links": [], "videos": []})
             if at == "link":
@@ -384,10 +384,25 @@ async def get_broker_assets(
     links: list[AssetItem] = []
     if asset_type_str in ("links", "all"):
         purpose_links = purpose_entry.get("links", [])
-        if purpose_lower == "copy_trade_connect" and market and len(purpose_links) > 1:
-            links = pick_copy_trade_link_by_market(purpose_links, market)
+        if purpose_lower == "copy_trade_connect":
+            if market and purpose_links:
+                market_lower = market.strip().lower()
+                # 1. Prefer links explicitly tagged with this bot
+                bot_specific = [l for l in purpose_links if (l.get("bot") or "").lower() == market_lower]
+                if bot_specific:
+                    links = bot_specific
+                else:
+                    # 2. Fall back to generic links (bot column is null/empty)
+                    generic = [l for l in purpose_links if not l.get("bot")]
+                    if generic:
+                        links = generic
+                    else:
+                        # 3. Legacy title-text match as last resort
+                        links = pick_copy_trade_link_by_market(purpose_links, market)
+            else:
+                links = purpose_links[:3]
         else:
-            links = purpose_links[:1] if purpose_lower != "copy_trade_connect" else purpose_links[:3]
+            links = purpose_links[:1]
 
     videos: list[AssetItem] = []
     if asset_type_str in ("videos", "all"):

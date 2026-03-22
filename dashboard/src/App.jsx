@@ -476,6 +476,7 @@ function BrokerAssetsTab() {
   const [search, setSearch]         = useState('')
   const [filterBroker, setFilterBroker]   = useState('all')
   const [filterPurpose, setFilterPurpose] = useState('all')
+  const [filterBot, setFilterBot]         = useState('all')
   const [brokerOptions, setBrokerOptions] = useState([])
 
   const [fBroker, setFBroker]       = useState('')
@@ -483,7 +484,9 @@ function BrokerAssetsTab() {
   const [fAssetType, setFAssetType] = useState('link')
   const [fTitle, setFTitle]         = useState('')
   const [fUrl, setFUrl]             = useState('')
+  const [fBot, setFBot]             = useState('')
   const [fOrder, setFOrder]         = useState(0)
+  const [botOptions, setBotOptions] = useState([])
 
   const load = useCallback(async () => {
     setLoading(true); setFetch('')
@@ -494,34 +497,37 @@ function BrokerAssetsTab() {
 
   useEffect(() => { load() }, [load])
   useEffect(() => {
-    apiFetch('/knowledge/brokers')
-      .then(data => {
-        const active = (data || []).filter(b => b.active)
-        setBrokerOptions(active)
-        if (active.length > 0) setFBroker(active[0].broker_id)
-      })
-      .catch(() => {})
+    Promise.all([
+      apiFetch('/knowledge/brokers'),
+      apiFetch('/knowledge/bots'),
+    ]).then(([brokers, bots]) => {
+      const active = (brokers || []).filter(b => b.active)
+      setBrokerOptions(active)
+      if (active.length > 0) setFBroker(active[0].broker_id)
+      setBotOptions((bots || []).filter(b => b.active))
+    }).catch(() => {})
   }, [])
 
   const filtered = rows.filter(r => {
     const matchesBroker  = filterBroker  === 'all' || r.broker  === filterBroker
     const matchesPurpose = filterPurpose === 'all' || r.purpose === filterPurpose
+    const matchesBot     = filterBot     === 'all' || (filterBot === '_generic' ? !r.bot : r.bot === filterBot)
     const matchesSearch  = !search.trim() ||
       r.title.toLowerCase().includes(search.toLowerCase()) ||
       r.url.toLowerCase().includes(search.toLowerCase())
-    return matchesBroker && matchesPurpose && matchesSearch
+    return matchesBroker && matchesPurpose && matchesBot && matchesSearch
   })
 
   function openAdd() {
     const first = brokerOptions[0]?.broker_id || ''
     setFBroker(first); setFPurpose('registration'); setFAssetType('link')
-    setFTitle(''); setFUrl(''); setFOrder(0); setModalError('')
+    setFTitle(''); setFUrl(''); setFBot(''); setFOrder(0); setModalError('')
     setModal({ mode: 'add' })
   }
 
   function openEdit(row) {
     setFBroker(row.broker); setFPurpose(row.purpose); setFAssetType(row.asset_type)
-    setFTitle(row.title); setFUrl(row.url); setFOrder(row.sort_order ?? 0); setModalError('')
+    setFTitle(row.title); setFUrl(row.url); setFBot(row.bot || ''); setFOrder(row.sort_order ?? 0); setModalError('')
     setModal({ mode: 'edit', row })
   }
 
@@ -530,7 +536,7 @@ function BrokerAssetsTab() {
     if (!t) { setModalError('Title is required'); return }
     if (!u) { setModalError('URL is required'); return }
     setSaving(true); setModalError('')
-    const payload = { broker: fBroker, purpose: fPurpose, asset_type: fAssetType, title: t, url: u, sort_order: fOrder }
+    const payload = { broker: fBroker, purpose: fPurpose, asset_type: fAssetType, title: t, url: u, bot: fBot.trim() || null, sort_order: fOrder }
     try {
       if (modal.mode === 'add') {
         await apiFetch('/knowledge/broker-assets', { method: 'POST', body: JSON.stringify(payload) })
@@ -571,6 +577,11 @@ function BrokerAssetsTab() {
             <option value="all">All purposes</option>
             {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
+          <select value={filterBot} onChange={e => setFilterBot(e.target.value)}>
+            <option value="all">All bots</option>
+            <option value="_generic">Generic (no bot)</option>
+            {botOptions.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+          </select>
           <span className="row-count">{filtered.length} of {rows.length} assets</span>
         </div>
         <button className="btn-primary" onClick={openAdd}>+ Add Asset</button>
@@ -583,7 +594,7 @@ function BrokerAssetsTab() {
       {filtered.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr><th>Broker</th><th>Purpose</th><th>Type</th><th>Title</th><th>URL</th><th>Order</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Broker</th><th>Purpose</th><th>Type</th><th>Bot</th><th>Title</th><th>URL</th><th>Order</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.map(row => (
@@ -591,6 +602,7 @@ function BrokerAssetsTab() {
                 <td>{row.broker}</td>
                 <td>{row.purpose}</td>
                 <td>{row.asset_type}</td>
+                <td>{row.bot || <span style={{color:'#999',fontStyle:'italic'}}>all</span>}</td>
                 <td className="cell-truncate">{row.title}</td>
                 <td className="cell-truncate"><a href={row.url} target="_blank" rel="noreferrer">{row.url}</a></td>
                 <td>{row.sort_order}</td>
@@ -625,6 +637,17 @@ function BrokerAssetsTab() {
               <div className="field"><label>Type</label>
                 <select value={fAssetType} onChange={e => { setFAssetType(e.target.value); setModalError('') }}>
                   {ASSET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>
+                  Bot
+                  <Hint text="Leave blank if this link/video applies to all bots (e.g. registration links). Set to a specific bot (e.g. Bronze) if it only applies to that bot's copy trade setup." />
+                  <span className="label-hint"> (optional)</span>
+                </label>
+                <select value={fBot} onChange={e => { setFBot(e.target.value); setModalError('') }}>
+                  <option value="">— all bots (generic) —</option>
+                  {botOptions.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
                 </select>
               </div>
               <div className="field"><label>Title</label>
@@ -731,8 +754,9 @@ function CountryOffersTab() {
   function parseNotes(str) { return str.split('\n').map(s => s.trim()).filter(Boolean) }
 
   async function handleSave() {
-    if (!fGroup)         { setModalError('Country group is required'); return }
-    if (!fBroker.trim()) { setModalError('Broker is required'); return }
+    if (!fGroup)                { setModalError('Country group is required'); return }
+    if (!fBroker.trim())        { setModalError('Broker is required'); return }
+    if (fSelectedBots.length === 0) { setModalError('At least one bot must be selected'); return }
     setSaving(true); setModalError('')
     const payload = {
       country_group: fGroup,

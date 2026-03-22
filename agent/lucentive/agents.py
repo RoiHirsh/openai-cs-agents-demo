@@ -320,7 +320,7 @@ def triage_instructions(
         "ROUTING PRIORITY (in order):\n"
         "1. Specific requests take priority (override default onboarding):\n"
         "   - Scheduling Agent: When customer says 'arrange a call', 'call', 'I want a call', or explicitly requests a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
-        "   - Investments FAQ Agent: When customer asks any question — about the service, the company, trading bots, how it works, fees, profit splits, setup process, brokers, or anything else they want to know. If it sounds like a question, route it to FAQ.\n"
+        "   - Investments FAQ Agent: When customer asks an information-seeking question — about the service, the company, how it works, trading bots, brokers, fees, profit splits, minimum investment, or any topic they want to understand. If it's a question seeking information (not requesting an action like a call), route it to FAQ.\n"
         "2. DEFAULT BEHAVIOR - New lead onboarding (proactive routing):\n"
         "   - Onboarding Agent: If this is a new lead (new_lead=True) who hasn't completed onboarding (onboarding_complete=False), route them to the Onboarding Agent proactively as the default action.\n"
         "   - This is the DEFAULT behavior for new leads - you should route to Onboarding Agent unless there's a specific request that requires Scheduling or FAQ Agent.\n"

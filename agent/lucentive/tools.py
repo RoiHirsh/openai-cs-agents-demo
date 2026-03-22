@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 # ─── Type definitions ─────────────────────────────────────────────────────────
 
-BrokerId = Literal["bybit", "vantage", "pu_prime"]
-Purpose = Literal["registration", "copy_trade_start", "copy_trade_open_account", "copy_trade_connect"]
 AssetType = Literal["videos", "links", "all"]
 Market = Literal["crypto", "gold", "silver", "forex"]
 AssetItem = dict[str, str]  # {title: str, url: str}
@@ -100,31 +98,70 @@ def _load_country_offers_data() -> dict[str, dict[str, Any]]:
     return _COUNTRY_OFFERS_CACHE  # type: ignore[return-value]
 
 
-# ─── Normalisation helpers ────────────────────────────────────────────────────
+# ─── Normalisation helpers (Supabase-backed, 5-min TTL cache) ────────────────
 
-def normalize_broker(broker_raw: str) -> Optional[BrokerId]:
-    """Normalize broker name to canonical form."""
+_BROKERS_NORM_CACHE: list[dict] | None = None
+_BROKERS_NORM_CACHE_TIME: float = 0
+
+_COUNTRY_GROUPS_NORM_CACHE: list[dict] | None = None
+_COUNTRY_GROUPS_NORM_CACHE_TIME: float = 0
+
+
+def _load_brokers_for_norm() -> list[dict]:
+    global _BROKERS_NORM_CACHE, _BROKERS_NORM_CACHE_TIME
+    now = time.time()
+    if _BROKERS_NORM_CACHE is not None and now - _BROKERS_NORM_CACHE_TIME < _CACHE_TTL:
+        return _BROKERS_NORM_CACHE
+    try:
+        from integrations.supabase_client import get_supabase_client
+        sb = get_supabase_client()
+        _BROKERS_NORM_CACHE = sb.table("brokers").select("broker_id,display_name,aliases").eq("active", True).execute().data
+        _BROKERS_NORM_CACHE_TIME = now
+    except Exception as e:
+        logger.error("Error loading brokers for normalization: %s", e)
+        if _BROKERS_NORM_CACHE is None:
+            _BROKERS_NORM_CACHE = []
+    return _BROKERS_NORM_CACHE  # type: ignore[return-value]
+
+
+def _load_country_groups_for_norm() -> list[dict]:
+    global _COUNTRY_GROUPS_NORM_CACHE, _COUNTRY_GROUPS_NORM_CACHE_TIME
+    now = time.time()
+    if _COUNTRY_GROUPS_NORM_CACHE is not None and now - _COUNTRY_GROUPS_NORM_CACHE_TIME < _CACHE_TTL:
+        return _COUNTRY_GROUPS_NORM_CACHE
+    try:
+        from integrations.supabase_client import get_supabase_client
+        sb = get_supabase_client()
+        _COUNTRY_GROUPS_NORM_CACHE = sb.table("country_groups").select("name,aliases").eq("active", True).execute().data
+        _COUNTRY_GROUPS_NORM_CACHE_TIME = now
+    except Exception as e:
+        logger.error("Error loading country groups for normalization: %s", e)
+        if _COUNTRY_GROUPS_NORM_CACHE is None:
+            _COUNTRY_GROUPS_NORM_CACHE = []
+    return _COUNTRY_GROUPS_NORM_CACHE  # type: ignore[return-value]
+
+
+def normalize_broker(broker_raw: str) -> Optional[str]:
+    """Normalize broker name to canonical broker_id using the brokers table."""
     b = broker_raw.strip().lower()
-    if b == "bybit":
-        return "bybit"
-    if b == "vantage":
-        return "vantage"
-    if b in ("pu prime", "pu_prime", "puprime", "pu-prime"):
-        return "pu_prime"
+    for row in _load_brokers_for_norm():
+        if b == row["broker_id"] or b == row["display_name"].lower():
+            return row["broker_id"]
+        if b in [a.lower() for a in (row.get("aliases") or [])]:
+            return row["broker_id"]
     return None
 
 
-def normalize_country(country: str) -> Literal["AUSTRALIA", "CANADA", "UK", "OTHER"]:
-    """Normalize country name to canonical country group."""
+def normalize_country(country: str) -> str:
+    """Normalize country name to canonical country group using the country_groups table."""
     if not country:
         return "OTHER"
-    country_normalized = country.strip().lower()
-    if country_normalized in ("australia", "au", "aus"):
-        return "AUSTRALIA"
-    if country_normalized in ("canada", "ca", "can"):
-        return "CANADA"
-    if country_normalized in ("united kingdom", "uk", "gb", "gbr", "great britain", "england", "scotland", "wales"):
-        return "UK"
+    c = country.strip().lower()
+    for row in _load_country_groups_for_norm():
+        if c == row["name"].lower():
+            return row["name"]
+        if c in [a.lower() for a in (row.get("aliases") or [])]:
+            return row["name"]
     return "OTHER"
 
 

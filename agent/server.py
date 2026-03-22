@@ -279,22 +279,8 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             self._state[thread_id] = ConversationState()
         state = self._state[thread_id]
         
-        # CRITICAL: Restore lead info from cache if context was reset
-        # This ensures lead info persists even if the context is recreated
-        if thread_id in self._lead_info_cache:
-            cached_lead_info = self._lead_info_cache[thread_id]
-            if cached_lead_info.get("first_name") and not state.context.first_name:
-                state.context.first_name = cached_lead_info["first_name"]
-            if cached_lead_info.get("email") and not state.context.email:
-                state.context.email = cached_lead_info["email"]
-            if cached_lead_info.get("phone") and not state.context.phone:
-                state.context.phone = cached_lead_info["phone"]
-            if cached_lead_info.get("country") and not state.context.country:
-                state.context.country = cached_lead_info["country"]
-            if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
-                state.context.new_lead = cached_lead_info["new_lead"]
-        
-        # CRITICAL: Restore onboarding state from cache if context was reset
+        # Restore lead info and onboarding state from cache if context was reset
+        restore_lead_info_to_context(thread_id, state.context)
         restore_onboarding_state_to_context(thread_id, state.context)
         
         return state
@@ -600,20 +586,8 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             set_lead_info(thread.id, lead_info_dict)  # Also update module-level cache
         else:
             # If no lead_info in context, restore from cache (set during bootstrap)
-            if thread.id in self._lead_info_cache:
-                cached_lead_info = self._lead_info_cache[thread.id]
-                # Only restore if cached values are actually valid (not None/empty)
-                if cached_lead_info.get("first_name") and not state.context.first_name:
-                    state.context.first_name = cached_lead_info["first_name"]
-                if cached_lead_info.get("email") and not state.context.email:
-                    state.context.email = cached_lead_info["email"]
-                if cached_lead_info.get("phone") and not state.context.phone:
-                    state.context.phone = cached_lead_info["phone"]
-                if cached_lead_info.get("country") and not state.context.country:
-                    state.context.country = cached_lead_info["country"]
-                if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
-                    state.context.new_lead = cached_lead_info["new_lead"]
-                logger.debug("[respond] Restored lead info from cache for thread %s: first_name=%s, country=%s, new_lead=%s", thread.id, state.context.first_name, state.context.country, state.context.new_lead)
+            restore_lead_info_to_context(thread.id, state.context)
+            logger.debug("[respond] Restored lead info from cache for thread %s: first_name=%s, country=%s, new_lead=%s", thread.id, state.context.first_name, state.context.country, state.context.new_lead)
             
             # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
             # This handles the case where ChatKit creates a new thread or cached thread has null values
@@ -674,11 +648,6 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             
             state.input_items.append({"content": user_text, "role": "user"})
 
-        # CRITICAL: Restore context from cache BEFORE creating chat_context
-        # This ensures context is populated even if it was reset
-        restore_lead_info_to_context(thread.id, state.context)
-        restore_onboarding_state_to_context(thread.id, state.context)
-        
         # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
         if (not state.context.first_name and not state.context.country and 
             len(self._lead_info_cache) > 0):
@@ -933,24 +902,8 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             # But explicitly ensure state.context is set to be safe
             state.context = chat_context.state
         
-        # CRITICAL: After handoffs, ensure lead info is never lost
-        # Restore from cache if any critical fields are missing
-        if thread.id in self._lead_info_cache:
-            cached_lead_info = self._lead_info_cache[thread.id]
-            # Restore if missing (use cache as source of truth for lead info)
-            if cached_lead_info.get("country") and (not state.context.country or state.context.country == "Unknown"):
-                state.context.country = cached_lead_info["country"]
-            if cached_lead_info.get("first_name") and not state.context.first_name:
-                state.context.first_name = cached_lead_info["first_name"]
-            if cached_lead_info.get("email") and not state.context.email:
-                state.context.email = cached_lead_info["email"]
-            if cached_lead_info.get("phone") and not state.context.phone:
-                state.context.phone = cached_lead_info["phone"]
-            if cached_lead_info.get("new_lead") is not None and state.context.new_lead is False:
-                state.context.new_lead = cached_lead_info["new_lead"]
-        
-        # CRITICAL: After handoffs, ensure onboarding state is never lost
-        # Restore from cache if missing
+        # After handoffs, ensure lead info and onboarding state are never lost
+        restore_lead_info_to_context(thread.id, state.context)
         restore_onboarding_state_to_context(thread.id, state.context)
         
         # Update cache with current context values to keep it in sync

@@ -448,16 +448,11 @@ def _format_event(ev: dict) -> dict:
         label = f"Handed off to {target}"
         detail = None
     elif etype == "tool_call":
-        args = metadata.get("tool_args")
         label = f"Called tool: {content}"
-        if args:
-            detail = str(args)[:300]
-        else:
-            detail = None
+        detail = None
     elif etype == "tool_output":
-        result = metadata.get("tool_result")
         label = f"Tool result: {content}"
-        detail = str(result)[:300] if result else None
+        detail = None
     elif etype == "guardrail":
         name = agent or ev.get("name") or "Guardrail"
         passed = metadata.get("passed", True) if metadata else ev.get("passed", True)

@@ -53,15 +53,15 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
         "http://10.164.64.44:3000",
-        # Allow any localhost or local network IP (for development)
-        r"http://localhost:\d+",
-        r"http://127\.0\.0\.1:\d+",
-        r"http://10\.\d+\.\d+\.\d+:\d+",
-        r"http://192\.168\.\d+\.\d+:\d+",
         # Dashboard Railway service (set DASHBOARD_ORIGIN env var in production)
         *([_DASHBOARD_ORIGIN] if _DASHBOARD_ORIGIN else []),
     ],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

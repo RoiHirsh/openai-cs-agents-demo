@@ -433,9 +433,10 @@ def _format_event(ev: dict) -> dict:
     content = ev.get("content", "") or ""
     metadata = ev.get("metadata") or {}
 
+    active_agent = metadata.get("active_agent") if etype == "user_message" else None
     if etype == "user_message":
-        label = f"User: {content}"
-        detail = content if len(content) > 80 else None
+        label = content
+        detail = None
     elif etype == "message":
         label = f"{agent} replied"
         detail = content if content else None
@@ -473,6 +474,7 @@ def _format_event(ev: dict) -> dict:
         "label": label,
         "detail": detail,
         "timestamp": ev.get("timestamp"),
+        "active_agent": active_agent,
     }
 
 

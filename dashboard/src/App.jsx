@@ -1319,13 +1319,23 @@ function EventRow({ ev }) {
   const [open, setOpen] = useState(false)
   const meta = EVENT_TYPE_LABEL[ev.type] || { icon: '•', color: '#555' }
   const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : ''
+  const isUser = ev.type === 'user_message'
   return (
-    <div className="event-row" onClick={() => ev.detail && setOpen(o => !o)}>
+    <div className="event-row" onClick={() => !isUser && ev.detail && setOpen(o => !o)}>
       <span className="event-icon">{meta.icon}</span>
       <div className="event-body">
-        <span className="event-label" style={{ color: meta.color }}>{ev.label}</span>
         {ev.agent && <span className="event-agent">{ev.agent}</span>}
-        {open && ev.detail && <pre className="event-detail">{ev.detail}</pre>}
+        {isUser && ev.active_agent && (
+          <span className="event-active-agent">Active: {ev.active_agent}</span>
+        )}
+        {isUser ? (
+          <pre className="event-detail">{ev.label}</pre>
+        ) : (
+          <>
+            <span className="event-label" style={{ color: meta.color }}>{ev.label}</span>
+            {open && ev.detail && <pre className="event-detail">{ev.detail}</pre>}
+          </>
+        )}
       </div>
       <span className="event-time">{ts}</span>
     </div>

@@ -501,6 +501,12 @@
   color: #999;
 }
 
+.event-active-agent {
+  font-size: 11px;
+  color: #b45309;
+  font-style: italic;
+}
+
 .event-detail {
   margin: 6px 0 0;
   padding: 8px 10px;

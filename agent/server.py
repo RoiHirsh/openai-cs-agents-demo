@@ -405,9 +405,10 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
         agent_name: str,
         input_text: str,
         guardrail_results: List[Any],
+        timestamp: float | None = None,
     ) -> List[GuardrailCheck]:
         checks: List[GuardrailCheck] = []
-        timestamp = time.time() * 1000
+        timestamp = timestamp if timestamp is not None else time.time() * 1000
         agent = _get_agent_by_name(agent_name)
         for guardrail in getattr(agent, "input_guardrails", []):
             result = next((r for r in guardrail_results if r.guardrail == guardrail), None)
@@ -653,6 +654,7 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                     type="user_message",
                     agent="User",
                     content=user_text,
+                    metadata={"active_agent": state.current_agent_name},
                     timestamp=time.time() * 1000,
                 )
             )
@@ -691,6 +693,7 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
         # Tell the client which thread to bind runner updates to before streaming starts.
         yield ClientEffectEvent(name="runner_bind_thread", data={"thread_id": thread.id, "ts": time.time()})
 
+        turn_start_ms = time.time() * 1000
         result = None
         started_at = time.time()
         try:
@@ -788,7 +791,7 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             failed_guardrail = exc.guardrail_result.guardrail
             gr_output = exc.guardrail_result.output.output_info
             reasoning = getattr(gr_output, "reasoning", "")
-            timestamp = time.time() * 1000
+            timestamp = turn_start_ms + 1
             checks: List[GuardrailCheck] = []
             for guardrail in _get_agent_by_name(state.current_agent_name).input_guardrails:
                 checks.append(
@@ -889,6 +892,7 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             agent_name=state.current_agent_name,
             input_text=user_text,
             guardrail_results=result.input_guardrail_results,
+            timestamp=turn_start_ms + 1,
         )
 
         # Ensure context state is preserved - chat_context.state should be the same object as state.context

@@ -1378,7 +1378,7 @@ function ThreadsTab() {
     return (
       <div className="tab-content">
         <div className="tab-toolbar">
-          <button className="btn-secondary" onClick={() => { setSelected(null); setEvents(null) }}>
+          <button className="btn-secondary" onClick={() => { setSelected(null); setEvents(null); loadThreads() }}>
             ← Back to threads
           </button>
           <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
@@ -1417,6 +1417,8 @@ function ThreadsTab() {
               <th>Phone</th>
               <th>Last active</th>
               <th>Events</th>
+              <th>Status</th>
+              <th>Feedback</th>
               <th></th>
             </tr>
           </thead>
@@ -1427,7 +1429,17 @@ function ThreadsTab() {
                 <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
                 <td>{t.event_count}</td>
                 <td>
-                  <button className="btn-secondary" onClick={() => openThread(t)}>View</button>
+                  {t.reset_at
+                    ? <span className="badge badge-inactive" title={`Reset on ${new Date(t.reset_at).toLocaleString()}`}>Reset</span>
+                    : <span className="badge badge-active">Active</span>}
+                </td>
+                <td style={{ fontSize: 15, letterSpacing: 2 }}>
+                  {t.has_corrections && <span title="Has corrections" style={{ color: '#ef4444' }}>✗</span>}
+                  {t.has_praise      && <span title="Has good responses" style={{ color: '#16a34a', marginLeft: t.has_corrections ? 4 : 0 }}>✓</span>}
+                  {!t.has_corrections && !t.has_praise && <span style={{ color: '#d1d5db' }}>—</span>}
+                </td>
+                <td>
+                  <button className="btn-secondary" onClick={() => openThread(t)}>Review</button>
                 </td>
               </tr>
             ))}

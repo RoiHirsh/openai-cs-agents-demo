@@ -499,16 +499,36 @@ def _require_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
 @app.get("/admin/threads")
 async def admin_list_threads(_: None = Depends(_require_key)) -> list:
     sb = get_supabase_client()
-    # Show all threads including reset/archived ones
-    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").order("updated_at", desc=True).execute()
+    rows = sb.table("threads").select("thread_id,phone_number,updated_at,reset_at,events").order("updated_at", desc=True).execute()
+    all_data = rows.data or []
+
+    # Correction summary per thread (same as /admin/conversations)
+    corr_summary: dict = {}
+    if all_data:
+        thread_ids = [r["thread_id"] for r in all_data if r.get("thread_id")]
+        corr_res = sb.table("corrections").select("thread_id,feedback_type").in_("thread_id", thread_ids).execute()
+        for c in (corr_res.data or []):
+            tid = c["thread_id"]
+            if tid not in corr_summary:
+                corr_summary[tid] = {"has_corrections": False, "has_praise": False}
+            if c.get("feedback_type") == "correction":
+                corr_summary[tid]["has_corrections"] = True
+            elif c.get("feedback_type") == "praise":
+                corr_summary[tid]["has_praise"] = True
+
     result = []
-    for row in (rows.data or []):
+    for row in all_data:
         events = row.get("events") or []
+        tid = row.get("thread_id")
+        summary = corr_summary.get(tid, {})
         result.append({
-            "thread_id": row.get("thread_id"),
+            "thread_id": tid,
             "phone_number": row.get("phone_number"),
             "last_active": row.get("updated_at"),
+            "reset_at": row.get("reset_at"),
             "event_count": len(events),
+            "has_corrections": summary.get("has_corrections", False),
+            "has_praise": summary.get("has_praise", False),
         })
     return result
 

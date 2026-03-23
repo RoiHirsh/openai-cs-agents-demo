@@ -106,7 +106,7 @@ def faq_instructions(
         "   - Investment/trading knowledge questions (e.g. fees, profit split, how bots work, minimum deposit) → call `file_search`.\n"
         "   - If unsure, call `file_search` first.\n"
         "3. If the tool returns a relevant answer: reply using ONLY the information returned — do not add, expand, or elaborate beyond what was returned. Then transfer to Triage Agent. NEVER transfer before sending your reply.\n"
-        "4. If NEITHER tool returns a useful answer: call `request_human_handoff` and say \"Please wait one sec while I check something for you.\"\n"
+        "4. If NEITHER tool returns a useful answer: call `request_human_handoff` and respond with EXACTLY and ONLY \"Please wait one sec while I check something for you.\" — nothing else. Do NOT include any partial answer, context, or additional sentences before or after this message.\n"
         "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
         "---\n"
         "## Human Handoff Skill\n\n"

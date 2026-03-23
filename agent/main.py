@@ -204,12 +204,12 @@ async def _handle_reset(phone_number: str, sb, server: LucentiveServer) -> Dict[
     except Exception:
         logger.exception("[reset] Failed to delete lead from Supabase")
 
-    # Step 3: Delete thread row from Supabase
+    # Step 3: Archive thread row (keep it for conversation history, don't delete)
     try:
-        sb.table("threads").delete().eq("phone_number", phone_number).execute()
-        logger.info("[reset] Deleted thread for %s", phone_number)
+        sb.table("threads").update({"reset_at": datetime.now(timezone.utc).isoformat()}).eq("phone_number", phone_number).execute()
+        logger.info("[reset] Archived thread for %s", phone_number)
     except Exception:
-        logger.exception("[reset] Failed to delete thread from Supabase")
+        logger.exception("[reset] Failed to archive thread in Supabase")
 
     # Step 4: Clear RAM caches
     if thread_id:
@@ -499,7 +499,8 @@ def _require_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
 @app.get("/admin/threads")
 async def admin_list_threads(_: None = Depends(_require_key)) -> list:
     sb = get_supabase_client()
-    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").order("updated_at", desc=True).execute()
+    # Only show active (non-reset) threads
+    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").is_("reset_at", "null").order("updated_at", desc=True).execute()
     result = []
     for row in (rows.data or []):
         events = row.get("events") or []
@@ -508,6 +509,25 @@ async def admin_list_threads(_: None = Depends(_require_key)) -> list:
             "phone_number": row.get("phone_number"),
             "last_active": row.get("updated_at"),
             "event_count": len(events),
+        })
+    return result
+
+
+@app.get("/admin/conversations")
+async def admin_list_conversations(_: None = Depends(_require_key)) -> list:
+    """Return ALL conversation sessions including reset/archived ones."""
+    sb = get_supabase_client()
+    rows = sb.table("threads").select("thread_id,phone_number,updated_at,reset_at,input_items").order("updated_at", desc=True).execute()
+    result = []
+    for row in (rows.data or []):
+        items = row.get("input_items") or []
+        msg_count = sum(1 for m in items if isinstance(m, dict) and m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str))
+        result.append({
+            "thread_id": row.get("thread_id"),
+            "phone_number": row.get("phone_number"),
+            "last_active": row.get("updated_at"),
+            "reset_at": row.get("reset_at"),
+            "message_count": msg_count,
         })
     return result
 
@@ -521,6 +541,64 @@ async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -
     events_raw = row_res.data[0].get("events") or []
     events_sorted = sorted(events_raw, key=lambda e: e.get("timestamp") or 0)
     return [_format_event(ev) for ev in events_sorted]
+
+
+@app.get("/admin/conversations/{thread_id}/messages")
+async def admin_conversation_messages(thread_id: str, _: None = Depends(_require_key)) -> list:
+    """Return just user + assistant messages for a clean chat view."""
+    sb = get_supabase_client()
+    row_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).limit(1).execute()
+    if not row_res.data:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    input_items = row_res.data[0].get("input_items") or []
+    messages = []
+    for idx, item in enumerate(input_items):
+        role = item.get("role")
+        if role not in ("user", "assistant"):
+            continue
+        content = item.get("content")
+        if not isinstance(content, str):
+            # Some items have content as a list of parts — flatten to text
+            if isinstance(content, list):
+                parts = [p.get("text", "") if isinstance(p, dict) else str(p) for p in content]
+                content = " ".join(parts).strip()
+            else:
+                continue
+        if not content:
+            continue
+        messages.append({"index": idx, "role": role, "content": content})
+    return messages
+
+
+class CorrectionRequest(BaseModel):
+    thread_id: str
+    message_index: int
+    original_message: str
+    corrected_message: str
+    note: Optional[str] = None
+
+
+@app.post("/admin/corrections", status_code=201)
+async def admin_save_correction(body: CorrectionRequest, _: None = Depends(_require_key)) -> Dict[str, Any]:
+    """Upsert a correction for an AI message."""
+    sb = get_supabase_client()
+    payload = {
+        "thread_id": body.thread_id,
+        "message_index": body.message_index,
+        "original_message": body.original_message,
+        "corrected_message": body.corrected_message,
+        "note": body.note or None,
+    }
+    sb.table("corrections").upsert(payload, on_conflict="thread_id,message_index").execute()
+    return {"ok": True}
+
+
+@app.get("/admin/corrections")
+async def admin_list_corrections(thread_id: str = Query(...), _: None = Depends(_require_key)) -> list:
+    """Return all corrections for a given thread."""
+    sb = get_supabase_client()
+    res = sb.table("corrections").select("*").eq("thread_id", thread_id).execute()
+    return res.data or []
 
 
 __all__ = [

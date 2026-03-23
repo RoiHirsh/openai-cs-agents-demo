@@ -1438,6 +1438,283 @@ function ThreadsTab() {
   )
 }
 
+// ─── Conversations Tab ────────────────────────────────────────────────────────
+
+function ConversationsTab() {
+  const [threads, setThreads]       = useState(null)
+  const [loadingList, setLoadingList] = useState(false)
+  const [listError, setListError]   = useState('')
+
+  const [selected, setSelected]     = useState(null)   // { thread_id, phone_number, last_active }
+  const [messages, setMessages]     = useState(null)   // array of { index, role, content }
+  const [corrections, setCorrections] = useState({})   // map: message_index → correction object
+  const [loadingMsgs, setLoadingMsgs] = useState(false)
+
+  // Correction panel state
+  const [correcting, setCorrecting]   = useState(null)   // message object being corrected
+  const [correctedText, setCorrectedText] = useState('')
+  const [noteText, setNoteText]           = useState('')
+  const [saving, setSaving]               = useState(false)
+  const [saveMsg, setSaveMsg]             = useState('')
+
+  useEffect(() => {
+    setLoadingList(true)
+    apiFetch('/admin/conversations')
+      .then(data => { setThreads(data); setLoadingList(false) })
+      .catch(e   => { setListError(e.message); setLoadingList(false) })
+  }, [])
+
+  async function openThread(t) {
+    setSelected(t)
+    setMessages(null)
+    setCorrections({})
+    setCorrecting(null)
+    setLoadingMsgs(true)
+    try {
+      const [msgs, corrs] = await Promise.all([
+        apiFetch(`/admin/conversations/${t.thread_id}/messages`),
+        apiFetch(`/admin/corrections?thread_id=${t.thread_id}`),
+      ])
+      setMessages(msgs)
+      const corrMap = {}
+      for (const c of (corrs || [])) corrMap[c.message_index] = c
+      setCorrections(corrMap)
+    } catch (e) {
+      setMessages([])
+    } finally {
+      setLoadingMsgs(false)
+    }
+  }
+
+  function startCorrection(msg) {
+    setCorrecting(msg)
+    const existing = corrections[msg.index]
+    setCorrectedText(existing?.corrected_message || '')
+    setNoteText(existing?.note || '')
+    setSaveMsg('')
+  }
+
+  async function saveCorrection() {
+    if (!correctedText.trim()) return
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      await apiFetch('/admin/corrections', {
+        method: 'POST',
+        body: JSON.stringify({
+          thread_id: selected.thread_id,
+          message_index: correcting.index,
+          original_message: correcting.content,
+          corrected_message: correctedText.trim(),
+          note: noteText.trim() || null,
+        }),
+      })
+      setCorrections(prev => ({
+        ...prev,
+        [correcting.index]: {
+          message_index: correcting.index,
+          original_message: correcting.content,
+          corrected_message: correctedText.trim(),
+          note: noteText.trim() || null,
+        },
+      }))
+      setSaveMsg('Saved!')
+      setTimeout(() => setSaveMsg(''), 2500)
+    } catch (e) {
+      setSaveMsg('Error: ' + e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Detail view ──────────────────────────────────────────────────────────────
+  if (selected) {
+    return (
+      <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Header */}
+        <div className="tab-toolbar">
+          <button className="btn-secondary" onClick={() => { setSelected(null); setCorrecting(null) }}>
+            ← Back to conversations
+          </button>
+          <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
+            {selected.phone_number || 'Unknown'} &nbsp;·&nbsp; {selected.thread_id}
+          </span>
+        </div>
+
+        {/* Body: chat + correction panel side by side */}
+        <div style={{ display: 'flex', flex: 1, gap: 16, overflow: 'hidden', marginTop: 12 }}>
+
+          {/* Chat column */}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingRight: 4 }}>
+            {loadingMsgs && <p style={{ color: '#888' }}>Loading…</p>}
+            {!loadingMsgs && messages && messages.length === 0 && (
+              <p style={{ color: '#888' }}>No messages in this conversation.</p>
+            )}
+            {messages && messages.map(msg => {
+              const isUser      = msg.role === 'user'
+              const hasCorrn    = !!corrections[msg.index]
+              const isActive    = correcting?.index === msg.index
+              return (
+                <div key={msg.index} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: isUser ? 'flex-end' : 'flex-start',
+                }}>
+                  <div
+                    onClick={!isUser ? () => startCorrection(msg) : undefined}
+                    style={{
+                      maxWidth: '72%',
+                      padding: '10px 14px',
+                      borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      background: isUser ? '#2563eb' : (isActive ? '#fef3c7' : hasCorrn ? '#dcfce7' : '#f1f5f9'),
+                      color: isUser ? '#fff' : '#1a1a2e',
+                      fontSize: 13.5,
+                      lineHeight: 1.5,
+                      cursor: !isUser ? 'pointer' : 'default',
+                      border: isActive ? '2px solid #f59e0b' : hasCorrn ? '2px solid #22c55e' : '2px solid transparent',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                    title={!isUser ? (hasCorrn ? 'Correction saved — click to edit' : 'Click to add correction') : undefined}
+                  >
+                    {msg.content}
+                  </div>
+                  {hasCorrn && !isUser && (
+                    <span style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>✓ correction saved</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Correction panel */}
+          {correcting && (
+            <div style={{
+              width: 340,
+              flexShrink: 0,
+              background: '#fff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              overflowY: 'auto',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ fontSize: 13 }}>Flag AI Message</strong>
+                <button className="modal-close" onClick={() => setCorrecting(null)}>✕</button>
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: 12, color: '#64748b' }}>Original (AI message)</label>
+                <div style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fca5a5',
+                  borderRadius: 6,
+                  padding: '8px 10px',
+                  fontSize: 13,
+                  color: '#7f1d1d',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  maxHeight: 140,
+                  overflowY: 'auto',
+                }}>
+                  {correcting.content}
+                </div>
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: 12, color: '#64748b' }}>Corrected message</label>
+                <textarea
+                  value={correctedText}
+                  onChange={e => setCorrectedText(e.target.value)}
+                  placeholder="Write the correct response the AI should have given…"
+                  rows={5}
+                  autoFocus
+                />
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: 12, color: '#64748b' }}>Note (optional)</label>
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="What went wrong? Any context for the team…"
+                  rows={3}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  className="btn-primary"
+                  onClick={saveCorrection}
+                  disabled={saving || !correctedText.trim()}
+                  style={{ flex: 1 }}
+                >
+                  {saving ? 'Saving…' : 'Save correction'}
+                </button>
+                {saveMsg && (
+                  <span style={{ fontSize: 12, color: saveMsg.startsWith('Error') ? '#dc2626' : '#16a34a' }}>
+                    {saveMsg}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── List view ────────────────────────────────────────────────────────────────
+  return (
+    <div className="tab-content">
+      <div className="tab-toolbar">
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Conversations</h2>
+        <span style={{ fontSize: 12, color: '#888', marginLeft: 12 }}>
+          Each row is a separate conversation session. Click to review messages and flag AI errors.
+        </span>
+      </div>
+      {loadingList && <p style={{ color: '#888', padding: '24px 0' }}>Loading…</p>}
+      {listError   && <p className="field-error">{listError}</p>}
+      {threads && threads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No conversations yet.</p>}
+      {threads && threads.length > 0 && (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Phone</th>
+              <th>Last active</th>
+              <th>Messages</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {threads.map((t, i) => (
+              <tr key={t.thread_id}>
+                <td style={{ color: '#94a3b8', fontSize: 12 }}>{threads.length - i}</td>
+                <td>{t.phone_number || '—'}</td>
+                <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
+                <td>{t.message_count ?? '—'}</td>
+                <td>
+                  {t.reset_at
+                    ? <span className="badge badge-inactive" title={`Reset on ${new Date(t.reset_at).toLocaleString()}`}>Reset</span>
+                    : <span className="badge badge-active">Active</span>}
+                </td>
+                <td>
+                  <button className="btn-secondary" onClick={() => openThread(t)}>Review</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1464,6 +1741,7 @@ export default function App() {
         <button className={`tab-btn ${tab === 'countries'      ? 'active' : ''}`} onClick={() => setTab('countries')}>Countries</button>
         <button className={`tab-btn ${tab === 'bots'           ? 'active' : ''}`} onClick={() => setTab('bots')}>Bots</button>
         <button className={`tab-btn ${tab === 'threads'        ? 'active' : ''}`} onClick={() => setTab('threads')}>Threads</button>
+        <button className={`tab-btn ${tab === 'conversations'  ? 'active' : ''}`} onClick={() => setTab('conversations')}>Conversations</button>
       </nav>
 
       {tab === 'qa'             && <QATab />}
@@ -1474,6 +1752,7 @@ export default function App() {
       {tab === 'countries'      && <CountriesTab />}
       {tab === 'bots'           && <BotsTab />}
       {tab === 'threads'        && <ThreadsTab />}
+      {tab === 'conversations'  && <ConversationsTab />}
     </div>
   )
 }

@@ -1315,12 +1315,28 @@ const EVENT_TYPE_LABEL = {
   context_update: { icon: '📝', color: '#92400e' },
 }
 
-function EventRow({ ev }) {
-  const meta = EVENT_TYPE_LABEL[ev.type] || { icon: '•', color: '#555' }
-  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : ''
-  const isUser = ev.type === 'user_message'
+function EventRow({ ev, correction, onCorrectionClick }) {
+  const meta      = EVENT_TYPE_LABEL[ev.type] || { icon: '•', color: '#555' }
+  const ts        = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : ''
+  const isUser    = ev.type === 'user_message'
+  const isCorrect = correction?.feedback_type === 'correction'
+  const isPraise  = correction?.feedback_type === 'praise'
+
+  function handleClick() {
+    if (correction) { onCorrectionClick(); return }
+  }
+
   return (
-    <div className="event-row">
+    <div
+      className="event-row"
+      onClick={handleClick}
+      style={correction ? {
+        background: isCorrect ? '#fef2f2' : '#f0fdf4',
+        border: isCorrect ? '1px solid #fca5a5' : '1px solid #86efac',
+        borderRadius: 6,
+        cursor: 'pointer',
+      } : {}}
+    >
       <span className="event-icon">{meta.icon}</span>
       <div className="event-body">
         {ev.agent && <span className="event-agent">{ev.agent}</span>}
@@ -1332,7 +1348,12 @@ function EventRow({ ev }) {
         ) : (
           <>
             <span className="event-label" style={{ color: meta.color }}>{ev.label}</span>
-            {ev.detail && <pre className="event-detail">{ev.detail}</pre>}
+            {correction && (
+              <span style={{ fontSize: 11, marginLeft: 8, color: isCorrect ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
+                {isCorrect ? '✗ correction — click to view' : '✓ good response — click to view'}
+              </span>
+            )}
+            {!correction && ev.detail && <pre className="event-detail">{ev.detail}</pre>}
           </>
         )}
       </div>
@@ -1342,43 +1363,55 @@ function EventRow({ ev }) {
 }
 
 function ThreadsTab() {
-  const [threads, setThreads] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const [events, setEvents]   = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [threads, setThreads]       = useState(null)
+  const [selected, setSelected]     = useState(null)
+  const [events, setEvents]         = useState(null)
+  const [corrMap, setCorrMap]       = useState({})   // event index → correction row
+  const [selectedCorr, setSelectedCorr] = useState(null)  // read-only modal
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [filter, setFilter]         = useState('all')  // 'all' | 'correction' | 'praise'
 
   function loadThreads() {
-    setLoading(true)
-    setError('')
+    setLoading(true); setError('')
     apiFetch('/admin/threads')
       .then(data => { setThreads(data); setLoading(false) })
       .catch(e   => { setError(e.message); setLoading(false) })
   }
-
   useEffect(() => { loadThreads() }, [])
 
-  function openThread(t) {
-    setSelected(t)
-    setEvents(null)
-    apiFetch(`/admin/threads/${t.thread_id}`)
-      .then(setEvents)
-      .catch(e => setError(e.message))
+  async function loadThread(t) {
+    setEvents(null); setCorrMap({}); setSelectedCorr(null)
+    try {
+      const [evs, corrs] = await Promise.all([
+        apiFetch(`/admin/threads/${t.thread_id}`),
+        apiFetch(`/admin/corrections?thread_id=${t.thread_id}`),
+      ])
+      setEvents(evs || [])
+      // Match corrections to events by content
+      const map = {}
+      for (const corr of (corrs || [])) {
+        const idx = (evs || []).findIndex(ev => ev.type === 'message' && ev.detail === corr.original_message)
+        if (idx !== -1) map[idx] = corr
+      }
+      setCorrMap(map)
+    } catch (e) { setError(e.message); setEvents([]) }
   }
 
-  function refreshThread() {
-    if (!selected) return
-    setEvents(null)
-    apiFetch(`/admin/threads/${selected.thread_id}`)
-      .then(setEvents)
-      .catch(e => setError(e.message))
-  }
+  function openThread(t) { setSelected(t); loadThread(t) }
+  function refreshThread() { if (selected) loadThread(selected) }
+
+  const filteredThreads = (threads || []).filter(t => {
+    if (filter === 'correction') return t.has_corrections
+    if (filter === 'praise')     return t.has_praise
+    return true
+  })
 
   if (selected) {
     return (
       <div className="tab-content">
         <div className="tab-toolbar">
-          <button className="btn-secondary" onClick={() => { setSelected(null); setEvents(null); loadThreads() }}>
+          <button className="btn-secondary" onClick={() => { setSelected(null); setEvents(null); setCorrMap({}); setSelectedCorr(null); loadThreads() }}>
             ← Back to threads
           </button>
           <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
@@ -1388,11 +1421,66 @@ function ThreadsTab() {
             ↺ Refresh
           </button>
         </div>
+
         {!events && <p style={{ padding: '24px 0', color: '#888' }}>Loading events…</p>}
         {events && events.length === 0 && <p style={{ padding: '24px 0', color: '#888' }}>No events recorded for this thread.</p>}
         {events && events.length > 0 && (
           <div className="event-list">
-            {events.map((ev, i) => <EventRow key={i} ev={ev} />)}
+            {events.map((ev, i) => (
+              <EventRow
+                key={i}
+                ev={ev}
+                correction={corrMap[i]}
+                onCorrectionClick={() => setSelectedCorr(corrMap[i])}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Read-only feedback modal */}
+        {selectedCorr && (
+          <div className="modal-overlay" onClick={() => setSelectedCorr(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2 style={{ color: selectedCorr.feedback_type === 'praise' ? '#16a34a' : '#dc2626', fontSize: 15 }}>
+                  {selectedCorr.feedback_type === 'praise' ? '✓ Good Response' : '✗ Correction'}
+                </h2>
+                <button className="modal-close" onClick={() => setSelectedCorr(null)}>✕</button>
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: 12, color: '#64748b' }}>AI message</label>
+                <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#7f1d1d', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
+                  {selectedCorr.original_message}
+                </div>
+              </div>
+
+              {selectedCorr.feedback_type === 'praise' && (
+                <p style={{ color: '#16a34a', fontSize: 13, margin: 0 }}>Marked as a good response by the team.</p>
+              )}
+
+              {selectedCorr.feedback_type !== 'praise' && selectedCorr.corrected_message && (
+                <div className="field">
+                  <label style={{ fontSize: 12, color: '#64748b' }}>Corrected message</label>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#14532d', whiteSpace: 'pre-wrap', maxHeight: 160, overflowY: 'auto' }}>
+                    {selectedCorr.corrected_message}
+                  </div>
+                </div>
+              )}
+
+              {selectedCorr.note && (
+                <div className="field">
+                  <label style={{ fontSize: 12, color: '#64748b' }}>Note</label>
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#78350f', whiteSpace: 'pre-wrap' }}>
+                    {selectedCorr.note}
+                  </div>
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={() => setSelectedCorr(null)}>Close</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1403,27 +1491,23 @@ function ThreadsTab() {
     <div className="tab-content">
       <div className="tab-toolbar">
         <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Conversation Threads</h2>
-        <button className="btn-secondary" style={{ marginLeft: 'auto' }} onClick={loadThreads}>
-          ↺ Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          {[['all', 'All'], ['correction', '✗ Corrections'], ['praise', '✓ Good responses']].map(([k, l]) => (
+            <button key={k} className={filter === k ? 'btn-primary' : 'btn-outline'} style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+          <button className="btn-secondary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={loadThreads}>↺ Refresh</button>
+        </div>
       </div>
       {loading && <p style={{ color: '#888', padding: '24px 0' }}>Loading…</p>}
       {error   && <p className="field-error">{error}</p>}
-      {threads && threads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No threads yet.</p>}
-      {threads && threads.length > 0 && (
+      {threads && filteredThreads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No threads match this filter.</p>}
+      {filteredThreads.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr>
-              <th>Phone</th>
-              <th>Last active</th>
-              <th>Events</th>
-              <th>Status</th>
-              <th>Feedback</th>
-              <th></th>
-            </tr>
+            <tr><th>Phone</th><th>Last active</th><th>Events</th><th>Status</th><th>Feedback</th><th></th></tr>
           </thead>
           <tbody>
-            {threads.map(t => (
+            {filteredThreads.map(t => (
               <tr key={t.thread_id}>
                 <td>{t.phone_number || '—'}</td>
                 <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
@@ -1438,9 +1522,7 @@ function ThreadsTab() {
                   {t.has_praise      && <span title="Has good responses" style={{ color: '#16a34a', marginLeft: t.has_corrections ? 4 : 0 }}>✓</span>}
                   {!t.has_corrections && !t.has_praise && <span style={{ color: '#d1d5db' }}>—</span>}
                 </td>
-                <td>
-                  <button className="btn-secondary" onClick={() => openThread(t)}>Review</button>
-                </td>
+                <td><button className="btn-secondary" onClick={() => openThread(t)}>Review</button></td>
               </tr>
             ))}
           </tbody>
@@ -1721,77 +1803,6 @@ function ConversationsTab() {
 
 // ─── Corrections Tab (developer review) ──────────────────────────────────────
 
-function CorrectionsRow({ row }) {
-  const [open, setOpen] = useState(false)
-  const isCorrection = row.feedback_type !== 'praise'
-  return (
-    <div onClick={() => setOpen(o => !o)} style={{ border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 8, cursor: 'pointer', background: open ? '#fafafa' : '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px' }}>
-        <span style={{ fontSize: 15, color: isCorrection ? '#ef4444' : '#22c55e', flexShrink: 0 }}>{isCorrection ? '✗' : '✓'}</span>
-        <span style={{ flex: 1, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.original_message}</span>
-        <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>{row.phone_number || row.thread_id?.slice(0, 8)} · {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}</span>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>{open ? '▲' : '▼'}</span>
-      </div>
-      {open && (
-        <div onClick={e => e.stopPropagation()} style={{ borderTop: '1px solid #f1f5f9', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>ORIGINAL MESSAGE</div>
-            <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#7f1d1d', whiteSpace: 'pre-wrap' }}>{row.original_message}</div>
-          </div>
-          {isCorrection && row.corrected_message && (
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>CORRECTED MESSAGE</div>
-              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#14532d', whiteSpace: 'pre-wrap' }}>{row.corrected_message}</div>
-            </div>
-          )}
-          {row.note && (
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>NOTE</div>
-              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#78350f', whiteSpace: 'pre-wrap' }}>{row.note}</div>
-            </div>
-          )}
-          <div style={{ fontSize: 11, color: '#94a3b8' }}>Thread: {row.thread_id} · {row.phone_number || 'no phone'} · {row.created_at ? new Date(row.created_at).toLocaleString() : ''}</div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function CorrectionsTab() {
-  const [rows, setRows]     = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]   = useState('')
-  const [filter, setFilter] = useState('corrections')
-
-  useEffect(() => {
-    setLoading(true)
-    apiFetch('/admin/all-corrections')
-      .then(data => { setRows(data); setLoading(false) })
-      .catch(e   => { setError(e.message); setLoading(false) })
-  }, [])
-
-  const filtered = (rows || []).filter(r => filter === 'all' || r.feedback_type === filter)
-
-  return (
-    <div className="tab-content">
-      <div className="tab-toolbar">
-        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>All Feedback</h2>
-        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-          {[['correction', '✗ Corrections'], ['praise', '✓ Good responses'], ['all', 'All']].map(([k, l]) => (
-            <button key={k} className={filter === k ? 'btn-primary' : 'btn-outline'} style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setFilter(k)}>{l}</button>
-          ))}
-        </div>
-      </div>
-      <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px' }}>
-        {filter === 'correction' ? 'All flagged AI mistakes — click any row to see original, corrected message, and team note.' : filter === 'praise' ? 'All responses the team marked as good.' : 'All feedback entries across all conversations.'}
-      </p>
-      {loading && <p style={{ color: '#888' }}>Loading…</p>}
-      {error   && <p className="field-error">{error}</p>}
-      {rows && filtered.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No entries.</p>}
-      {filtered.map((r, i) => <CorrectionsRow key={r.id || i} row={r} />)}
-    </div>
-  )
-}
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -1820,7 +1831,6 @@ export default function App() {
         <button className={`tab-btn ${tab === 'bots'           ? 'active' : ''}`} onClick={() => setTab('bots')}>Bots</button>
         <button className={`tab-btn ${tab === 'threads'        ? 'active' : ''}`} onClick={() => setTab('threads')}>Threads</button>
         <button className={`tab-btn ${tab === 'conversations'  ? 'active' : ''}`} onClick={() => setTab('conversations')}>Conversations</button>
-        <button className={`tab-btn ${tab === 'feedback'       ? 'active' : ''}`} onClick={() => setTab('feedback')}>Feedback</button>
       </nav>
 
       {tab === 'qa'             && <QATab />}
@@ -1832,7 +1842,6 @@ export default function App() {
       {tab === 'bots'           && <BotsTab />}
       {tab === 'threads'        && <ThreadsTab />}
       {tab === 'conversations'  && <ConversationsTab />}
-      {tab === 'feedback'       && <CorrectionsTab />}
     </div>
   )
 }

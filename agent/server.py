@@ -805,6 +805,15 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             state.guardrails = checks
+            for g in checks:
+                state.events.append(AgentEvent(
+                    id=uuid4().hex,
+                    type="guardrail",
+                    agent=g.name,
+                    content=g.name,
+                    metadata={"passed": g.passed, "reasoning": g.reasoning},
+                    timestamp=g.timestamp,
+                ))
             refusal = "I'm not able to help with that."
             state.input_items.append({"role": "assistant", "content": refusal})
             yield ThreadItemDoneEvent(
@@ -894,6 +903,15 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
             guardrail_results=result.input_guardrail_results,
             timestamp=turn_start_ms + 1,
         )
+        for g in state.guardrails:
+            state.events.append(AgentEvent(
+                id=uuid4().hex,
+                type="guardrail",
+                agent=g.name,
+                content=g.name,
+                metadata={"passed": g.passed, "reasoning": g.reasoning},
+                timestamp=g.timestamp,
+            ))
 
         # Ensure context state is preserved - chat_context.state should be the same object as state.context
         # Explicitly sync to ensure any modifications during handoffs are preserved

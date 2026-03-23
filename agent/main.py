@@ -362,19 +362,26 @@ async def api_chat(
         if thread_res.data:
             row = thread_res.data[0]
             stored_context = row.get("context")
-            # Restore events from Supabase — split back into events vs guardrail checks
+            # Restore events from Supabase — all events (including guardrails) go into restored_events
             stored_events_raw = row.get("events") or []
             restored_events = []
             restored_guardrails = []
             for ev in stored_events_raw:
+                try:
+                    restored_events.append(AgentEvent(**{k: ev[k] for k in AgentEvent.model_fields if k in ev}))
+                except Exception:
+                    pass
                 if ev.get("type") == "guardrail":
                     try:
-                        restored_guardrails.append(GuardrailCheck(**{k: ev[k] for k in GuardrailCheck.model_fields if k in ev}))
-                    except Exception:
-                        pass
-                else:
-                    try:
-                        restored_events.append(AgentEvent(**{k: ev[k] for k in AgentEvent.model_fields if k in ev}))
+                        meta = ev.get("metadata") or {}
+                        restored_guardrails.append(GuardrailCheck(
+                            id=ev.get("id", ""),
+                            name=ev.get("agent") or ev.get("content") or "Guardrail",
+                            input=meta.get("input", ""),
+                            reasoning=meta.get("reasoning", "") or ev.get("reasoning", ""),
+                            passed=meta.get("passed", True) if meta.get("passed") is not None else ev.get("passed", True),
+                            timestamp=ev.get("timestamp", 0),
+                        ))
                     except Exception:
                         pass
             server._state[thread_id] = ConversationState(
@@ -400,12 +407,8 @@ async def api_chat(
     # 4. Persist updated full state back to threads table
     current_state = server._state.get(new_thread_id)
     if current_state:
-        # Combine events + guardrails into one list (guardrails tagged with type="guardrail")
+        # Guardrails are already written into state.events with correct timestamps
         all_events = [e.model_dump() for e in current_state.events]
-        for g in current_state.guardrails:
-            gd = g.model_dump()
-            gd["type"] = "guardrail"
-            all_events.append(gd)
         all_events.sort(key=lambda e: e.get("timestamp") or 0)
 
         sb.table("threads").upsert({
@@ -456,10 +459,10 @@ def _format_event(ev: dict) -> dict:
         label = f"Tool result: {content}"
         detail = str(result)[:300] if result else None
     elif etype == "guardrail":
-        name = ev.get("name", "Guardrail")
-        passed = ev.get("passed", True)
+        name = agent or ev.get("name") or "Guardrail"
+        passed = metadata.get("passed", True) if metadata else ev.get("passed", True)
         label = f"Guardrail: {name} — {'passed' if passed else 'blocked'}"
-        detail = ev.get("reasoning") or None
+        detail = (metadata.get("reasoning") if metadata else None) or ev.get("reasoning") or None
     elif etype == "context_update":
         changes = metadata.get("changes", {})
         label = "Context updated"

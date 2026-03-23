@@ -1316,12 +1316,11 @@ const EVENT_TYPE_LABEL = {
 }
 
 function EventRow({ ev }) {
-  const [open, setOpen] = useState(false)
   const meta = EVENT_TYPE_LABEL[ev.type] || { icon: '•', color: '#555' }
   const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : ''
   const isUser = ev.type === 'user_message'
   return (
-    <div className="event-row" onClick={() => !isUser && ev.detail && setOpen(o => !o)}>
+    <div className="event-row">
       <span className="event-icon">{meta.icon}</span>
       <div className="event-body">
         {ev.agent && <span className="event-agent">{ev.agent}</span>}
@@ -1333,7 +1332,7 @@ function EventRow({ ev }) {
         ) : (
           <>
             <span className="event-label" style={{ color: meta.color }}>{ev.label}</span>
-            {open && ev.detail && <pre className="event-detail">{ev.detail}</pre>}
+            {ev.detail && <pre className="event-detail">{ev.detail}</pre>}
           </>
         )}
       </div>
@@ -1349,17 +1348,28 @@ function ThreadsTab() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
 
-  useEffect(() => {
+  function loadThreads() {
     setLoading(true)
+    setError('')
     apiFetch('/admin/threads')
       .then(data => { setThreads(data); setLoading(false) })
       .catch(e   => { setError(e.message); setLoading(false) })
-  }, [])
+  }
+
+  useEffect(() => { loadThreads() }, [])
 
   function openThread(t) {
     setSelected(t)
     setEvents(null)
     apiFetch(`/admin/threads/${t.thread_id}`)
+      .then(setEvents)
+      .catch(e => setError(e.message))
+  }
+
+  function refreshThread() {
+    if (!selected) return
+    setEvents(null)
+    apiFetch(`/admin/threads/${selected.thread_id}`)
       .then(setEvents)
       .catch(e => setError(e.message))
   }
@@ -1374,6 +1384,9 @@ function ThreadsTab() {
           <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
             {selected.phone_number} &nbsp;·&nbsp; {selected.thread_id}
           </span>
+          <button className="btn-secondary" style={{ marginLeft: 'auto' }} onClick={refreshThread}>
+            ↺ Refresh
+          </button>
         </div>
         {!events && <p style={{ padding: '24px 0', color: '#888' }}>Loading events…</p>}
         {events && events.length === 0 && <p style={{ padding: '24px 0', color: '#888' }}>No events recorded for this thread.</p>}
@@ -1390,6 +1403,9 @@ function ThreadsTab() {
     <div className="tab-content">
       <div className="tab-toolbar">
         <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Conversation Threads</h2>
+        <button className="btn-secondary" style={{ marginLeft: 'auto' }} onClick={loadThreads}>
+          ↺ Refresh
+        </button>
       </div>
       {loading && <p style={{ color: '#888', padding: '24px 0' }}>Loading…</p>}
       {error   && <p className="field-error">{error}</p>}

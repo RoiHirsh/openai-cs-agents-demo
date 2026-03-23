@@ -1441,63 +1441,61 @@ function ThreadsTab() {
 // ─── Conversations Tab ────────────────────────────────────────────────────────
 
 function ConversationsTab() {
-  const [threads, setThreads]       = useState(null)
-  const [loadingList, setLoadingList] = useState(false)
-  const [listError, setListError]   = useState('')
+  const [threads, setThreads]           = useState(null)
+  const [loadingList, setLoadingList]   = useState(false)
+  const [listError, setListError]       = useState('')
+  const [filter, setFilter]             = useState('all') // 'all'|'corrections'|'praise'|'clean'
 
-  const [selected, setSelected]     = useState(null)   // { thread_id, phone_number, last_active }
-  const [messages, setMessages]     = useState(null)   // array of { index, role, content }
-  const [corrections, setCorrections] = useState({})   // map: message_index → correction object
-  const [loadingMsgs, setLoadingMsgs] = useState(false)
+  const [selected, setSelected]         = useState(null)
+  const [messages, setMessages]         = useState(null)
+  const [corrections, setCorrections]   = useState({})  // message_index → correction row
+  const [loadingMsgs, setLoadingMsgs]   = useState(false)
 
-  // Correction panel state
-  const [correcting, setCorrecting]   = useState(null)   // message object being corrected
+  const [correcting, setCorrecting]     = useState(null)
   const [correctedText, setCorrectedText] = useState('')
-  const [noteText, setNoteText]           = useState('')
-  const [saving, setSaving]               = useState(false)
-  const [saveMsg, setSaveMsg]             = useState('')
+  const [noteText, setNoteText]         = useState('')
+  const [saving, setSaving]             = useState(false)
+  const [saveMsg, setSaveMsg]           = useState('')
 
-  useEffect(() => {
-    setLoadingList(true)
-    apiFetch('/admin/conversations')
-      .then(data => { setThreads(data); setLoadingList(false) })
-      .catch(e   => { setListError(e.message); setLoadingList(false) })
+  const loadList = useCallback(async () => {
+    setLoadingList(true); setListError('')
+    try { setThreads(await apiFetch('/admin/conversations')) }
+    catch (e) { setListError(e.message) }
+    finally { setLoadingList(false) }
   }, [])
 
-  async function openThread(t) {
-    setSelected(t)
-    setMessages(null)
-    setCorrections({})
-    setCorrecting(null)
-    setLoadingMsgs(true)
+  useEffect(() => { loadList() }, [loadList])
+
+  async function loadThread(t) {
+    setMessages(null); setCorrections({}); setCorrecting(null); setLoadingMsgs(true)
     try {
       const [msgs, corrs] = await Promise.all([
         apiFetch(`/admin/conversations/${t.thread_id}/messages`),
         apiFetch(`/admin/corrections?thread_id=${t.thread_id}`),
       ])
-      setMessages(msgs)
-      const corrMap = {}
-      for (const c of (corrs || [])) corrMap[c.message_index] = c
-      setCorrections(corrMap)
-    } catch (e) {
-      setMessages([])
-    } finally {
-      setLoadingMsgs(false)
-    }
+      setMessages(msgs || [])
+      const map = {}
+      for (const c of (corrs || [])) map[c.message_index] = c
+      setCorrections(map)
+    } catch { setMessages([]) }
+    finally { setLoadingMsgs(false) }
   }
 
-  function startCorrection(msg) {
-    setCorrecting(msg)
+  function openThread(t) { setSelected(t); loadThread(t) }
+  function refreshThread() { loadThread(selected) }
+
+  function startCorrection(e, msg) {
+    e.stopPropagation()
     const existing = corrections[msg.index]
-    setCorrectedText(existing?.corrected_message || '')
-    setNoteText(existing?.note || '')
+    setCorrectedText(existing?.feedback_type === 'correction' ? (existing.corrected_message || '') : '')
+    setNoteText(existing?.feedback_type === 'correction' ? (existing.note || '') : '')
     setSaveMsg('')
+    setCorrecting(msg)
   }
 
   async function saveCorrection() {
     if (!correctedText.trim()) return
-    setSaving(true)
-    setSaveMsg('')
+    setSaving(true); setSaveMsg('')
     try {
       await apiFetch('/admin/corrections', {
         method: 'POST',
@@ -1507,158 +1505,134 @@ function ConversationsTab() {
           original_message: correcting.content,
           corrected_message: correctedText.trim(),
           note: noteText.trim() || null,
+          feedback_type: 'correction',
         }),
       })
-      setCorrections(prev => ({
-        ...prev,
-        [correcting.index]: {
-          message_index: correcting.index,
-          original_message: correcting.content,
-          corrected_message: correctedText.trim(),
-          note: noteText.trim() || null,
-        },
-      }))
+      setCorrections(prev => ({ ...prev, [correcting.index]: { message_index: correcting.index, original_message: correcting.content, corrected_message: correctedText.trim(), note: noteText.trim() || null, feedback_type: 'correction' } }))
       setSaveMsg('Saved!')
       setTimeout(() => setSaveMsg(''), 2500)
-    } catch (e) {
-      setSaveMsg('Error: ' + e.message)
-    } finally {
-      setSaving(false)
-    }
+    } catch (e) { setSaveMsg('Error: ' + e.message) }
+    finally { setSaving(false) }
   }
+
+  async function togglePraise(e, msg) {
+    e.stopPropagation()
+    const existing = corrections[msg.index]
+    if (existing?.feedback_type === 'praise') {
+      // Toggle off
+      try {
+        await apiFetch(`/admin/corrections/${selected.thread_id}/${msg.index}`, { method: 'DELETE' })
+        setCorrections(prev => { const n = { ...prev }; delete n[msg.index]; return n })
+      } catch {}
+      return
+    }
+    try {
+      await apiFetch('/admin/corrections', {
+        method: 'POST',
+        body: JSON.stringify({ thread_id: selected.thread_id, message_index: msg.index, original_message: msg.content, feedback_type: 'praise' }),
+      })
+      setCorrections(prev => ({ ...prev, [msg.index]: { message_index: msg.index, original_message: msg.content, feedback_type: 'praise' } }))
+      if (correcting?.index === msg.index) setCorrecting(null)
+    } catch {}
+  }
+
+  const filteredThreads = (threads || []).filter(t => {
+    if (filter === 'corrections') return t.has_corrections
+    if (filter === 'praise')      return t.has_praise
+    if (filter === 'clean')       return !t.has_corrections && !t.has_praise
+    return true
+  })
 
   // ── Detail view ──────────────────────────────────────────────────────────────
   if (selected) {
     return (
       <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Header */}
         <div className="tab-toolbar">
-          <button className="btn-secondary" onClick={() => { setSelected(null); setCorrecting(null) }}>
-            ← Back to conversations
-          </button>
+          <button className="btn-secondary" onClick={() => { setSelected(null); setCorrecting(null) }}>← Back</button>
           <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
-            {selected.phone_number || 'Unknown'} &nbsp;·&nbsp; {selected.thread_id}
+            {selected.phone_number || 'Unknown'} · {selected.thread_id}
           </span>
+          <button className="btn-outline" style={{ marginLeft: 'auto', fontSize: 13 }} onClick={refreshThread} title="Reload messages">
+            ↻ Refresh
+          </button>
         </div>
 
-        {/* Body: chat + correction panel side by side */}
-        <div style={{ display: 'flex', flex: 1, gap: 16, overflow: 'hidden', marginTop: 12 }}>
+        {/* Click on background closes the panel */}
+        <div style={{ display: 'flex', flex: 1, gap: 16, overflow: 'hidden', marginTop: 12 }} onClick={() => setCorrecting(null)}>
 
           {/* Chat column */}
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingRight: 4 }}>
             {loadingMsgs && <p style={{ color: '#888' }}>Loading…</p>}
-            {!loadingMsgs && messages && messages.length === 0 && (
-              <p style={{ color: '#888' }}>No messages in this conversation.</p>
-            )}
+            {!loadingMsgs && messages && messages.length === 0 && <p style={{ color: '#888' }}>No messages in this conversation.</p>}
             {messages && messages.map(msg => {
-              const isUser      = msg.role === 'user'
-              const hasCorrn    = !!corrections[msg.index]
-              const isActive    = correcting?.index === msg.index
+              const isUser     = msg.role === 'user'
+              const entry      = corrections[msg.index]
+              const isCorrect  = entry?.feedback_type === 'correction'
+              const isPraise   = entry?.feedback_type === 'praise'
+              const isActive   = correcting?.index === msg.index
+
+              let bg = isUser ? '#2563eb' : '#f1f5f9'
+              let border = '2px solid transparent'
+              if (!isUser) {
+                if (isActive)    { bg = '#fef3c7'; border = '2px solid #f59e0b' }
+                else if (isCorrect) { bg = '#fef2f2'; border = '2px solid #fca5a5' }
+                else if (isPraise)  { bg = '#f0fdf4'; border = '2px solid #86efac' }
+              }
+
               return (
-                <div key={msg.index} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: isUser ? 'flex-end' : 'flex-start',
-                }}>
-                  <div
-                    onClick={!isUser ? () => startCorrection(msg) : undefined}
-                    style={{
-                      maxWidth: '72%',
-                      padding: '10px 14px',
-                      borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                      background: isUser ? '#2563eb' : (isActive ? '#fef3c7' : hasCorrn ? '#dcfce7' : '#f1f5f9'),
-                      color: isUser ? '#fff' : '#1a1a2e',
-                      fontSize: 13.5,
-                      lineHeight: 1.5,
-                      cursor: !isUser ? 'pointer' : 'default',
-                      border: isActive ? '2px solid #f59e0b' : hasCorrn ? '2px solid #22c55e' : '2px solid transparent',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
-                    title={!isUser ? (hasCorrn ? 'Correction saved — click to edit' : 'Click to add correction') : undefined}
-                  >
-                    {msg.content}
+                <div key={msg.index} style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, maxWidth: '80%' }}>
+                    <div
+                      onClick={!isUser ? e => startCorrection(e, msg) : undefined}
+                      style={{ padding: '10px 14px', borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: bg, color: isUser ? '#fff' : '#1a1a2e', fontSize: 13.5, lineHeight: 1.5, cursor: !isUser ? 'pointer' : 'default', border, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                      title={!isUser ? (isCorrect ? 'Click to edit correction' : 'Click to flag as wrong') : undefined}
+                    >
+                      {msg.content}
+                    </div>
+                    {!isUser && (
+                      <button
+                        onClick={e => togglePraise(e, msg)}
+                        title={isPraise ? 'Remove good-response mark' : 'Mark as good response'}
+                        style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', border: isPraise ? '2px solid #22c55e' : '2px solid #d1fae5', background: isPraise ? '#22c55e' : '#f0fdf4', color: isPraise ? '#fff' : '#16a34a', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                      >✓</button>
+                    )}
                   </div>
-                  {hasCorrn && !isUser && (
-                    <span style={{ fontSize: 11, color: '#16a34a', marginTop: 2 }}>✓ correction saved</span>
+                  {!isUser && (isCorrect || isPraise) && (
+                    <span style={{ fontSize: 11, marginTop: 3, marginLeft: 4, color: isCorrect ? '#ef4444' : '#16a34a' }}>
+                      {isCorrect ? '✗ correction saved' : '✓ good response'}
+                    </span>
                   )}
                 </div>
               )
             })}
           </div>
 
-          {/* Correction panel */}
+          {/* Correction panel — stopPropagation so clicks inside don't close it */}
           {correcting && (
-            <div style={{
-              width: 340,
-              flexShrink: 0,
-              background: '#fff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 10,
-              padding: 16,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              overflowY: 'auto',
-            }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 340, flexShrink: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <strong style={{ fontSize: 13 }}>Flag AI Message</strong>
                 <button className="modal-close" onClick={() => setCorrecting(null)}>✕</button>
               </div>
-
               <div className="field">
                 <label style={{ fontSize: 12, color: '#64748b' }}>Original (AI message)</label>
-                <div style={{
-                  background: '#fef2f2',
-                  border: '1px solid #fca5a5',
-                  borderRadius: 6,
-                  padding: '8px 10px',
-                  fontSize: 13,
-                  color: '#7f1d1d',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  maxHeight: 140,
-                  overflowY: 'auto',
-                }}>
+                <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#7f1d1d', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 140, overflowY: 'auto' }}>
                   {correcting.content}
                 </div>
               </div>
-
               <div className="field">
                 <label style={{ fontSize: 12, color: '#64748b' }}>Corrected message</label>
-                <textarea
-                  value={correctedText}
-                  onChange={e => setCorrectedText(e.target.value)}
-                  placeholder="Write the correct response the AI should have given…"
-                  rows={5}
-                  autoFocus
-                />
+                <textarea value={correctedText} onChange={e => setCorrectedText(e.target.value)} placeholder="Write the correct response the AI should have given…" rows={5} autoFocus />
               </div>
-
               <div className="field">
                 <label style={{ fontSize: 12, color: '#64748b' }}>Note (optional)</label>
-                <textarea
-                  value={noteText}
-                  onChange={e => setNoteText(e.target.value)}
-                  placeholder="What went wrong? Any context for the team…"
-                  rows={3}
-                />
+                <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="What went wrong? Any context for the team…" rows={3} />
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <button
-                  className="btn-primary"
-                  onClick={saveCorrection}
-                  disabled={saving || !correctedText.trim()}
-                  style={{ flex: 1 }}
-                >
+                <button className="btn-primary" onClick={saveCorrection} disabled={saving || !correctedText.trim()} style={{ flex: 1 }}>
                   {saving ? 'Saving…' : 'Save correction'}
                 </button>
-                {saveMsg && (
-                  <span style={{ fontSize: 12, color: saveMsg.startsWith('Error') ? '#dc2626' : '#16a34a' }}>
-                    {saveMsg}
-                  </span>
-                )}
+                {saveMsg && <span style={{ fontSize: 12, color: saveMsg.startsWith('Error') ? '#dc2626' : '#16a34a' }}>{saveMsg}</span>}
               </div>
             </div>
           )}
@@ -1668,33 +1642,37 @@ function ConversationsTab() {
   }
 
   // ── List view ────────────────────────────────────────────────────────────────
+  const filterOpts = [
+    { key: 'all',         label: 'All' },
+    { key: 'corrections', label: '✗ Corrections' },
+    { key: 'praise',      label: '✓ Good responses' },
+    { key: 'clean',       label: 'No feedback' },
+  ]
+
   return (
     <div className="tab-content">
-      <div className="tab-toolbar">
+      <div className="tab-toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Conversations</h2>
-        <span style={{ fontSize: 12, color: '#888', marginLeft: 12 }}>
-          Each row is a separate conversation session. Click to review messages and flag AI errors.
-        </span>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          {filterOpts.map(o => (
+            <button key={o.key} className={filter === o.key ? 'btn-primary' : 'btn-outline'} style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setFilter(o.key)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
       {loadingList && <p style={{ color: '#888', padding: '24px 0' }}>Loading…</p>}
       {listError   && <p className="field-error">{listError}</p>}
-      {threads && threads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No conversations yet.</p>}
-      {threads && threads.length > 0 && (
+      {threads && filteredThreads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No conversations match this filter.</p>}
+      {filteredThreads.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Phone</th>
-              <th>Last active</th>
-              <th>Messages</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
+            <tr><th>#</th><th>Phone</th><th>Last active</th><th>Messages</th><th>Status</th><th>Feedback</th><th></th></tr>
           </thead>
           <tbody>
-            {threads.map((t, i) => (
+            {filteredThreads.map((t, i) => (
               <tr key={t.thread_id}>
-                <td style={{ color: '#94a3b8', fontSize: 12 }}>{threads.length - i}</td>
+                <td style={{ color: '#94a3b8', fontSize: 12 }}>{filteredThreads.length - i}</td>
                 <td>{t.phone_number || '—'}</td>
                 <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
                 <td>{t.message_count ?? '—'}</td>
@@ -1703,14 +1681,91 @@ function ConversationsTab() {
                     ? <span className="badge badge-inactive" title={`Reset on ${new Date(t.reset_at).toLocaleString()}`}>Reset</span>
                     : <span className="badge badge-active">Active</span>}
                 </td>
-                <td>
-                  <button className="btn-secondary" onClick={() => openThread(t)}>Review</button>
+                <td style={{ fontSize: 15, letterSpacing: 2 }}>
+                  {t.has_corrections && <span title="Has corrections" style={{ color: '#ef4444' }}>✗</span>}
+                  {t.has_praise      && <span title="Has good responses" style={{ color: '#16a34a', marginLeft: t.has_corrections ? 4 : 0 }}>✓</span>}
+                  {!t.has_corrections && !t.has_praise && <span style={{ color: '#d1d5db' }}>—</span>}
                 </td>
+                <td><button className="btn-secondary" onClick={() => openThread(t)}>Review</button></td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+    </div>
+  )
+}
+
+// ─── Corrections Tab (developer review) ──────────────────────────────────────
+
+function CorrectionsRow({ row }) {
+  const [open, setOpen] = useState(false)
+  const isCorrection = row.feedback_type !== 'praise'
+  return (
+    <div onClick={() => setOpen(o => !o)} style={{ border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: 8, cursor: 'pointer', background: open ? '#fafafa' : '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px' }}>
+        <span style={{ fontSize: 15, color: isCorrection ? '#ef4444' : '#22c55e', flexShrink: 0 }}>{isCorrection ? '✗' : '✓'}</span>
+        <span style={{ flex: 1, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.original_message}</span>
+        <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>{row.phone_number || row.thread_id?.slice(0, 8)} · {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}</span>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div onClick={e => e.stopPropagation()} style={{ borderTop: '1px solid #f1f5f9', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>ORIGINAL MESSAGE</div>
+            <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#7f1d1d', whiteSpace: 'pre-wrap' }}>{row.original_message}</div>
+          </div>
+          {isCorrection && row.corrected_message && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>CORRECTED MESSAGE</div>
+              <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#14532d', whiteSpace: 'pre-wrap' }}>{row.corrected_message}</div>
+            </div>
+          )}
+          {row.note && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>NOTE</div>
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '8px 10px', fontSize: 13, color: '#78350f', whiteSpace: 'pre-wrap' }}>{row.note}</div>
+            </div>
+          )}
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>Thread: {row.thread_id} · {row.phone_number || 'no phone'} · {row.created_at ? new Date(row.created_at).toLocaleString() : ''}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CorrectionsTab() {
+  const [rows, setRows]     = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError]   = useState('')
+  const [filter, setFilter] = useState('corrections')
+
+  useEffect(() => {
+    setLoading(true)
+    apiFetch('/admin/all-corrections')
+      .then(data => { setRows(data); setLoading(false) })
+      .catch(e   => { setError(e.message); setLoading(false) })
+  }, [])
+
+  const filtered = (rows || []).filter(r => filter === 'all' || r.feedback_type === filter)
+
+  return (
+    <div className="tab-content">
+      <div className="tab-toolbar">
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>All Feedback</h2>
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          {[['corrections', '✗ Corrections'], ['praise', '✓ Good responses'], ['all', 'All']].map(([k, l]) => (
+            <button key={k} className={filter === k ? 'btn-primary' : 'btn-outline'} style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setFilter(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px' }}>
+        {filter === 'corrections' ? 'All flagged AI mistakes — click any row to see original, corrected message, and team note.' : filter === 'praise' ? 'All responses the team marked as good.' : 'All feedback entries across all conversations.'}
+      </p>
+      {loading && <p style={{ color: '#888' }}>Loading…</p>}
+      {error   && <p className="field-error">{error}</p>}
+      {rows && filtered.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No entries.</p>}
+      {filtered.map((r, i) => <CorrectionsRow key={r.id || i} row={r} />)}
     </div>
   )
 }
@@ -1742,6 +1797,7 @@ export default function App() {
         <button className={`tab-btn ${tab === 'bots'           ? 'active' : ''}`} onClick={() => setTab('bots')}>Bots</button>
         <button className={`tab-btn ${tab === 'threads'        ? 'active' : ''}`} onClick={() => setTab('threads')}>Threads</button>
         <button className={`tab-btn ${tab === 'conversations'  ? 'active' : ''}`} onClick={() => setTab('conversations')}>Conversations</button>
+        <button className={`tab-btn ${tab === 'feedback'       ? 'active' : ''}`} onClick={() => setTab('feedback')}>Feedback</button>
       </nav>
 
       {tab === 'qa'             && <QATab />}
@@ -1753,6 +1809,7 @@ export default function App() {
       {tab === 'bots'           && <BotsTab />}
       {tab === 'threads'        && <ThreadsTab />}
       {tab === 'conversations'  && <ConversationsTab />}
+      {tab === 'feedback'       && <CorrectionsTab />}
     </div>
   )
 }

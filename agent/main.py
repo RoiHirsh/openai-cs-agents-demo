@@ -499,8 +499,8 @@ def _require_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
 @app.get("/admin/threads")
 async def admin_list_threads(_: None = Depends(_require_key)) -> list:
     sb = get_supabase_client()
-    # Only show active (non-reset) threads
-    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").is_("reset_at", "null").order("updated_at", desc=True).execute()
+    # Show all threads including reset/archived ones
+    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").order("updated_at", desc=True).execute()
     result = []
     for row in (rows.data or []):
         events = row.get("events") or []
@@ -515,19 +515,39 @@ async def admin_list_threads(_: None = Depends(_require_key)) -> list:
 
 @app.get("/admin/conversations")
 async def admin_list_conversations(_: None = Depends(_require_key)) -> list:
-    """Return ALL conversation sessions including reset/archived ones."""
+    """Return ALL conversation sessions including reset/archived ones, with correction summaries."""
     sb = get_supabase_client()
     rows = sb.table("threads").select("thread_id,phone_number,updated_at,reset_at,input_items").order("updated_at", desc=True).execute()
+    all_threads_data = rows.data or []
+
+    # Build correction summary per thread
+    corr_summary: dict = {}
+    if all_threads_data:
+        thread_ids = [r["thread_id"] for r in all_threads_data if r.get("thread_id")]
+        corr_res = sb.table("corrections").select("thread_id,feedback_type").in_("thread_id", thread_ids).execute()
+        for c in (corr_res.data or []):
+            tid = c["thread_id"]
+            if tid not in corr_summary:
+                corr_summary[tid] = {"has_corrections": False, "has_praise": False}
+            if c.get("feedback_type") == "correction":
+                corr_summary[tid]["has_corrections"] = True
+            elif c.get("feedback_type") == "praise":
+                corr_summary[tid]["has_praise"] = True
+
     result = []
-    for row in (rows.data or []):
+    for row in all_threads_data:
         items = row.get("input_items") or []
         msg_count = sum(1 for m in items if isinstance(m, dict) and m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str))
+        tid = row.get("thread_id")
+        summary = corr_summary.get(tid, {})
         result.append({
-            "thread_id": row.get("thread_id"),
+            "thread_id": tid,
             "phone_number": row.get("phone_number"),
             "last_active": row.get("updated_at"),
             "reset_at": row.get("reset_at"),
             "message_count": msg_count,
+            "has_corrections": summary.get("has_corrections", False),
+            "has_praise": summary.get("has_praise", False),
         })
     return result
 
@@ -574,31 +594,56 @@ class CorrectionRequest(BaseModel):
     thread_id: str
     message_index: int
     original_message: str
-    corrected_message: str
+    corrected_message: Optional[str] = None
     note: Optional[str] = None
+    feedback_type: str = "correction"
 
 
 @app.post("/admin/corrections", status_code=201)
 async def admin_save_correction(body: CorrectionRequest, _: None = Depends(_require_key)) -> Dict[str, Any]:
-    """Upsert a correction for an AI message."""
+    """Upsert a correction or praise entry for an AI message."""
     sb = get_supabase_client()
-    payload = {
+    payload: Dict[str, Any] = {
         "thread_id": body.thread_id,
         "message_index": body.message_index,
         "original_message": body.original_message,
-        "corrected_message": body.corrected_message,
-        "note": body.note or None,
+        "feedback_type": body.feedback_type,
     }
+    if body.corrected_message is not None:
+        payload["corrected_message"] = body.corrected_message
+    if body.note is not None:
+        payload["note"] = body.note
     sb.table("corrections").upsert(payload, on_conflict="thread_id,message_index").execute()
     return {"ok": True}
 
 
 @app.get("/admin/corrections")
 async def admin_list_corrections(thread_id: str = Query(...), _: None = Depends(_require_key)) -> list:
-    """Return all corrections for a given thread."""
+    """Return all corrections/praise for a given thread."""
     sb = get_supabase_client()
     res = sb.table("corrections").select("*").eq("thread_id", thread_id).execute()
     return res.data or []
+
+
+@app.delete("/admin/corrections/{thread_id}/{message_index}", status_code=204)
+async def admin_delete_correction(thread_id: str, message_index: int, _: None = Depends(_require_key)) -> None:
+    """Remove a correction or praise entry."""
+    sb = get_supabase_client()
+    sb.table("corrections").delete().eq("thread_id", thread_id).eq("message_index", message_index).execute()
+
+
+@app.get("/admin/all-corrections")
+async def admin_all_corrections(_: None = Depends(_require_key)) -> list:
+    """Return all corrections/praise across all threads, enriched with phone_number."""
+    sb = get_supabase_client()
+    corr_res = sb.table("corrections").select("*").order("created_at", desc=True).execute()
+    corrections = corr_res.data or []
+    if not corrections:
+        return []
+    thread_ids = list({c["thread_id"] for c in corrections})
+    threads_res = sb.table("threads").select("thread_id,phone_number").in_("thread_id", thread_ids).execute()
+    phone_map = {t["thread_id"]: t.get("phone_number") for t in (threads_res.data or [])}
+    return [{**c, "phone_number": phone_map.get(c["thread_id"])} for c in corrections]
 
 
 __all__ = [

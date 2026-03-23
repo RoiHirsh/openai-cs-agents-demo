@@ -49,6 +49,15 @@ Agents lose their place the moment a user deviates from the expected response fo
 3. Should agents be more tolerant of fragmented input — accumulate partial answers before treating a step as complete?
 4. Every multi-step flow agent should have explicit prompt language instructing it to re-ask the current step if the user's response is off-topic or incomplete, rather than accepting anything as a valid answer.
 
+**Missing infrastructure — testing & correction pipeline:**
+Beyond fixing individual deviation bugs, the team needs a repeatable way to catch and correct regressions. Without this, every prompt fix is a guess with no feedback loop.
+
+Questions to decide and build:
+- How do we run a scripted conversation against the agent and assert on the output? (e.g. "given this message sequence, the agent must end up in onboarding step 2 and not deviate")
+- Where do we log real conversations that went wrong so they become test cases?
+- Who reviews flagged conversations and decides whether the fix is a prompt change, a tool change, or a knowledge base addition?
+- Should we build a lightweight eval harness (scripted chat replay + expected behavior assertions) or use an existing framework?
+
 ---
 
 ### [X] Extend human handoff to all agents
@@ -94,6 +103,17 @@ Three gaps in the sync that runs after every QA pair create/update/delete:
 - Wrap upload + attach in `try/except`, log `ERROR` on failure with full exception detail
 - After `vector_stores.files.create()`, poll until `completed` or `failed` (with timeout), then log accordingly
 - Return `207 Multi-Status` with `{"saved": true, "synced": false, "sync_error": "..."}` when sync fails so the dashboard can surface it
+
+---
+
+### [ ] FAQ agent — always run file_search before get_country_offers
+**Location**: `agent/lucentive/agents.py` — `faq_instructions()`
+
+Current routing picks one tool based on question type (country/availability → `get_country_offers`, knowledge → `file_search`). This caused a wrong answer: "if I live in the USA can I trade?" was routed to `get_country_offers`, which said yes — missing the regulatory restriction that IS in the knowledge base.
+
+**Root cause:** `get_country_offers` always returns something (structured fallback), so the agent treats it as authoritative. `file_search` may return nothing but contains richer, exception-aware knowledge.
+
+**Fix:** Always run `file_search` first. If it returns a useful answer, use it. If it returns nothing, fall back to `get_country_offers`. This scales automatically — any new Q&A pair added to the knowledge base is surfaced without touching routing logic.
 
 ---
 

@@ -18,7 +18,7 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from chatkit.types import ThreadMetadata
-from server import ConversationState
+from server import AgentEvent, ConversationState, GuardrailCheck
 from integrations.supabase_client import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -53,15 +53,15 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
         "http://10.164.64.44:3000",
-        # Allow any localhost or local network IP (for development)
-        r"http://localhost:\d+",
-        r"http://127\.0\.0\.1:\d+",
-        r"http://10\.\d+\.\d+\.\d+:\d+",
-        r"http://192\.168\.\d+\.\d+:\d+",
         # Dashboard Railway service (set DASHBOARD_ORIGIN env var in production)
         *([_DASHBOARD_ORIGIN] if _DASHBOARD_ORIGIN else []),
     ],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -358,14 +358,31 @@ async def api_chat(
             {"request": None},
         )
 
-        thread_res = sb.table("threads").select("input_items,context,current_agent_name").eq("thread_id", thread_id).limit(1).execute()
+        thread_res = sb.table("threads").select("input_items,context,current_agent_name,events").eq("thread_id", thread_id).limit(1).execute()
         if thread_res.data:
             row = thread_res.data[0]
             stored_context = row.get("context")
+            # Restore events from Supabase — split back into events vs guardrail checks
+            stored_events_raw = row.get("events") or []
+            restored_events = []
+            restored_guardrails = []
+            for ev in stored_events_raw:
+                if ev.get("type") == "guardrail":
+                    try:
+                        restored_guardrails.append(GuardrailCheck(**{k: ev[k] for k in GuardrailCheck.model_fields if k in ev}))
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        restored_events.append(AgentEvent(**{k: ev[k] for k in AgentEvent.model_fields if k in ev}))
+                    except Exception:
+                        pass
             server._state[thread_id] = ConversationState(
                 input_items=row.get("input_items") or [],
                 context=LucentiveAgentContext(**stored_context) if stored_context else create_initial_context(),
                 current_agent_name=row.get("current_agent_name") or triage_agent.name,
+                events=restored_events,
+                guardrails=restored_guardrails,
             )
 
     # 2b. Inject conversation_id into context so handoff tool can use it
@@ -383,12 +400,21 @@ async def api_chat(
     # 4. Persist updated full state back to threads table
     current_state = server._state.get(new_thread_id)
     if current_state:
+        # Combine events + guardrails into one list (guardrails tagged with type="guardrail")
+        all_events = [e.model_dump() for e in current_state.events]
+        for g in current_state.guardrails:
+            gd = g.model_dump()
+            gd["type"] = "guardrail"
+            all_events.append(gd)
+        all_events.sort(key=lambda e: e.get("timestamp") or 0)
+
         sb.table("threads").upsert({
             "thread_id": new_thread_id,
             "phone_number": body.phone_number,
             "input_items": current_state.input_items,
             "context": current_state.context.model_dump(),
             "current_agent_name": current_state.current_agent_name,
+            "events": all_events,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }).execute()
 
@@ -398,6 +424,100 @@ async def api_chat(
 
     return {"reply": reply}
 
+
+
+def _format_event(ev: dict) -> dict:
+    """Convert a raw stored event dict into a clean, human-readable entry."""
+    etype = ev.get("type", "")
+    agent = ev.get("agent", "")
+    content = ev.get("content", "") or ""
+    metadata = ev.get("metadata") or {}
+
+    if etype == "message":
+        label = f"{agent} replied"
+        detail = content if content else None
+    elif etype == "handoff":
+        target = metadata.get("target_agent") or content
+        label = f"Handed off to {target}"
+        detail = None
+    elif etype == "tool_call":
+        args = metadata.get("tool_args")
+        label = f"Called tool: {content}"
+        if args:
+            detail = str(args)[:300]
+        else:
+            detail = None
+    elif etype == "tool_output":
+        result = metadata.get("tool_result")
+        label = f"Tool result: {content}"
+        detail = str(result)[:300] if result else None
+    elif etype == "guardrail":
+        name = ev.get("name", "Guardrail")
+        passed = ev.get("passed", True)
+        label = f"Guardrail: {name} — {'passed' if passed else 'blocked'}"
+        detail = ev.get("reasoning") or None
+    elif etype == "context_update":
+        changes = metadata.get("changes", {})
+        label = "Context updated"
+        detail = ", ".join(f"{k}: {v}" for k, v in changes.items()) if changes else None
+    else:
+        label = f"{etype}: {content}" if content else etype
+        detail = None
+
+    return {
+        "type": etype,
+        "agent": agent,
+        "label": label,
+        "detail": detail,
+        "timestamp": ev.get("timestamp"),
+    }
+
+
+def _require_dashboard_key_dep(x_dashboard_key: Optional[str] = None) -> None:
+    from fastapi import Header, HTTPException
+    expected = os.environ.get("DASHBOARD_API_KEY", "")
+    if not expected:
+        raise __import__("fastapi").HTTPException(status_code=500, detail="DASHBOARD_API_KEY not configured")
+    if x_dashboard_key != expected:
+        raise __import__("fastapi").HTTPException(status_code=401, detail="Invalid dashboard key")
+
+
+from fastapi import Header, HTTPException
+
+
+def _require_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
+    expected = os.environ.get("DASHBOARD_API_KEY", "")
+    if not expected:
+        raise HTTPException(status_code=500, detail="DASHBOARD_API_KEY not configured")
+    if x_dashboard_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid dashboard key")
+
+
+@app.get("/admin/threads")
+async def admin_list_threads(_: None = Depends(_require_key)) -> list:
+    sb = get_supabase_client()
+    rows = sb.table("threads").select("thread_id,phone_number,updated_at,events").order("updated_at", desc=True).execute()
+    result = []
+    for row in (rows.data or []):
+        events = row.get("events") or []
+        result.append({
+            "thread_id": row.get("thread_id"),
+            "phone_number": row.get("phone_number"),
+            "last_active": row.get("updated_at"),
+            "event_count": len(events),
+        })
+    return result
+
+
+@app.get("/admin/threads/{thread_id}")
+async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -> list:
+    sb = get_supabase_client()
+    row_res = sb.table("threads").select("events").eq("thread_id", thread_id).limit(1).execute()
+    if not row_res.data:
+        raise HTTPException(status_code=404, detail="Thread not found")
+    events_raw = row_res.data[0].get("events") or []
+    events_sorted = sorted(events_raw, key=lambda e: e.get("timestamp") or 0)
+    return [_format_event(ev) for ev in events_sorted]
 
 
 __all__ = [

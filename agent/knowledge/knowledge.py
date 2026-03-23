@@ -183,7 +183,7 @@ def update_qa_pair(row_id: UUID, body: QAPairUpdate, background_tasks: Backgroun
     return res.data[0]
 
 
-@router.delete("/qa/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/qa/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_qa_pair(row_id: UUID, background_tasks: BackgroundTasks) -> None:
     sb = get_supabase_client()
     sb.table("qa_pairs").delete().eq("id", str(row_id)).execute()
@@ -230,7 +230,7 @@ def update_handoff_trigger(row_id: UUID, body: HandoffTriggerUpdate) -> Dict[str
     return res.data[0]
 
 
-@router.delete("/handoff/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/handoff/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_handoff_trigger(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("handoff_triggers").delete().eq("id", str(row_id)).execute()
@@ -302,7 +302,7 @@ def update_broker_asset(row_id: UUID, body: BrokerAssetUpdate) -> Dict[str, Any]
     return res.data[0]
 
 
-@router.delete("/broker-assets/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/broker-assets/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_broker_asset(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("broker_assets").delete().eq("id", str(row_id)).execute()
@@ -378,7 +378,7 @@ def update_country_offer(row_id: UUID, body: CountryOfferUpdate) -> Dict[str, An
     return res.data[0]
 
 
-@router.delete("/country-offers/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/country-offers/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_country_offer(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("country_offers").delete().eq("id", str(row_id)).execute()
@@ -427,7 +427,7 @@ def update_broker(row_id: UUID, body: BrokerUpdate) -> Dict[str, Any]:
     return res.data[0]
 
 
-@router.delete("/brokers/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/brokers/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_broker(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("brokers").delete().eq("id", str(row_id)).execute()
@@ -478,7 +478,7 @@ def update_country_group(row_id: UUID, body: CountryGroupUpdate) -> Dict[str, An
     return res.data[0]
 
 
-@router.delete("/country-groups/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/country-groups/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_country_group(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("country_groups").delete().eq("id", str(row_id)).execute()
@@ -520,7 +520,7 @@ def update_bot(row_id: UUID, body: BotUpdate) -> Dict[str, Any]:
     return res.data[0]
 
 
-@router.delete("/bots/{row_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/bots/{row_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_bot(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("bots").delete().eq("id", str(row_id)).execute()

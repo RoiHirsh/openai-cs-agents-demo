@@ -1303,6 +1303,114 @@ function BotsTab() {
   )
 }
 
+// ─── Threads Tab ──────────────────────────────────────────────────────────────
+
+const EVENT_TYPE_LABEL = {
+  message:        { icon: '💬', color: '#1a1a2e' },
+  handoff:        { icon: '↪️',  color: '#6d28d9' },
+  tool_call:      { icon: '🔧', color: '#0369a1' },
+  tool_output:    { icon: '📋', color: '#0891b2' },
+  guardrail:      { icon: '🛡️', color: '#15803d' },
+  context_update: { icon: '📝', color: '#92400e' },
+}
+
+function EventRow({ ev }) {
+  const [open, setOpen] = useState(false)
+  const meta = EVENT_TYPE_LABEL[ev.type] || { icon: '•', color: '#555' }
+  const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : ''
+  return (
+    <div className="event-row" onClick={() => ev.detail && setOpen(o => !o)}>
+      <span className="event-icon">{meta.icon}</span>
+      <div className="event-body">
+        <span className="event-label" style={{ color: meta.color }}>{ev.label}</span>
+        {ev.agent && <span className="event-agent">{ev.agent}</span>}
+        {open && ev.detail && <pre className="event-detail">{ev.detail}</pre>}
+      </div>
+      <span className="event-time">{ts}</span>
+    </div>
+  )
+}
+
+function ThreadsTab() {
+  const [threads, setThreads] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const [events, setEvents]   = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+
+  useEffect(() => {
+    setLoading(true)
+    apiFetch('/admin/threads')
+      .then(data => { setThreads(data); setLoading(false) })
+      .catch(e   => { setError(e.message); setLoading(false) })
+  }, [])
+
+  function openThread(t) {
+    setSelected(t)
+    setEvents(null)
+    apiFetch(`/admin/threads/${t.thread_id}`)
+      .then(setEvents)
+      .catch(e => setError(e.message))
+  }
+
+  if (selected) {
+    return (
+      <div className="tab-content">
+        <div className="tab-toolbar">
+          <button className="btn-secondary" onClick={() => { setSelected(null); setEvents(null) }}>
+            ← Back to threads
+          </button>
+          <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
+            {selected.phone_number} &nbsp;·&nbsp; {selected.thread_id}
+          </span>
+        </div>
+        {!events && <p style={{ padding: '24px 0', color: '#888' }}>Loading events…</p>}
+        {events && events.length === 0 && <p style={{ padding: '24px 0', color: '#888' }}>No events recorded for this thread.</p>}
+        {events && events.length > 0 && (
+          <div className="event-list">
+            {events.map((ev, i) => <EventRow key={i} ev={ev} />)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="tab-content">
+      <div className="tab-toolbar">
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Conversation Threads</h2>
+      </div>
+      {loading && <p style={{ color: '#888', padding: '24px 0' }}>Loading…</p>}
+      {error   && <p className="field-error">{error}</p>}
+      {threads && threads.length === 0 && <p style={{ color: '#888', padding: '24px 0' }}>No threads yet.</p>}
+      {threads && threads.length > 0 && (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Last active</th>
+              <th>Events</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {threads.map(t => (
+              <tr key={t.thread_id}>
+                <td>{t.phone_number || '—'}</td>
+                <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
+                <td>{t.event_count}</td>
+                <td>
+                  <button className="btn-secondary" onClick={() => openThread(t)}>View</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1328,6 +1436,7 @@ export default function App() {
         <button className={`tab-btn ${tab === 'brokers'        ? 'active' : ''}`} onClick={() => setTab('brokers')}>Brokers</button>
         <button className={`tab-btn ${tab === 'countries'      ? 'active' : ''}`} onClick={() => setTab('countries')}>Countries</button>
         <button className={`tab-btn ${tab === 'bots'           ? 'active' : ''}`} onClick={() => setTab('bots')}>Bots</button>
+        <button className={`tab-btn ${tab === 'threads'        ? 'active' : ''}`} onClick={() => setTab('threads')}>Threads</button>
       </nav>
 
       {tab === 'qa'             && <QATab />}
@@ -1337,6 +1446,7 @@ export default function App() {
       {tab === 'brokers'        && <BrokersTab />}
       {tab === 'countries'      && <CountriesTab />}
       {tab === 'bots'           && <BotsTab />}
+      {tab === 'threads'        && <ThreadsTab />}
     </div>
   )
 }

@@ -1444,7 +1444,7 @@ function ConversationsTab() {
   const [threads, setThreads]           = useState(null)
   const [loadingList, setLoadingList]   = useState(false)
   const [listError, setListError]       = useState('')
-  const [filter, setFilter]             = useState('all') // 'all'|'corrections'|'praise'|'clean'
+  const [filter, setFilter]             = useState('all') // 'all'|'correction'|'praise'|'clean'
 
   const [selected, setSelected]         = useState(null)
   const [messages, setMessages]         = useState(null)
@@ -1537,7 +1537,7 @@ function ConversationsTab() {
   }
 
   const filteredThreads = (threads || []).filter(t => {
-    if (filter === 'corrections') return t.has_corrections
+    if (filter === 'correction') return t.has_corrections
     if (filter === 'praise')      return t.has_praise
     if (filter === 'clean')       return !t.has_corrections && !t.has_praise
     return true
@@ -1548,7 +1548,7 @@ function ConversationsTab() {
     return (
       <div className="tab-content" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div className="tab-toolbar">
-          <button className="btn-secondary" onClick={() => { setSelected(null); setCorrecting(null) }}>← Back</button>
+          <button className="btn-secondary" onClick={() => { setSelected(null); setCorrecting(null); loadList() }}>← Back</button>
           <span style={{ marginLeft: 16, color: '#555', fontSize: 13 }}>
             {selected.phone_number || 'Unknown'} · {selected.thread_id}
           </span>
@@ -1632,6 +1632,17 @@ function ConversationsTab() {
                 <button className="btn-primary" onClick={saveCorrection} disabled={saving || !correctedText.trim()} style={{ flex: 1 }}>
                   {saving ? 'Saving…' : 'Save correction'}
                 </button>
+                {corrections[correcting.index]?.feedback_type === 'correction' && (
+                  <button className="btn-secondary" disabled={saving} onClick={async () => {
+                    setSaving(true)
+                    try {
+                      await apiFetch(`/admin/corrections/${selected.thread_id}/${correcting.index}`, { method: 'DELETE' })
+                      setCorrections(prev => { const n = { ...prev }; delete n[correcting.index]; return n })
+                      setCorrecting(null)
+                    } catch (e) { setSaveMsg('Error: ' + e.message) }
+                    finally { setSaving(false) }
+                  }}>Delete</button>
+                )}
                 {saveMsg && <span style={{ fontSize: 12, color: saveMsg.startsWith('Error') ? '#dc2626' : '#16a34a' }}>{saveMsg}</span>}
               </div>
             </div>
@@ -1644,7 +1655,7 @@ function ConversationsTab() {
   // ── List view ────────────────────────────────────────────────────────────────
   const filterOpts = [
     { key: 'all',         label: 'All' },
-    { key: 'corrections', label: '✗ Corrections' },
+    { key: 'correction', label: '✗ Corrections' },
     { key: 'praise',      label: '✓ Good responses' },
     { key: 'clean',       label: 'No feedback' },
   ]
@@ -1754,13 +1765,13 @@ function CorrectionsTab() {
       <div className="tab-toolbar">
         <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>All Feedback</h2>
         <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-          {[['corrections', '✗ Corrections'], ['praise', '✓ Good responses'], ['all', 'All']].map(([k, l]) => (
+          {[['correction', '✗ Corrections'], ['praise', '✓ Good responses'], ['all', 'All']].map(([k, l]) => (
             <button key={k} className={filter === k ? 'btn-primary' : 'btn-outline'} style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setFilter(k)}>{l}</button>
           ))}
         </div>
       </div>
       <p style={{ fontSize: 12, color: '#94a3b8', margin: '0 0 16px' }}>
-        {filter === 'corrections' ? 'All flagged AI mistakes — click any row to see original, corrected message, and team note.' : filter === 'praise' ? 'All responses the team marked as good.' : 'All feedback entries across all conversations.'}
+        {filter === 'correction' ? 'All flagged AI mistakes — click any row to see original, corrected message, and team note.' : filter === 'praise' ? 'All responses the team marked as good.' : 'All feedback entries across all conversations.'}
       </p>
       {loading && <p style={{ color: '#888' }}>Loading…</p>}
       {error   && <p className="field-error">{error}</p>}

@@ -647,6 +647,15 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                 state.input_items.append({"role": "assistant", "content": initial_greeting})
             
             state.input_items.append({"content": user_text, "role": "user"})
+            state.events.append(
+                AgentEvent(
+                    id=uuid4().hex,
+                    type="user_message",
+                    agent="User",
+                    content=user_text,
+                    timestamp=time.time() * 1000,
+                )
+            )
 
         # FALLBACK: If this thread still has no valid lead info, try to copy from most recent cache entry with valid data
         if (not state.context.first_name and not state.context.country and 

@@ -1306,6 +1306,7 @@ function BotsTab() {
 // ─── Threads Tab ──────────────────────────────────────────────────────────────
 
 const EVENT_TYPE_LABEL = {
+  user_message:   { icon: '👤', color: '#b45309' },
   message:        { icon: '💬', color: '#1a1a2e' },
   handoff:        { icon: '↪️',  color: '#6d28d9' },
   tool_call:      { icon: '🔧', color: '#0369a1' },

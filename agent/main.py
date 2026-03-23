@@ -433,7 +433,10 @@ def _format_event(ev: dict) -> dict:
     content = ev.get("content", "") or ""
     metadata = ev.get("metadata") or {}
 
-    if etype == "message":
+    if etype == "user_message":
+        label = f"User: {content}"
+        detail = content if len(content) > 80 else None
+    elif etype == "message":
         label = f"{agent} replied"
         detail = content if content else None
     elif etype == "handoff":

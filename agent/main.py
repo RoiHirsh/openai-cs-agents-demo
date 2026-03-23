@@ -575,12 +575,48 @@ async def admin_list_conversations(_: None = Depends(_require_key)) -> list:
 @app.get("/admin/threads/{thread_id}")
 async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -> list:
     sb = get_supabase_client()
-    row_res = sb.table("threads").select("events").eq("thread_id", thread_id).limit(1).execute()
+    row_res = sb.table("threads").select("events,input_items").eq("thread_id", thread_id).limit(1).execute()
     if not row_res.data:
         raise HTTPException(status_code=404, detail="Thread not found")
-    events_raw = row_res.data[0].get("events") or []
+
+    row = row_res.data[0]
+    events_raw = row.get("events") or []
+    input_items = row.get("input_items") or []
+
+    # Load corrections for this thread
+    corr_res = sb.table("corrections").select("*").eq("thread_id", thread_id).execute()
+    corr_by_index = {c["message_index"]: c for c in (corr_res.data or [])}
+
+    # Build content → message_index map from input_items (assistant messages only)
+    def _normalize(content: Any) -> str:
+        if isinstance(content, str):
+            return content.strip()
+        if isinstance(content, list):
+            parts = [p.get("text", "") if isinstance(p, dict) else str(p) for p in content]
+            return " ".join(parts).strip()
+        return ""
+
+    content_to_idx: dict = {}
+    for idx, item in enumerate(input_items):
+        if not isinstance(item, dict) or item.get("role") != "assistant":
+            continue
+        normalized = _normalize(item.get("content"))
+        if normalized:
+            content_to_idx[normalized] = idx
+
     events_sorted = sorted(events_raw, key=lambda e: e.get("timestamp") or 0)
-    return [_format_event(ev) for ev in events_sorted]
+    result = []
+    for ev in events_sorted:
+        formatted = _format_event(ev)
+        # Attach correction to AI message events by matching content → input_items index → correction
+        if ev.get("type") == "message":
+            ev_content = _normalize(ev.get("content"))
+            if ev_content:
+                msg_idx = content_to_idx.get(ev_content)
+                if msg_idx is not None and msg_idx in corr_by_index:
+                    formatted["correction"] = corr_by_index[msg_idx]
+        result.append(formatted)
+    return result
 
 
 @app.get("/admin/conversations/{thread_id}/messages")

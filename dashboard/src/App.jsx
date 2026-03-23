@@ -1383,17 +1383,12 @@ function ThreadsTab() {
   async function loadThread(t) {
     setEvents(null); setCorrMap({}); setSelectedCorr(null)
     try {
-      const [evs, corrs] = await Promise.all([
-        apiFetch(`/admin/threads/${t.thread_id}`),
-        apiFetch(`/admin/corrections?thread_id=${t.thread_id}`),
-      ])
+      // Corrections are now matched and embedded server-side in each event
+      const evs = await apiFetch(`/admin/threads/${t.thread_id}`)
       setEvents(evs || [])
-      // Match corrections to events by content
+      // Build corrMap from embedded corrections for modal lookup
       const map = {}
-      for (const corr of (corrs || [])) {
-        const idx = (evs || []).findIndex(ev => ev.type === 'message' && ev.detail === corr.original_message)
-        if (idx !== -1) map[idx] = corr
-      }
+      ;(evs || []).forEach((ev, i) => { if (ev.correction) map[i] = ev.correction })
       setCorrMap(map)
     } catch (e) { setError(e.message); setEvents([]) }
   }
@@ -1430,8 +1425,8 @@ function ThreadsTab() {
               <EventRow
                 key={i}
                 ev={ev}
-                correction={corrMap[i]}
-                onCorrectionClick={() => setSelectedCorr(corrMap[i])}
+                correction={ev.correction}
+                onCorrectionClick={() => setSelectedCorr(ev.correction)}
               />
             ))}
           </div>

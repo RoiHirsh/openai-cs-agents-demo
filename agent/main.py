@@ -608,11 +608,21 @@ async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -
     result = []
     for ev in events_sorted:
         formatted = _format_event(ev)
-        # Attach correction to AI message events by matching content → input_items index → correction
+        # Attach correction to AI message events.
+        # Events truncate message content at 200 chars (_truncate in server.py),
+        # so we match by prefix: strip the "…" marker and check startswith against
+        # the full input_items content.
         if ev.get("type") == "message":
             ev_content = _normalize(ev.get("content"))
             if ev_content:
-                msg_idx = content_to_idx.get(ev_content)
+                ev_core = ev_content.rstrip("…\u2026")  # remove truncation marker
+                msg_idx = content_to_idx.get(ev_content)  # exact match first
+                if msg_idx is None:
+                    # Prefix match for truncated events
+                    for inp_content, inp_idx in content_to_idx.items():
+                        if inp_content.startswith(ev_core):
+                            msg_idx = inp_idx
+                            break
                 if msg_idx is not None and msg_idx in corr_by_index:
                     formatted["correction"] = corr_by_index[msg_idx]
         result.append(formatted)

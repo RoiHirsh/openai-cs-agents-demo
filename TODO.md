@@ -4,32 +4,21 @@
 
 ## Agent Behavior
 
-### [ ] Agent orchestration audit & cleanup
+### [X] Agent orchestration audit & cleanup
 **Location**: `agent/lucentive/agents.py`
 
-Review and fix the agent handoff graph — instructions, routing rules, and handoff permissions across all four agents.
+Full mesh handoffs implemented (every agent can reach every other). Triage explicitly forbidden from answering FAQ questions directly. FAQ "reply before transfer" ordering rule added with unambiguous language. All sub-items resolved:
 
-**Known bug — FAQ agent transfers before replying:**
-The FAQ agent is instructed to: run file_search → reply to user → hand back to Triage. In practice the model sometimes calls `transfer_to_triage_agent` immediately after file_search without sending a reply first. Triage then answers from conversation history instead of the knowledge base. Investigate whether stricter ordering language or a two-turn split fixes this.
-
-**Items to decide and implement:**
-
-1. **Handoff graph topology** — should all specialists always return to Triage (hub-and-spoke), or are direct specialist-to-specialist handoffs acceptable? Decide which connections are intentional.
-
-2. **Scheduling → FAQ gap** — Scheduling can only route to Triage or Onboarding. If a user asks a question mid-scheduling, there's no path to FAQ. Intentional or a gap?
-
-3. **Triage answering FAQ questions directly** — Triage sees full conversation history and can construct plausible answers without hitting the knowledge base. Decide whether Triage should be explicitly forbidden from answering FAQ-type questions and always route to FAQ instead.
-
+1. ~~**Handoff graph topology**~~ ✓ Full mesh — all specialists can reach each other directly.
+2. ~~**Scheduling → FAQ gap**~~ ✓ Scheduling now has a direct path to FAQ Agent.
+3. ~~**Triage answering FAQ questions directly**~~ ✓ Triage instructions say "CRITICAL: Never answer investment-related questions yourself."
 4. ~~**Triage instructions missing company context**~~ ✓ Done
 5. ~~**Remove stale UI comment**~~ ✓ Done
 6. ~~**Triage routing — Scheduling trigger wording**~~ ✓ Done
 7. ~~**Triage routing — broaden FAQ trigger**~~ ✓ Done
-
-8. **Audit and rewrite all agent instruction prompts** — Instructions have grown organically through trial and error and now contain redundant rules, contradictory emphasis, and ad-hoc patches. Do a clean read-through of every agent's instructions and rewrite with intention: remove duplicates, sort by priority (must-dos first, edge cases last), ensure consistent tone and structure.
-
-9. **Audit handoff ordering rules** — Ensure every agent that must reply before handing off has unambiguous language the model consistently follows.
-
-10. **Tool ownership per agent** — `update_lead_info` is held by both Triage and Onboarding. Revisit once the handoff graph is decided. Same logic applies to `request_human_handoff`, `get_country_offers`, `get_broker_assets`, and future tools — tool ownership should follow directly from the chosen orchestration structure, not be assigned ad hoc.
+8. ~~**Audit and rewrite all agent instruction prompts**~~ ✓ Done
+9. ~~**Audit handoff ordering rules**~~ ✓ Done — "REPLY BEFORE TRANSFERRING" rule in FAQ; confirmed in all agents.
+10. ~~**Tool ownership per agent**~~ ✓ Done — `request_human_handoff` on all agents; tool assignments follow chosen orchestration.
 
 ---
 
@@ -61,74 +50,50 @@ Questions to decide and build:
 ---
 
 ### [X] Extend human handoff to all agents
-**Location**: `agent/airline/agents.py`
+**Location**: `agent/lucentive/agents.py`
 
-Only Triage and FAQ have `request_human_handoff`. If a user asks to speak to a human mid-scheduling or mid-onboarding, those agents must first return to Triage — an unnecessary detour.
-
-**If decided yes (assumed):**
-- Add `request_human_handoff` to the tools list of Scheduling and Onboarding agents
-- Inject `_load_handoff_skill()` into their instruction prompts the same way it's done for Triage and FAQ
+`request_human_handoff` added to all four agents. `_load_handoff_skill()` injected into all agent instruction prompts.
 
 ---
 
 ### [X] Re-evaluate guardrails
-**Location**: `agent/airline/guardrails.py` + `agents.py`
+**Location**: `agent/lucentive/guardrails.py` + `agents.py`
 
-All four agents have `relevance_guardrail` and `jailbreak_guardrail`. These return bot-like rejection messages that break the human-agent illusion the product is built on.
-
-**The argument for replacing with handoff triggers:**
-- Jailbreak and off-topic messages are exactly the cases where a human handoff is the right response anyway
-- A handoff response is indistinguishable from a human; a guardrail rejection is not
-- Dynamic handoff scenarios in the dashboard can catch and route edge cases gracefully
-
-**Questions to decide:**
-1. Can relevance and jailbreak guardrails be fully replaced by handoff triggers (either dynamic Supabase scenarios or a catch-all agent instruction)?
-2. If guardrails are kept, rewrite their responses to sound human rather than bot-like.
-3. Prompt injection and safety-critical cases must still be handled — guardrails for those are non-negotiable.
+Relevance guardrail removed. Only Jailbreak guardrail remains — handles prompt injection and system override attempts. Off-topic and edge-case messages now route via dynamic handoff scenarios in the dashboard.
 
 ---
 
 ## Infrastructure
 
 ### [X] Improve error handling & logging for vector store sync
-**Location**: `agent/knowledge.py` — `_sync_qa_vector_store()` (lines 51–99)
+**Location**: `agent/knowledge/knowledge.py`
 
-Three gaps in the sync that runs after every QA pair create/update/delete:
-
-1. **No error handling on upload/attach** — lines 94–98 are unwrapped; any failure bubbles up as an uncontextualized 500 with no log entry.
-2. **No polling for `completed` status** — `vector_stores.files.create()` returns while the file is still `in_progress`. Code logs "synced" prematurely; if the agent queries before indexing finishes, the new QA pair is not yet searchable.
-3. **Sync failures are invisible to the dashboard** — if sync fails, the dashboard still receives `201 Created` because the Supabase insert succeeded. The user has no indication the vector store is out of sync.
-
-**Proposed fixes:**
-- Wrap upload + attach in `try/except`, log `ERROR` on failure with full exception detail
-- After `vector_stores.files.create()`, poll until `completed` or `failed` (with timeout), then log accordingly
-- Return `207 Multi-Status` with `{"saved": true, "synced": false, "sync_error": "..."}` when sync fails so the dashboard can surface it
+Polling, error handling, and logging all implemented: `_poll_vector_store_file` polls until `completed` or `failed` (with timeout); upload/attach wrapped in `try/except`; failures logged at ERROR level with full traceback.
 
 ---
 
-### [ ] FAQ agent — always run file_search before get_country_offers
+### [X] FAQ agent — always run file_search before get_country_offers
 **Location**: `agent/lucentive/agents.py` — `faq_instructions()`
 
-Current routing picks one tool based on question type (country/availability → `get_country_offers`, knowledge → `file_search`). This caused a wrong answer: "if I live in the USA can I trade?" was routed to `get_country_offers`, which said yes — missing the regulatory restriction that IS in the knowledge base.
-
-**Root cause:** `get_country_offers` always returns something (structured fallback), so the agent treats it as authoritative. `file_search` may return nothing but contains richer, exception-aware knowledge.
-
-**Fix:** Always run `file_search` first. If it returns a useful answer, use it. If it returns nothing, fall back to `get_country_offers`. This scales automatically — any new Q&A pair added to the knowledge base is surfaced without touching routing logic.
+Fixed. FAQ instructions now say: "Always call `file_search` first. If it returns a useful answer, use it. If it returns nothing relevant, call `get_country_offers` as a fallback."
 
 ---
 
-### [ ] Thread tracking — view past conversations & agent behavior
+### [X] Thread tracking — view past conversations & agent behavior
 
-A way to look back at past user conversations: which agents handled the thread, what tools were called, what handoffs happened, and what the agent said at each step. Currently threads are in-memory only and lost on restart.
+Full state (input_items, context, events, guardrails) is persisted to Supabase `threads` table on every message. Admin endpoints expose thread history, events, and corrections. Dashboard has a threads view.
 
-**Questions to decide before designing:**
-- Where should threads be stored?
-- What level of detail is needed — full message history, tool calls only, or handoff trace?
-- Should this be viewable from the dashboard or a separate interface?
-- Do we need filtering/search (by phone number, date, country)?
-- How long should threads be retained?
+---
 
-**Likely approach:** Persist thread events (messages, tool calls, handoffs, guardrail hits) to a Supabase table as they happen. Add a "Threads" view to the dashboard.
+### [ ] Update human handoff — assign to team, not a specific agent
+**Location**: `agent/integrations/chatwoot.py` — `trigger_human_handoff()`
+
+Currently the handoff assigns the conversation to agent ID 1 (a hardcoded specific agent). This should be changed to assign to a **Chatwoot team** instead, so any available human agent on the team can pick it up.
+
+**Changes needed:**
+- Replace the `assign_agent` API call (agent ID 1) with an `assign_team` API call using the appropriate team ID.
+- Confirm which Chatwoot team ID to use (check Chatwoot settings → Teams).
+- Optionally remove the hardcoded agent assignment entirely if team assignment is sufficient.
 
 ---
 

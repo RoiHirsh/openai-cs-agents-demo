@@ -4,24 +4,6 @@
 
 ## Agent Behavior
 
-### [X] Agent orchestration audit & cleanup
-**Location**: `agent/lucentive/agents.py`
-
-Full mesh handoffs implemented (every agent can reach every other). Triage explicitly forbidden from answering FAQ questions directly. FAQ "reply before transfer" ordering rule added with unambiguous language. All sub-items resolved:
-
-1. ~~**Handoff graph topology**~~ ✓ Full mesh — all specialists can reach each other directly.
-2. ~~**Scheduling → FAQ gap**~~ ✓ Scheduling now has a direct path to FAQ Agent.
-3. ~~**Triage answering FAQ questions directly**~~ ✓ Triage instructions say "CRITICAL: Never answer investment-related questions yourself."
-4. ~~**Triage instructions missing company context**~~ ✓ Done
-5. ~~**Remove stale UI comment**~~ ✓ Done
-6. ~~**Triage routing — Scheduling trigger wording**~~ ✓ Done
-7. ~~**Triage routing — broaden FAQ trigger**~~ ✓ Done
-8. ~~**Audit and rewrite all agent instruction prompts**~~ ✓ Done
-9. ~~**Audit handoff ordering rules**~~ ✓ Done — "REPLY BEFORE TRANSFERRING" rule in FAQ; confirmed in all agents.
-10. ~~**Tool ownership per agent**~~ ✓ Done — `request_human_handoff` on all agents; tool assignments follow chosen orchestration.
-
----
-
 ### [ ] Agent flow resilience — keep agents on track when users deviate
 **Location**: `agent/lucentive/agents.py` + individual agent instruction prompts
 
@@ -49,41 +31,7 @@ Questions to decide and build:
 
 ---
 
-### [X] Extend human handoff to all agents
-**Location**: `agent/lucentive/agents.py`
-
-`request_human_handoff` added to all four agents. `_load_handoff_skill()` injected into all agent instruction prompts.
-
----
-
-### [X] Re-evaluate guardrails
-**Location**: `agent/lucentive/guardrails.py` + `agents.py`
-
-Relevance guardrail removed. Only Jailbreak guardrail remains — handles prompt injection and system override attempts. Off-topic and edge-case messages now route via dynamic handoff scenarios in the dashboard.
-
----
-
 ## Infrastructure
-
-### [X] Improve error handling & logging for vector store sync
-**Location**: `agent/knowledge/knowledge.py`
-
-Polling, error handling, and logging all implemented: `_poll_vector_store_file` polls until `completed` or `failed` (with timeout); upload/attach wrapped in `try/except`; failures logged at ERROR level with full traceback.
-
----
-
-### [X] FAQ agent — always run file_search before get_country_offers
-**Location**: `agent/lucentive/agents.py` — `faq_instructions()`
-
-Fixed. FAQ instructions now say: "Always call `file_search` first. If it returns a useful answer, use it. If it returns nothing relevant, call `get_country_offers` as a fallback."
-
----
-
-### [X] Thread tracking — view past conversations & agent behavior
-
-Full state (input_items, context, events, guardrails) is persisted to Supabase `threads` table on every message. Admin endpoints expose thread history, events, and corrections. Dashboard has a threads view.
-
----
 
 ### [ ] Update human handoff — assign to team, not a specific agent
 **Location**: `agent/integrations/chatwoot.py` — `trigger_human_handoff()`
@@ -137,14 +85,3 @@ When a user confirms a callback (10-min or 2–4 hour window), human agents need
 - Should the trigger come from the Python backend (webhook to n8n) or from n8n detecting the confirmation directly?
 
 **Likely approach:** Python backend triggers an n8n webhook when the user confirms a callback → n8n sends the pre-approved WhatsApp template to agent number(s).
-
----
-
-## Misc
-
-### [X] Remove `/manager` slash command
-**Location**: All references in the dashboard/UI frontend and the backend agent server
-
-`/manager` was added as a manual testing shortcut to simulate human handoff. Now that dynamic handoff triggers are configured via the dashboard, this hardcoded command should be removed.
-
-**Before removing:** Confirm that dynamic handoff scenarios fully cover the `/manager` use case.

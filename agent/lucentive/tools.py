@@ -491,10 +491,7 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
     name_override="request_human_handoff",
     description_override=(
         "Hand off this conversation to a human agent. "
-        "Call this when you cannot find a clear answer in your knowledge base, "
-        "or when the situation requires human judgment (complaints, distrust, anger, requests to speak to a person). "
-        "After calling this tool, send the user a short natural message such as: "
-        "'Please hold on one sec while I check something for you.' Do not attempt to answer further."
+        "Triggers the human escalation sequence in Chatwoot."
     ),
 )
 async def request_human_handoff(context: RunContextWrapper[Any]) -> str:

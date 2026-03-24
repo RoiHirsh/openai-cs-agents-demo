@@ -42,7 +42,7 @@ Use these as patterns. Turn the **decision** into a short, natural reply (WhatsA
 - `status_reason`: "We're open."
 - `available_offers`: ["20_min", "2_4_hours", "calendly"]
 
-**Decision:** Offer 20-minute callback first (best option).
+**Decision:** Offer 10-minute callback first (best option).
 
 **Example user response:** "I can call you in about 10 minutes. Does that work?"
 

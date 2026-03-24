@@ -338,7 +338,7 @@ def triage_instructions(
         "- You MUST route them to the Onboarding Agent immediately - do NOT just acknowledge and continue.\n"
         "- This is a specific action that requires routing to the Onboarding Agent - treat it the same as a specific request.\n"
         "- Only if they're NOT a new lead or have completed onboarding should you acknowledge and continue naturally.\n\n"
-        "CALLBACK ACCEPTANCE - When the user says only 'yes', 'sure', 'ok', 'yes please', or 'that works' and the last assistant message was from the Scheduling Agent offering a callback (e.g. 20 minutes or 2–4 hours):\n"
+        "CALLBACK ACCEPTANCE - When the user says only 'yes', 'sure', 'ok', 'yes please', or 'that works' and the last assistant message was from the Scheduling Agent offering a callback (e.g. 10 minutes or 2–4 hours):\n"
         "- Do NOT ask for phone number or timezone. We already have them from the campaign.\n"
         "- Hand off immediately to the Scheduling Agent so it can send the confirmation and close the flow. Do not ask any questions.\n\n"
         "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"

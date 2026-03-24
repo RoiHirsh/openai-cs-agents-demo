@@ -254,7 +254,7 @@ def compute_scheduling_context(
             # Offer 2–4 hours when we open within 4 hours (we'll be open by then)
             if minutes_until_open <= 240:
                 status_reason = f"We're closed; we open in {minutes_until_open} minutes."
-                reason_20_min = f"We open in {minutes_until_open} minutes; we can't offer a 20-minute callback yet."
+                reason_20_min = f"We open in {minutes_until_open} minutes; we can't offer a 10-minute callback yet."
                 reason_2_4_hours = None
                 candidate_offers = ["2_4_hours", "calendly"]
             else:

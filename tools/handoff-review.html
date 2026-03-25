@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Handoff Scenarios Review — Lucentive Club</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding: 32px 24px;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 24px;
+    }
+
+    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    header p  { font-size: 14px; color: #666; line-height: 1.5; }
+
+    .explainer {
+      max-width: 960px;
+      margin: 0 auto 24px;
+      background: #e8f0fe;
+      border: 1px solid #c5d4f7;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #1a3a6b;
+      line-height: 1.6;
+    }
+
+    .explainer strong { font-weight: 700; }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .stat strong { font-size: 20px; font-weight: 700; color: #111; display: block; margin-bottom: 2px; }
+    .stat.stat-add strong    { color: #1a73e8; }
+    .stat.stat-skip strong   { color: #999; }
+    .stat.stat-undecided strong { color: #e65100; }
+
+    .controls {
+      max-width: 960px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .controls input[type="text"] {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .controls input:focus { border-color: #555; }
+
+    .btn-export {
+      padding: 9px 18px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-export:hover { background: #1558b0; }
+
+    .tabs {
+      max-width: 960px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .tab {
+      padding: 7px 18px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .tab:hover  { border-color: #999; color: #111; }
+    .tab.active { background: #111; color: #fff; border-color: #111; }
+
+    .pair-list {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pair {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .pair.status-add  { border-color: #1a73e8; }
+    .pair.status-skip { border-color: #e0e0e0; background: #fafafa; opacity: 0.7; }
+    .pair.hidden      { display: none; }
+
+    /* Header row */
+    .pair-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .pair-meta { flex: 1; }
+
+    .pair-number {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .pair-category {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .cat-call        { background: #fce4ec; color: #880e4f; }
+    .cat-technical   { background: #fff3e0; color: #e65100; }
+    .cat-objection   { background: #f3e5f5; color: #6a1b9a; }
+    .cat-readytogo   { background: #e8f5e9; color: #1b5e20; }
+    .cat-skepticism  { background: #e3f2fd; color: #0d47a1; }
+    .cat-complaint   { background: #ffebee; color: #b71c1c; }
+
+    .question {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.4;
+    }
+
+    .pair-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .btn-add, .btn-skip {
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: 1.5px solid;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .btn-add  { border-color: #1a73e8; color: #1a73e8; }
+    .btn-skip { border-color: #bbb;    color: #777; }
+
+    .btn-add:hover  { background: #e8f0fe; }
+    .btn-skip:hover { background: #f5f5f5; }
+
+    .btn-add.active  { background: #1a73e8; color: #fff; }
+    .btn-skip.active { background: #e0e0e0; color: #555; }
+
+    /* Body */
+    .pair-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+    .section-label {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    /* Example from chat */
+    .chat-example {
+      background: #f9f9f9;
+      border-left: 3px solid #ccc;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    /* Editable fields */
+    .field-wrap { display: flex; flex-direction: column; }
+
+    .field-input, .field-textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #222;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field-input:focus, .field-textarea:focus { border-color: #1a73e8; }
+
+    .field-textarea {
+      min-height: 80px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .pair-footer {
+      padding: 8px 18px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .no-results {
+      color: #999;
+      font-size: 15px;
+      padding: 40px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Handoff Scenarios — Review for Upload</h1>
+  <p>These are patterns from real conversations where the AI should trigger a human handoff. For each one you want to keep, edit the <strong>Scenario</strong> (what triggers it) and the <strong>AI Response</strong> (what the AI says before handing off). Then export.</p>
+  <div class="stats">
+    <div class="stat"><strong id="count-total">—</strong>Total</div>
+    <div class="stat stat-add"><strong id="count-add">0</strong>Add</div>
+    <div class="stat stat-skip"><strong id="count-skip">0</strong>Skip</div>
+    <div class="stat stat-undecided"><strong id="count-undecided">—</strong>Undecided</div>
+  </div>
+</header>
+
+<div class="explainer">
+  <strong>How these work in the system:</strong> Each entry goes into the <code>handoff_triggers</code> table in Supabase. The <strong>Scenario</strong> is injected into the agent's instructions so it knows <em>when</em> to hand off. The <strong>AI Response</strong> is what the agent says to the customer <em>before</em> the human takes over.
+</div>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search…" oninput="applyFilters()" />
+  <button class="btn-export" onclick="exportApproved()">Export Approved</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="all"       onclick="setTab(this)">All</button>
+  <button class="tab"        data-tab="undecided" onclick="setTab(this)">Undecided</button>
+  <button class="tab"        data-tab="add"       onclick="setTab(this)">Add</button>
+  <button class="tab"        data-tab="skip"      onclick="setTab(this)">Skip</button>
+</div>
+
+<div class="pair-list" id="pair-list"></div>
+<div class="no-results" id="no-results">No items match your filter.</div>
+
+<script>
+const STORAGE_KEY = "handoff_review_data";
+
+const scenarios = [
+  {
+    id: "h001",
+    category: "call",
+    categoryLabel: "Wants a call",
+    question: "Can you show me all step by step please 🙏",
+    chatExample: "I will show you step by step\nLet me know when I can call you so we can go through everything\nPlease let me know when it is the best time to call you",
+    defaultScenario: "Customer asks for a step-by-step walkthrough or requests a phone call to be guided through the setup process.",
+    defaultResponse: "Of course! I'd love to walk you through everything step by step. Let me connect you with one of our team members who can call you at a convenient time."
+  },
+  {
+    id: "h002",
+    category: "call",
+    categoryLabel: "Wants a call",
+    question: "I'm available now if it's not too late for you?",
+    chatExample: "Good afternoon are you available?\nSorry I had to go into a meeting, will you be available in an hour or let me know when is a good time for you.",
+    defaultScenario: "Customer signals they are available now or asks about availability for a call.",
+    defaultResponse: "Let me connect you with a team member right away. One of our portfolio managers will reach out to you shortly to arrange a call."
+  },
+  {
+    id: "h003",
+    category: "readytogo",
+    categoryLabel: "Ready to connect",
+    question: "Do I try it first or what are the terms?",
+    chatExample: "On Monday, I can help you set up a demo so you can see how the bot works.",
+    defaultScenario: "Customer is ready to get started and wants to know next steps or asks to try the bot, requiring a human to coordinate the actual connection.",
+    defaultResponse: "Great, you're all set to get started! Let me connect you with our team to coordinate the setup and get the bot connected for you."
+  },
+  {
+    id: "h004",
+    category: "readytogo",
+    categoryLabel: "Ready to connect",
+    question: "The bot is now at work, right?",
+    chatExample: "Yes, the bot has been connected\nYou can see a trade open right now\nYou have been connected to the Gold bot",
+    defaultScenario: "Customer is asking for confirmation that their bot has been connected and is trading, which requires a human to verify the connection status.",
+    defaultResponse: "Let me check the connection status for your account right now. I'll connect you with our team to confirm everything is running correctly."
+  },
+  {
+    id: "h005",
+    category: "technical",
+    categoryLabel: "Technical issue",
+    question: "How are you? did you fix the bot?",
+    chatExample: "Yes, the bot is now connected.",
+    defaultScenario: "Customer reports or asks about a technical issue or problem with their bot, such as it not trading or behaving unexpectedly.",
+    defaultResponse: "I'm sorry to hear there's an issue. Let me escalate this to our technical team right away — they'll look into your account and follow up with you shortly."
+  },
+  {
+    id: "h006",
+    category: "technical",
+    categoryLabel: "Technical issue",
+    question: "Did you solve problem?",
+    chatExample: "We were looking into it, from this account we are not able to trade crypto. We will need a few more days for the reply from support to know how to proceed",
+    defaultScenario: "Customer is following up on an unresolved technical issue with their trading account or bot configuration.",
+    defaultResponse: "I want to make sure this gets resolved properly. Let me connect you with our support team who can give you a direct update on the status of your issue."
+  },
+  {
+    id: "h007",
+    category: "complaint",
+    categoryLabel: "Complaint / missed commitment",
+    question: "Don't understand, I was supposed to have a zoom meeting by 10am, it is after ten now. There is no link. Try to let me know what is happening.",
+    chatExample: "We need to open a Live Account... This is the registration link...\nHello Kelvin! How are you? Were you able to open the account for our Gold bot?",
+    defaultScenario: "Customer is complaining about a missed scheduled meeting, call, or commitment that was not fulfilled by the team.",
+    defaultResponse: "I'm really sorry about that — this should not have happened. Let me get someone from our team to reach out to you immediately to sort this out."
+  },
+  {
+    id: "h008",
+    category: "objection",
+    categoryLabel: "Objection / negotiation",
+    question: "why not 50% and above",
+    chatExample: "The profit sharing model is 65:35 — you keep 65% and we take 35%.",
+    defaultScenario: "Customer questions or pushes back on the commission or profit-sharing structure and tries to negotiate better terms.",
+    defaultResponse: "That's a fair question! Our profit-sharing model is carefully structured to ensure we're fully aligned with your success. Let me connect you with a senior portfolio manager who can walk you through the full details."
+  },
+  {
+    id: "h009",
+    category: "skepticism",
+    categoryLabel: "Skepticism / trust",
+    question: "whats your license number",
+    chatExample: "We are not a broker. We have been in business for 3 years. We provide the software connected to your trading account. We don't have access to your funds.",
+    defaultScenario: "Customer asks for legal credentials, license numbers, or expresses regulatory concerns suggesting they need more trust-building than the AI can provide.",
+    defaultResponse: "I completely understand the need to verify who you're dealing with. Let me connect you with one of our senior team members who can address your questions and share all relevant documentation."
+  },
+  {
+    id: "h010",
+    category: "skepticism",
+    categoryLabel: "Skepticism / trust",
+    question: "Can I see the past and current performance",
+    chatExample: "Perfect, let me show you a few videos with our results. One minute.\n[video omitted]",
+    defaultScenario: "Customer asks to see proof of past performance, results, or client testimonials before committing.",
+    defaultResponse: "Absolutely — transparency is important to us. Let me connect you with a team member who can share our performance records and walk you through real client results."
+  }
+];
+
+const CAT_INFO = {
+  call:       { label: "Wants a call",              cls: "cat-call" },
+  technical:  { label: "Technical issue",           cls: "cat-technical" },
+  objection:  { label: "Objection / negotiation",   cls: "cat-objection" },
+  readytogo:  { label: "Ready to connect",          cls: "cat-readytogo" },
+  skepticism: { label: "Skepticism / trust",        cls: "cat-skepticism" },
+  complaint:  { label: "Complaint",                 cls: "cat-complaint" },
+};
+
+// Load saved state
+let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+// saved[id] = { decision: "add"|"skip"|undefined, scenario: "...", response: "..." }
+
+let activeTab = "all";
+
+function getState(id) {
+  return saved[id] || {};
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+function setDecision(id, value) {
+  if (!saved[id]) saved[id] = {};
+  saved[id].decision = saved[id].decision === value ? undefined : value;
+  if (saved[id].decision === undefined) delete saved[id].decision;
+  persist();
+  updateCardUI(id);
+  updateStats();
+  applyFilters();
+}
+
+function onFieldChange(id, field, value) {
+  if (!saved[id]) saved[id] = {};
+  saved[id][field] = value;
+  persist();
+}
+
+function updateCardUI(id) {
+  const el  = document.querySelector(`.pair[data-id="${id}"]`);
+  if (!el) return;
+  const dec = getState(id).decision;
+  el.classList.remove("status-add", "status-skip");
+  if (dec === "add")  el.classList.add("status-add");
+  if (dec === "skip") el.classList.add("status-skip");
+  el.querySelector(".btn-add").classList.toggle("active",  dec === "add");
+  el.querySelector(".btn-skip").classList.toggle("active", dec === "skip");
+}
+
+function updateStats() {
+  const add  = Object.values(saved).filter(v => v.decision === "add").length;
+  const skip = Object.values(saved).filter(v => v.decision === "skip").length;
+  const undecided = scenarios.length - add - skip;
+  document.getElementById("count-total").textContent     = scenarios.length;
+  document.getElementById("count-add").textContent       = add;
+  document.getElementById("count-skip").textContent      = skip;
+  document.getElementById("count-undecided").textContent = undecided;
+}
+
+function setTab(btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  activeTab = btn.dataset.tab;
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll(".pair").forEach(el => {
+    const id  = el.dataset.id;
+    const s   = scenarios.find(x => x.id === id);
+    const dec = getState(id).decision || "undecided";
+    const text = (s.question + " " + s.chatExample + " " + s.categoryLabel).toLowerCase();
+    const show = (!q || text.includes(q)) && (activeTab === "all" || dec === activeTab);
+    el.classList.toggle("hidden", !show);
+    if (show) visible++;
+  });
+  document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
+}
+
+function exportApproved() {
+  const result = scenarios
+    .filter(s => getState(s.id).decision === "add")
+    .map(s => {
+      const st = getState(s.id);
+      return {
+        scenario:         st.scenario  || s.defaultScenario,
+        default_response: st.response  || s.defaultResponse,
+        category:         s.category,
+        source_question:  s.question
+      };
+    });
+
+  if (result.length === 0) { alert("No scenarios marked as Add yet."); return; }
+
+  const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = "handoff_approved.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(str) {
+  return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function render() {
+  const list = document.getElementById("pair-list");
+  list.innerHTML = "";
+
+  scenarios.forEach((s, i) => {
+    const st      = getState(s.id);
+    const catInfo = CAT_INFO[s.category] || { label: s.category, cls: "" };
+    const scenVal = st.scenario !== undefined ? st.scenario : s.defaultScenario;
+    const respVal = st.response !== undefined ? st.response : s.defaultResponse;
+
+    const el = document.createElement("div");
+    el.className  = "pair";
+    el.dataset.id = s.id;
+
+    el.innerHTML = `
+      <div class="pair-header">
+        <div class="pair-meta">
+          <div class="pair-number">Scenario ${i + 1} of ${scenarios.length}</div>
+          <span class="pair-category ${catInfo.cls}">${catInfo.label}</span>
+          <div class="question">${escHtml(s.question)}</div>
+        </div>
+        <div class="pair-actions">
+          <button class="btn-add"  onclick="setDecision('${s.id}', 'add')">Add</button>
+          <button class="btn-skip" onclick="setDecision('${s.id}', 'skip')">Skip</button>
+        </div>
+      </div>
+
+      <div class="pair-body">
+        <div>
+          <div class="section-label">Example from real chat</div>
+          <div class="chat-example">${escHtml(s.chatExample)}</div>
+        </div>
+
+        <div class="field-wrap">
+          <div class="section-label">Scenario — when should the AI hand off?</div>
+          <input
+            class="field-input"
+            type="text"
+            value="${escHtml(scenVal)}"
+            oninput="onFieldChange('${s.id}', 'scenario', this.value)"
+          />
+        </div>
+
+        <div class="field-wrap">
+          <div class="section-label">AI response before handing off</div>
+          <textarea
+            class="field-textarea"
+            oninput="onFieldChange('${s.id}', 'response', this.value)"
+          >${escHtml(respVal)}</textarea>
+        </div>
+      </div>
+
+      <div class="pair-footer">ID: ${s.id}</div>
+    `;
+
+    list.appendChild(el);
+    updateCardUI(s.id);
+  });
+
+  updateStats();
+  applyFilters();
+}
+
+render();
+</script>
+</body>
+</html>

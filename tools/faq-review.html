@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ Pairs Review — Lucentive Club</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding: 32px 24px;
+    }
+
+    header {
+      max-width: 900px;
+      margin: 0 auto 24px;
+    }
+
+    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    header p  { font-size: 14px; color: #666; }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .stat strong { font-size: 20px; font-weight: 700; color: #111; display: block; margin-bottom: 2px; }
+    .stat.stat-keep strong     { color: #2e7d32; }
+    .stat.stat-remove strong   { color: #c62828; }
+    .stat.stat-undecided strong{ color: #e65100; }
+
+    .controls {
+      max-width: 900px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .controls input[type="text"] {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .controls input:focus { border-color: #555; }
+
+    .btn-export {
+      padding: 9px 18px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-export:hover { background: #1558b0; }
+
+    .tabs {
+      max-width: 900px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .tab {
+      padding: 7px 18px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .tab:hover  { border-color: #999; color: #111; }
+    .tab.active { background: #111; color: #fff; border-color: #111; }
+
+    .pair-list {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .pair {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .pair.status-keep   { border-color: #66bb6a; }
+    .pair.status-remove { border-color: #ef9a9a; background: #fff8f8; }
+    .pair.hidden        { display: none; }
+
+    .pair-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .pair-meta { flex: 1; }
+
+    .pair-number {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+
+    .question {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.4;
+    }
+
+    .pair-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .btn-keep, .btn-remove {
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: 1.5px solid;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #fff;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .btn-keep   { border-color: #4caf50; color: #2e7d32; }
+    .btn-remove { border-color: #ef5350; color: #c62828; }
+
+    .btn-keep:hover   { background: #e8f5e9; }
+    .btn-remove:hover { background: #ffebee; }
+
+    .btn-keep.active   { background: #4caf50; color: #fff; }
+    .btn-remove.active { background: #ef5350; color: #fff; }
+
+    /* Answer section */
+    .pair-body { padding: 12px 18px 14px; }
+
+    .answer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .answer-label {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-edit {
+      font-size: 12px;
+      color: #1a73e8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 0;
+    }
+
+    .btn-edit:hover { text-decoration: underline; }
+
+    /* Read mode */
+    .answer-display {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .answer-display.edited {
+      border-left: 3px solid #1a73e8;
+      padding-left: 10px;
+    }
+
+    /* Edit mode */
+    .answer-edit-wrap { display: none; }
+
+    .answer-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 10px 12px;
+      border: 1.5px solid #1a73e8;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.6;
+      color: #222;
+      resize: vertical;
+      outline: none;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-save {
+      padding: 5px 16px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save:hover { background: #1558b0; }
+
+    .btn-cancel-edit {
+      padding: 5px 16px;
+      background: #fff;
+      color: #555;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-cancel-edit:hover { background: #f5f5f5; }
+
+    .btn-restore {
+      padding: 5px 12px;
+      background: #fff;
+      color: #c62828;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    .btn-restore:hover { background: #ffebee; }
+
+    .edited-badge {
+      font-size: 11px;
+      color: #1a73e8;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .pair-footer {
+      padding: 8px 18px;
+      border-top: 1px solid #f0f0f0;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .tag-pricing      { background: #e8f5e9; color: #2e7d32; }
+    .tag-how-it-works { background: #e3f2fd; color: #1565c0; }
+    .tag-broker       { background: #fff3e0; color: #e65100; }
+    .tag-returns      { background: #f3e5f5; color: #6a1b9a; }
+    .tag-general      { background: #f5f5f5; color: #555; }
+    .tag-security     { background: #fce4ec; color: #b71c1c; }
+    .tag-company      { background: #e0f2f1; color: #00695c; }
+    .tag-demo         { background: #fff8e1; color: #f57f17; }
+
+    .no-results {
+      color: #999;
+      font-size: 15px;
+      padding: 40px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>FAQ Pairs — Review for Upload</h1>
+  <p>Mark each pair as <strong>Keep</strong> or <strong>Remove</strong>. Click <strong>Edit</strong> to update an answer. All changes are saved automatically. Click <strong>Export Kept</strong> when done.</p>
+  <div class="stats">
+    <div class="stat"><strong id="count-total">—</strong>Total</div>
+    <div class="stat stat-keep"><strong id="count-keep">0</strong>Keep</div>
+    <div class="stat stat-remove"><strong id="count-remove">0</strong>Remove</div>
+    <div class="stat stat-undecided"><strong id="count-undecided">—</strong>Undecided</div>
+  </div>
+</header>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search questions or answers…" oninput="applyFilters()" />
+  <button class="btn-export" onclick="exportKept()">Export Kept</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="all"       onclick="setTab(this)">All</button>
+  <button class="tab"        data-tab="undecided" onclick="setTab(this)">Undecided</button>
+  <button class="tab"        data-tab="keep"      onclick="setTab(this)">Keep</button>
+  <button class="tab"        data-tab="remove"    onclick="setTab(this)">Remove</button>
+</div>
+
+<div class="pair-list" id="pair-list"></div>
+<div class="no-results" id="no-results">No pairs match your current filter.</div>
+
+<script>
+const STORAGE_KEY  = "faq_review_decisions";
+const EDITS_KEY    = "faq_review_edits";
+
+const pairs = [
+  { id: "d495daca", question: "What is the smallest amount to invest?", answer: "the minimum is $500 usd", tags: ["pricing"] },
+  { id: "cd3a0353", question: "How much for the trading bot", answer: "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 60:40 you will keep 60% of the profits.\nHello Daniel! We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Which market are you interested in?", tags: ["pricing"] },
+  { id: "60d6a1db", question: "whats the starting fee?", answer: "Great! For the bots, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.\nIt's ideal you have at least $500 for each bot. This will give them enough capital and enough room to open and close good trades during the month", tags: ["pricing"] },
+  { id: "e6e034f7", question: "What is minimum trading capital account you can trade with?", answer: "500usd\nProfit share of 60:40. You keep 60% of the profits", tags: ["pricing"] },
+  { id: "51dbaacc", question: "How much investment need?", answer: "The minimum is $500 usd\nIf you can start with $1000 would be great, You will see results fast.\nSo you can fund the account with what you think will bring you better returns, that is totally up to you.", tags: ["pricing"] },
+  { id: "91618be5", question: "Can I start with small investment first?", answer: "Yes, the minimum is £300 for UK customers. This is to give the bot enough capital.\nThat way you try it out, see the results. You will feel confident in the bot and will be very happy with the results, you'll see", tags: ["pricing"] },
+  { id: "85898e3e", question: "Can it work with an account of 100 USD?", answer: "the minimum is £300 for the Gold bot. This will give it enough capital and enough room to open and close good trades during the month\nAside your investment, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.", tags: ["pricing"] },
+  { id: "b1a38169", question: "I am interested in crypto market.  I want to earn some money to pay off all my bills and to buy a car.\nWhat is the minimum amount to start?", answer: "Perfect, that is what we are here for. Help you achieve your trading goals. It's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trades during the month\nIs that possible for you?", tags: ["pricing"] },
+  { id: "40c8aaa7", question: "How do you get your commission?", answer: "The only way we get paid, is at the end of the month whatever profits the bot makes for you we will do profit share 60:40. You keep 60% and we will provide you with form of payment. Via a wallet, directly from your broker.\nWe will not have access to your funds, or your broker account. Only you will have access to that.\nWe will need access to MT5 so we can make the connection of the bot and be able to do any necessary updates if needed\n$500 is the minimum capital for the bot to have available, I have lowered it to $400 for you, so you can start small and try out the bots", tags: ["pricing"] },
+  { id: "503c27a9", question: "I don't understand here?", answer: "You don't have to pay anything for the bot\nto answer your questions, if we are selling it.\nWe are not. We will work by commission. And we will profit only if you do", tags: ["pricing"] },
+  { id: "addcb2d6", question: "what are your charges", answer: "Hello Joshua, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 60:40 you will keep 60% of the profits.", tags: ["pricing"] },
+  { id: "ca37ce08", question: "From your experience,by the end of the month I make how much?", answer: "Between 10% and 30% monthly\nDo you have the £300 or $400 to start?", tags: ["returns"] },
+  { id: "fc74e62a", question: "How quickly would I get the £300 back", answer: "We are getting between 15% and 30% monthly returns, with a £300 investment you will be getting between £45 and £90 monthly\nThe returns are proportional to your investment. The higher the investment, the better returns you will have.\nHonestly some months are better than others. In crypto for example, we got 50% returns in November. So out of a £300 investment you would have gotten £150 this month", tags: ["returns"] },
+  { id: "7afa93c0", question: "Can I make thousands in a week or  2?", answer: "Over time, your account can compound, resulting in growth.\nWere you able to fund your account so we can start trading and you can start seeing the results?", tags: ["returns"] },
+  { id: "b3cbb6d0", question: "are this bots 100% sure on returns?", answer: "We are getting between 10% and 30% monthly", tags: ["returns"] },
+  { id: "7df5e9b4", question: "What's the average dd you normally see?", answer: "Between 10% and 20% monthly returns\n5%", tags: ["returns"] },
+  { id: "74a936fd", question: "Which is the best, gold?", answer: "Yes, the gold bot in giving us exceptional returns.", tags: ["returns"] },
+  { id: "b7519cc9", question: "Can I withdraw it anytime", answer: "Yes you can\nWe can't control your account.\nWe only can make you profit", tags: ["security"] },
+  { id: "6d4e8a4e", question: "And I can withdraw my money anytime correct?", answer: "Yes you can withdraw your funds at any time", tags: ["security"] },
+  { id: "499557db", question: "How can I share my login details? Is that not handing over my account?", answer: "You have account details\nAnd you have mt5 details.\nIt's different.\nWe can only trade in your account.\nBut can't touch the money.\nNo withdraw no deposit", tags: ["security"] },
+  { id: "4b225b1e", question: "Can I know how this works?", answer: "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets\nThere is no experience needed. You don't have to study charts, you don't have to spend hours on a computer screen stressing over market moves, you don't have to lift a finger. Our bots will trade for you, you just sit back and watch the results\nYou don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.", tags: ["how-it-works"] },
+  { id: "5e118ae8", question: "How is the bot?", answer: "It is an algorithm, we connect our software directly to the trading platform MT5\nDo you have a broker you already use?\nYou don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.", tags: ["how-it-works"] },
+  { id: "3167bb1b", question: "what this club all about", answer: "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Are you interested in trading?", tags: ["how-it-works"] },
+  { id: "5ab52163", question: "automated trading ?", answer: "Yes, Artificial intelligence, automated trading\nYou don't have to pay anything upfront for our bots.\nFirst step is to register with a broker. We recommend using https://www.puprime.com/\nOnce you are registered, you will need to open a Live account.\nIt's ideal you have at least $500 USD for the bot. This will give it enough capital and enough room to open and close good trades during the month", tags: ["how-it-works"] },
+  { id: "9cf837ab", question: "Meaning I can stay even for days without opening the account to see what is happening?", answer: "Yes, that is the idea with trading with AI. you don't have to lift a finger, or study the charts. The bot will generate profits for you, open and close trades during the week as it sees fit. When the market has the right conditions, it will open automatically", tags: ["how-it-works"] },
+  { id: "1766614e", question: "Is manual trading an option?", answer: "If you want our AI bots to trade for you, it is ideal the account you use for the bot is specifically and only for the bot. If you want to manually trade, it's not recommended using the same account.", tags: ["how-it-works"] },
+  { id: "ff3a6742", question: "Okay, you do account management?", answer: "We will manage the bot, and any updates necessary. The algorithm will be always running smoothly and how it is supposed to", tags: ["how-it-works"] },
+  { id: "28c7df70", question: "Do you sell the bot?", answer: "Yes, once you add funds, the bot will start trading automatically.", tags: ["how-it-works"] },
+  { id: "fc73c006", question: "What about lot size??", answer: "Lot size is proportional to your account size. Always with risk management upfront", tags: ["how-it-works"] },
+  { id: "6170b52e", question: "Can you manage a prop firm account for me please", answer: "No. We not managing prop\nWe making money alone\nDo you want to trade with us?", tags: ["how-it-works"] },
+  { id: "5fd112e3", question: "Do you offer trial??", answer: "Yes we can offer a trial in Demo\nJust open a demo account for MT5 and provide me with the details so we can connect the bot\nYes, we make the connection manually directly to your MT5 platform", tags: ["demo"] },
+  { id: "e0a13d3e", question: "Do I try it first or what are the terms?", answer: "On Monday, I can help you set up a demo so you can see how the bot works.", tags: ["demo"] },
+  { id: "fcbce5f8", question: "Which platform/broker do you use?", answer: "We work with few of them\nVantage\nTickmill\nOx securities\nFusion markets", tags: ["broker"] },
+  { id: "430f055e", question: "What's wrong with telling me whatever I need to know right here?", answer: "basically all the information you have it. You don't have to pay anything upfront, we only profit when you do. We will give you a free subscription.\nIt's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trades during the month\nIs that possible for you?", tags: ["general"] },
+  { id: "b407471e", question: "Do you have a Whatsapp group or telegram", answer: "No, this chat is the direct channel of communication with us", tags: ["general"] },
+  { id: "ec74f103", question: "How long have you been in business?", answer: "3 years\nThere are months that are better than others. Sometimes we have the surprise that the bot generates more than expected", tags: ["company"] },
+  { id: "76835c1b", question: "whats your website where are you guys located ?", answer: "This is our website https://www.lucentiveclub.com/#home\nOur main office is in Bulgaria and others in Germany & UK", tags: ["company"] },
+  { id: "68173e80", question: "Where are you located", answer: "We have offices in the UK, UAE, and Canada, and we operate globally, including in Australia.", tags: ["company"] },
+  { id: "fea1f330", question: "whats your license number", answer: "We are not a broker.\nWe have been in business for 3 years. Developing and perfecting trading algorithms. We provide the software, that is connected to your trading account. Only you will have access to your funds. Only you will be able to add and withdraw from your account. We don't have access to your funds\nAnd remember, You don't have to pay anything upfront, We are not charging you for our software. You stay 100% in control of your funds.\nAt the end of the month we do profit share and split 60:40 you will keep 60% of the profits.", tags: ["company"] }
+];
+
+const TAG_LABELS = {
+  "pricing":      { label: "Pricing",      cls: "tag-pricing" },
+  "returns":      { label: "Returns",      cls: "tag-returns" },
+  "security":     { label: "Security",     cls: "tag-security" },
+  "how-it-works": { label: "How it works", cls: "tag-how-it-works" },
+  "broker":       { label: "Broker",       cls: "tag-broker" },
+  "demo":         { label: "Demo / Trial", cls: "tag-demo" },
+  "company":      { label: "Company",      cls: "tag-company" },
+  "general":      { label: "General",      cls: "tag-general" },
+};
+
+let decisions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+let edits      = JSON.parse(localStorage.getItem(EDITS_KEY)   || "{}");
+let activeTab  = "all";
+
+function saveDecisions() { localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions)); }
+function saveEdits()     { localStorage.setItem(EDITS_KEY,   JSON.stringify(edits)); }
+
+function getAnswer(id) {
+  return edits[id] !== undefined ? edits[id] : pairs.find(p => p.id === id).answer;
+}
+
+function setDecision(id, value) {
+  decisions[id] = decisions[id] === value ? undefined : value;
+  if (decisions[id] === undefined) delete decisions[id];
+  saveDecisions();
+  updatePairUI(id);
+  updateStats();
+  applyFilters();
+}
+
+function startEdit(id) {
+  const el = document.querySelector(`.pair[data-id="${id}"]`);
+  el.querySelector(".answer-display").style.display  = "none";
+  el.querySelector(".answer-edit-wrap").style.display = "block";
+  el.querySelector(".btn-edit").style.display        = "none";
+  const ta = el.querySelector(".answer-textarea");
+  ta.value = getAnswer(id);
+  ta.focus();
+}
+
+function saveEdit(id) {
+  const el  = document.querySelector(`.pair[data-id="${id}"]`);
+  const val = el.querySelector(".answer-textarea").value.trim();
+  const orig = pairs.find(p => p.id === id).answer;
+
+  if (val === orig) {
+    delete edits[id];
+  } else {
+    edits[id] = val;
+  }
+  saveEdits();
+  cancelEdit(id);
+  refreshAnswerDisplay(id);
+}
+
+function cancelEdit(id) {
+  const el = document.querySelector(`.pair[data-id="${id}"]`);
+  el.querySelector(".answer-display").style.display   = "";
+  el.querySelector(".answer-edit-wrap").style.display = "none";
+  el.querySelector(".btn-edit").style.display         = "";
+}
+
+function restoreAnswer(id) {
+  delete edits[id];
+  saveEdits();
+  cancelEdit(id);
+  refreshAnswerDisplay(id);
+}
+
+function refreshAnswerDisplay(id) {
+  const el       = document.querySelector(`.pair[data-id="${id}"]`);
+  const display  = el.querySelector(".answer-display");
+  const badge    = el.querySelector(".edited-badge");
+  const restoreBtn = el.querySelector(".btn-restore");
+  const isEdited = edits[id] !== undefined;
+
+  display.textContent = getAnswer(id);
+  display.classList.toggle("edited", isEdited);
+  badge.style.display      = isEdited ? "inline" : "none";
+  restoreBtn.style.display = isEdited ? "inline-block" : "none";
+}
+
+function updatePairUI(id) {
+  const el = document.querySelector(`.pair[data-id="${id}"]`);
+  if (!el) return;
+  const dec = decisions[id];
+  el.classList.remove("status-keep", "status-remove");
+  if (dec === "keep")   el.classList.add("status-keep");
+  if (dec === "remove") el.classList.add("status-remove");
+  el.querySelector(".btn-keep").classList.toggle("active",   dec === "keep");
+  el.querySelector(".btn-remove").classList.toggle("active", dec === "remove");
+}
+
+function updateStats() {
+  const keep      = Object.values(decisions).filter(v => v === "keep").length;
+  const remove    = Object.values(decisions).filter(v => v === "remove").length;
+  const undecided = pairs.length - keep - remove;
+  document.getElementById("count-total").textContent     = pairs.length;
+  document.getElementById("count-keep").textContent      = keep;
+  document.getElementById("count-remove").textContent    = remove;
+  document.getElementById("count-undecided").textContent = undecided;
+}
+
+function setTab(btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  activeTab = btn.dataset.tab;
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll(".pair").forEach(el => {
+    const id   = el.dataset.id;
+    const pair = pairs.find(p => p.id === id);
+    const dec  = decisions[id] || "undecided";
+    const text = (pair.question + " " + getAnswer(id)).toLowerCase();
+    const show = (!q || text.includes(q)) && (activeTab === "all" || dec === activeTab);
+    el.classList.toggle("hidden", !show);
+    if (show) visible++;
+  });
+  document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
+}
+
+function exportKept() {
+  const kept = pairs
+    .filter(p => decisions[p.id] === "keep")
+    .map(p => ({
+      id:       p.id,
+      question: p.question,
+      answer:   getAnswer(p.id),
+      tags:     p.tags,
+      edited:   edits[p.id] !== undefined
+    }));
+
+  if (kept.length === 0) { alert("No pairs marked as Keep yet."); return; }
+
+  const blob = new Blob([JSON.stringify(kept, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = "faq_approved.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function render() {
+  const list = document.getElementById("pair-list");
+  list.innerHTML = "";
+
+  pairs.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "pair";
+    el.dataset.id = p.id;
+
+    const tags = p.tags.map(t => {
+      const info = TAG_LABELS[t] || { label: t, cls: "tag-general" };
+      return `<span class="tag ${info.cls}">${info.label}</span>`;
+    }).join("");
+
+    el.innerHTML = `
+      <div class="pair-header">
+        <div class="pair-meta">
+          <div class="pair-number">Pair ${i + 1} of ${pairs.length}</div>
+          <div class="question">${escHtml(p.question)}</div>
+        </div>
+        <div class="pair-actions">
+          <button class="btn-keep"   onclick="setDecision('${p.id}', 'keep')">Keep</button>
+          <button class="btn-remove" onclick="setDecision('${p.id}', 'remove')">Remove</button>
+        </div>
+      </div>
+      <div class="pair-body">
+        <div class="answer-header">
+          <span class="answer-label">
+            Answer
+            <span class="edited-badge" style="display:none">· edited</span>
+          </span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-restore" style="display:none" onclick="restoreAnswer('${p.id}')">Restore original</button>
+            <button class="btn-edit" onclick="startEdit('${p.id}')">Edit</button>
+          </div>
+        </div>
+        <div class="answer-display">${escHtml(p.answer)}</div>
+        <div class="answer-edit-wrap">
+          <textarea class="answer-textarea"></textarea>
+          <div class="edit-actions">
+            <button class="btn-save"        onclick="saveEdit('${p.id}')">Save</button>
+            <button class="btn-cancel-edit" onclick="cancelEdit('${p.id}')">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="pair-footer">${tags}</div>
+    `;
+
+    list.appendChild(el);
+    updatePairUI(p.id);
+    refreshAnswerDisplay(p.id);
+  });
+
+  updateStats();
+  applyFilters();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,2276 @@
+{
+  "pairs": [
+    {
+      "id": "be4d8467-b4a2-4720-82b8-0a038cc5ae51",
+      "question": "Could you send me a link to your platform",
+      "answer": "The first step is to open an account with a broker. We recommend using PU Prime, a global multi-asset broker, which has over 5 million registered users worldwide.\nYou can register to the broker here:\nhttps://www.puprime.partners/forex-trading-account/?affid=7525953\nAbsolutely\nFor the bots you don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.\nGreat! In order to connect the bot I will need to credentials to log into MT5.\nLogin ID, Server name and password.\nPlease keep in mind this is only to be able to trade for you through the trading platform MT5. These credentials are not for your broker, only you will have access to your broker.\nOnce you have sent it to us, it will take 24-48 hours to be connected to the trading bot\nHello Richard Good Morning! Were you able to get the credentials for MT5 so we can get you connected today and start trading for you?\nWhat type of account do you have with PU Prime? ‎<This message was edited>\nDo you know if it is for MT5 of for MT4?\nIn which platform do you trade with this account?\nCan you check your email, type MT5 on your search box, see if they ever sent you an email with credentials to this platform\nSo the account you have, they trade for you? You don't use it manually?\nDone by yourself?\nOk, so you trade directly in their WebTrader?\nAlright, lets open a new account. That way you can keep your current account for your manual trading and the new account will be dedicated specifically to the bot.\nAt the time you open a new Live Account\nPlease remember to choose:\n-MT5\n-Standard Account\n-USD currency\nSince you are already registered with PU Prime, this should take only a few minutes to complete. ‎<This message was edited>\nOnce you open the new account, you will receive an email, with the log in credentials to MT5\nok, let me know if you have any questions.\nPerfect.\npassword and server name please\nthis will grant us access to MT5 only ‎<This message was edited>\nHere is were we make the connection of the bot\nThis is for MT5?\nOnly Telus?\nPlease search your email, this information you must have it\nCan you please type in your gmail inbox: MT5\nYou should have received an email from PU Prime\n\"New Live MT5 account\" something like this\nHere is were they give you login, password and server name\nthank you\nPUPrime-Live (then a number) is what is usually looks like, the server name ‎<This message was edited>\npassword, is different than the password for your broker account. Usually numbers, symbols and letters. it is preset by them\n‎[24/11/2025, 3:51:27 pm] ~Richard Dallibar: ‎image omitted\nThats the one\namazing thank you\nHow much capital do you have in your account?\nOk, fund it with at least $500 usd to start.\nSounds good.\nTalk to you buy the end of the week",
+      "topics": [
+        "platform"
+      ],
+      "examples": [
+        {
+          "file": "_chat.txt",
+          "question_excerpt": "Could you send me a link to your platform",
+          "answer_excerpt": "The first step is to open an account with a broker. We recommend using PU Prime, a global multi-asset broker, which has over 5 million registered users worldwide.\nYou can register to the broker here:\n..."
+        },
+        {
+          "file": "_chat.txt",
+          "question_excerpt": "Could you send me a link to your platform",
+          "answer_excerpt": "The first step is to open an account with a broker. We recommend using PU Prime, a global multi-asset broker, which has over 5 million registered users worldwide.\nYou can register to the broker here:\n..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.653390",
+      "quality": {
+        "question_clarity_score": 0.9609756097560975,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "430f055e-1b6a-47da-8be3-64031fc51a9e",
+      "question": "What's wrong with telling me whatever I need to know right here?",
+      "answer": "basically all the information you have it. You don't have to pay anything upfront, we only profit when you do. We will give you a free subscription.\nIt's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trades during the month\nIs that possible for you?\nOk got it. Let us know when you have put together funds to invest, and we are here ready to assist you any time",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (250) 938-8953.txt",
+          "question_excerpt": "What's wrong with telling me whatever I need to know right here?",
+          "answer_excerpt": "basically all the information you have it. You don't have to pay anything upfront, we only profit when you do. We will give you a free subscription.\nIt's ideal you have at least $500 for the bot. This..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (250) 938-8953.txt",
+          "question_excerpt": "What's wrong with telling me whatever I need to know right here?",
+          "answer_excerpt": "basically all the information you have it. You don't have to pay anything upfront, we only profit when you do. We will give you a free subscription.\nIt's ideal you have at least $500 for the bot. This..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.655887",
+      "quality": {
+        "question_clarity_score": 0.959375,
+        "answer_completeness_score": 0.760875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "d495daca-8641-470f-9156-19914ceaa086",
+      "question": "What is the smallest amount to invest?",
+      "answer": "the minimum is $500 usd",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (250) 938-8953.txt",
+          "question_excerpt": "What is the smallest amount to invest?",
+          "answer_excerpt": "the minimum is $500 usd"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (250) 938-8953.txt",
+          "question_excerpt": "What is the smallest amount to invest?",
+          "answer_excerpt": "the minimum is $500 usd"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.657965",
+      "quality": {
+        "question_clarity_score": 0.9631578947368421,
+        "answer_completeness_score": 0.7999999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7b734590-da46-4f36-8da2-823d1e38ead9",
+      "question": "How to add AI",
+      "answer": "",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (418) 254-8935.txt",
+          "question_excerpt": "How to add AI",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (418) 254-8935.txt",
+          "question_excerpt": "How to add AI",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.660034",
+      "quality": {
+        "question_clarity_score": 0.9538461538461538,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "8975a9e1-e331-4162-b247-e57277f60f63",
+      "question": "Can you show me all step by step please 🙏",
+      "answer": "Hello Kisasu! Good morning. I will show you step by step\nLet me know when I can call you so we can go everything\nlet me know so we can add the AI and move to the next step\nGot it, let me know when you are off work and we can continue\nHello Kisasu, good morning. Were you able to set up the account with the parameters we need to connect you to Gold?\nSorry I didn't see your message before\nPlease let me know when it is the best time to call you\nDid you check if you are able to transfer from one account to the other?\nYou are not able to transfer from one account to the other? ‎<This message was edited>",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (418) 254-8935.txt",
+          "question_excerpt": "Can you show me all step by step please 🙏",
+          "answer_excerpt": "Hello Kisasu! Good morning. I will show you step by step\nLet me know when I can call you so we can go everything\nlet me know so we can add the AI and move to the next step\nGot it, let me know when you..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (418) 254-8935.txt",
+          "question_excerpt": "Can you show me all step by step please 🙏",
+          "answer_excerpt": "Hello Kisasu! Good morning. I will show you step by step\nLet me know when I can call you so we can go everything\nlet me know so we can add the AI and move to the next step\nGot it, let me know when you..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.662806",
+      "quality": {
+        "question_clarity_score": 0.9512195121951219,
+        "answer_completeness_score": 0.8264999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "cd3a0353-c4e0-4b84-8327-65f0948b109b",
+      "question": "How much for the trading bot",
+      "answer": "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 60:40 you will keep 60% of the profits.\nHello Daniel! We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Which market are you interested in?",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (613) 716-4080.txt",
+          "question_excerpt": "How much for the trading bot",
+          "answer_excerpt": "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and spl..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (613) 716-4080.txt",
+          "question_excerpt": "How much for the trading bot",
+          "answer_excerpt": "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and spl..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.665239",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.7439999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "b7519cc9-5ad3-45f3-82c7-3a37bd64cd65",
+      "question": "Can I withdraw it anytime",
+      "answer": "Yes you can\nWe can't control your account.\nWe only can make you profit\nDo you have any experience in trading ?\nWith which broker you trading today ?\nLet's make it profitable this time\nThe first step is to open an account with a broker. We recommend using PU Prime, a global multi-asset broker, which has millions of registered users worldwide.\nYou can register to the broker here:\nhttps://www.puprime.partners/forex-trading-account/?affid=7525953\nOnce you are registered and verified\nWe need to open a Live Account with these parameters:\n-Platform: MT5 or Platform 5\n-Account type: Standard\n-Currency: USD\nThe process should be very easy, takes only a couple of minutes. Let me know if you need assistance of any kind.\n‎[11/12/2025, 9:34:45 pm] ~Brendon Akin: ‎image omitted\nThank you Brendon\nYou should have received an email\n\"New MT5 Account\"\nPlease sent me a screenshot of this email\n‎[12/12/2025, 12:43:33 am] ~Brendon Akin: ‎image omitted\nI am calling you now.\nSorry we missed your calls.\nI cannot take calls on this whats app. Is for text only. I will call you from my land line.\nYou have successfully opened your account with the broker right?\nthis email contains the log in credentials to MT5\nMT5 is the trading platform, were we connect our software.\nOnly you will have access to your trading account. These credentials are not for your broker. ‎<This message was edited>\nPlease sent me a screenshot of this email showing the information we need to connect you\n‎[12/12/2025, 7:52:06 am] ~Brendon Akin: ‎image omitted\nThis one please\n\"New MT5 Live Account\"\n‎[12/12/2025, 7:58:39 am] ~Brendon Akin: ‎image omitted\nOk, what we need to connect the bot are your MT5 login credentials\nThey were sent via this email\nMT5 Login\nMT5 Password\nMT5 Server\nIn MT5 which is the trading platform, we connect our software, so we can trade for you ( on your behalf}\n‎[12/12/2025, 8:04:43 am] ~Brendon Akin: ‎image omitted\nPerfect.\nDid you deposit the money there ? So we can start ?\nGot it, Please let me know when you are ready to proceed\nbetween 8 and 20% monthly\nYes. There are month better than others, If the market has the right conditions it can be more.",
+      "topics": [
+        "withdrawals"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can I withdraw it anytime",
+          "answer_excerpt": "Yes you can\nWe can't control your account.\nWe only can make you profit\nDo you have any experience in trading ?\nWith which broker you trading today ?\nLet's make it profitable this time\nThe first step i..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can I withdraw it anytime",
+          "answer_excerpt": "Yes you can\nWe can't control your account.\nWe only can make you profit\nDo you have any experience in trading ?\nWith which broker you trading today ?\nLet's make it profitable this time\nThe first step i..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.667345",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7afa93c0-2f33-406f-a2f2-eeedcf9de5e1",
+      "question": "Can I make thousands in a week or  2? ‎<This message was edited>",
+      "answer": "Over time, your account can compound, resulting in growth.\nWere you able to fund your account so we can start trading and you can start seeing the results?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can I make thousands in a week or  2? ‎<This message was edited>",
+          "answer_excerpt": "Over time, your account can compound, resulting in growth.\nWere you able to fund your account so we can start trading and you can start seeing the results?"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can I make thousands in a week or  2? ‎<This message was edited>",
+          "answer_excerpt": "Over time, your account can compound, resulting in growth.\nWere you able to fund your account so we can start trading and you can start seeing the results?"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.669898",
+      "quality": {
+        "question_clarity_score": 0.94375,
+        "answer_completeness_score": 0.658125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "6d4e8a4e-d11c-4f74-9571-54aff52039c3",
+      "question": "And I can withdraw my money anytime correct?",
+      "answer": "Hello! Sorry we are not able to call from whatsapp. We can only text\nYes you can withdraw your funds at any time",
+      "topics": [
+        "withdrawals"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "And I can withdraw my money anytime correct?",
+          "answer_excerpt": "Hello! Sorry we are not able to call from whatsapp. We can only text\nYes you can withdraw your funds at any time"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "And I can withdraw my money anytime correct?",
+          "answer_excerpt": "Hello! Sorry we are not able to call from whatsapp. We can only text\nYes you can withdraw your funds at any time"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.672011",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.642
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "34d399e8-0a56-456e-9e71-d3911e0e388e",
+      "question": "Can it increase to thousands",
+      "answer": "",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can it increase to thousands",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can it increase to thousands",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.673924",
+      "quality": {
+        "question_clarity_score": 0.9714285714285714,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "a5b71e26-ddb8-45f5-98e1-b929ca651c7e",
+      "question": "In a couple of weeks?",
+      "answer": "yes you can\nadd more funds\nthe investment will increase, steady. Every week is different. at the end of the month you will be able to see what the results are.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "In a couple of weeks?",
+          "answer_excerpt": "yes you can\nadd more funds\nthe investment will increase, steady. Every week is different. at the end of the month you will be able to see what the results are."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "In a couple of weeks?",
+          "answer_excerpt": "yes you can\nadd more funds\nthe investment will increase, steady. Every week is different. at the end of the month you will be able to see what the results are."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.675836",
+      "quality": {
+        "question_clarity_score": 0.9523809523809523,
+        "answer_completeness_score": 0.45962499999999995
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "e1315662-9abc-4f29-b12a-3557c5d8d41b",
+      "question": "Can you do that without adding more funds",
+      "answer": "yes, just make the first deposit so we can start trading for you\nnot in  couple of days, it will take time\nbut it will reach a thousand eventually\nthere are no withdraws fees.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can you do that without adding more funds",
+          "answer_excerpt": "yes, just make the first deposit so we can start trading for you\nnot in  couple of days, it will take time\nbut it will reach a thousand eventually\nthere are no withdraws fees."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Can you do that without adding more funds",
+          "answer_excerpt": "yes, just make the first deposit so we can start trading for you\nnot in  couple of days, it will take time\nbut it will reach a thousand eventually\nthere are no withdraws fees."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.678264",
+      "quality": {
+        "question_clarity_score": 0.9658536585365853,
+        "answer_completeness_score": 0.665625
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "13ad5613-7c96-47b6-b0dc-92dafb900b57",
+      "question": "Will there be a bonus because of the month of Christmas",
+      "answer": "we are seeing lots of trade before Christmas.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Will there be a bonus because of the month of Christmas",
+          "answer_excerpt": "we are seeing lots of trade before Christmas."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 302-5892.txt",
+          "question_excerpt": "Will there be a bonus because of the month of Christmas",
+          "answer_excerpt": "we are seeing lots of trade before Christmas."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.681151",
+      "quality": {
+        "question_clarity_score": 0.9636363636363636,
+        "answer_completeness_score": 0.4
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "60d6a1db-4457-41f0-9be7-51c2055828f3",
+      "question": "whats the starting fee?",
+      "answer": "Great! For the bots, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.\nIt's ideal you have at least $500 for each bot. This will give them enough capital and enough room to open and close good trades during the month",
+      "topics": [
+        "pricing"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats the starting fee?",
+          "answer_excerpt": "Great! For the bots, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.\nIt's ideal you have at least ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats the starting fee?",
+          "answer_excerpt": "Great! For the bots, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.\nIt's ideal you have at least ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.683083",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.7185
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "76835c1b-056e-4758-8428-066a6161c97d",
+      "question": "whats your website where are you guys located ?",
+      "answer": "This is our website https://www.lucentiveclub.com/#home\nOur main office is in Bulgaria and others in Germany & UK ‎<This message was edited>\nDo you have MT5?\nDo you have a broker you already work with?\nOk The first step is to open an account with a broker. We recommend using StarTrader https://strex.live/FJfyQr\nYou will need register with the broker first.\nClick on the link\nFill out your information",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your website where are you guys located ?",
+          "answer_excerpt": "This is our website https://www.lucentiveclub.com/#home\nOur main office is in Bulgaria and others in Germany & UK ‎<This message was edited>\nDo you have MT5?\nDo you have a broker you already work with..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your website where are you guys located ?",
+          "answer_excerpt": "This is our website https://www.lucentiveclub.com/#home\nOur main office is in Bulgaria and others in Germany & UK ‎<This message was edited>\nDo you have MT5?\nDo you have a broker you already work with..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.685263",
+      "quality": {
+        "question_clarity_score": 0.9617021276595744,
+        "answer_completeness_score": 0.9507499999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "fea1f330-13d6-4c51-9cb6-6eb67d3832f7",
+      "question": "whats your license number",
+      "answer": "We are not a broker.\nWe are. We have been in business for 3 years. Developing and perfectioning trading algorithms. We provide the software, that is connected to your trading account. Only you will have access to your funds. Only you will be able to add and withdraw from your account. We don't have access to your funds ‎<This message was edited>\nAnd remember, You don't have to pay anything upfront, We are not charging you for our software. You stay 100% in control of your funds.\nAt the end of the month we do profit share and split 60:40 you will keep 60% of the profits.\nHi Jonny Jonny,\nMy name is Perry, Senior Portfolio Manager at Lucentive Club.\nI'm confident that very soon you'll realize you've come to the right place.\nLet's start with a short conversation.\nDo you prefer a call or would you rather we chat here?\nPerhaps we can continue our conversation from yesterday?\nHello  Jonny! Are you ready to get started with our artificial intelligence trading bots? We would love to get you on board and help you earn extra income every month.\nHello Jonny, I want to share with you the results of our Crypto algorithm this month.\n‎[18/11/2025, 6:11:48 pm] Lucentive Club: ‎video omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your license number",
+          "answer_excerpt": "You won't be asked that\nWe are not a broker.\nWe provide the software for AI trading\nWe will connect the software to your trading account once it is open\nIf you have another broker of your preference, ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your registration license number",
+          "answer_excerpt": "We are not a broker.\nWe are. We have been in business for 3 years. Developing and perfectioning trading algorithms. We provide the software, that is connected to your trading account. Only you will ha..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your license number",
+          "answer_excerpt": "You won't be asked that\nWe are not a broker.\nWe provide the software for AI trading\nWe will connect the software to your trading account once it is open\nIf you have another broker of your preference, ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "whats your registration license number",
+          "answer_excerpt": "We are not a broker.\nWe are. We have been in business for 3 years. Developing and perfectioning trading algorithms. We provide the software, that is connected to your trading account. Only you will ha..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.689272",
+      "quality": {
+        "question_clarity_score": 0.976,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "5ab52163-d730-4c22-bb84-55a5ca198706",
+      "question": "automated trading ?",
+      "answer": "Yes, Artificial intelligence, automated trading\nYou don't have to pay anything upfront for our bots.\nFirst step is to register with a broker. We recommend using  https://www.puprime.com/\nOnce you are registered, you will need to open a Live account.\nIt's ideal you have at least $500 USD for the bot. This will give it enough capital and enough room to open and close good trades during the month\nOk great Please send me Login ID, Server name and password for MT5\nIt will take 24 to 48h to see your first trades.\nSorry, the first step will be to open an account with them.\nLive account, Please remember to choose:\n-MT5\n-Standard Account\n-USD currency\nOnce you have that setup, We will need the log in details for MT5 since that is were we connect the bot.\nHello Jonny! Can you provide me with some information? Do you have an account with PU Prime for MT5?\nHello Jonny, would you like to proceed? We are ready to start trading for you. Do you want to make the connection today?\nHello Jonny! I have been trying to reach you, would you like to get started with trading with AI this week?\nHello Jonny, I tried calling you to check if you are still interested in proceeding. Please let me know with a simple yes or no if I should continue to follow up with you. We would love to get you on board and help you earn extra income every month. Thank you",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "automated trading ?",
+          "answer_excerpt": "Yes, Artificial intelligence, automated trading\nYou don't have to pay anything upfront for our bots.\nFirst step is to register with a broker. We recommend using  https://www.puprime.com/\nOnce you are ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +1 (647) 868-5903.txt",
+          "question_excerpt": "automated trading ?",
+          "answer_excerpt": "Yes, Artificial intelligence, automated trading\nYou don't have to pay anything upfront for our bots.\nFirst step is to register with a broker. We recommend using  https://www.puprime.com/\nOnce you are ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.691088",
+      "quality": {
+        "question_clarity_score": 0.9684210526315788,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "28c7df70-48cc-4f36-8b32-a127b3496557",
+      "question": "Do you sell the bot?",
+      "answer": "Yes, once you add funds, the bus will start trading automatically.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do you sell the bot?",
+          "answer_excerpt": "Yes, once you add funds, the bus will start trading automatically."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do you sell the bot?",
+          "answer_excerpt": "Yes, once you add funds, the bus will start trading automatically."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.693023",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.42474999999999996
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "e487651a-86ed-430b-a680-eb9787e39aa3",
+      "question": "How much do I buy the bus?",
+      "answer": "Sorry lol bot\n500 USD",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How much do I buy the bus?",
+          "answer_excerpt": "Sorry lol bot\n500 USD"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How much do I buy the bus?",
+          "answer_excerpt": "Sorry lol bot\n500 USD"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.695725",
+      "quality": {
+        "question_clarity_score": 0.9461538461538461,
+        "answer_completeness_score": 0.7999999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "e0a13d3e-2af2-47bb-9ca0-a47e71adb39a",
+      "question": "Do I try it first or what are the terms?",
+      "answer": "On Monday, I can help you set up a demo so you can see how the bot works.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do I try it first or what are the terms?",
+          "answer_excerpt": "On Monday, I can help you set up a demo so you can see how the bot works."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do I try it first or what are the terms?",
+          "answer_excerpt": "On Monday, I can help you set up a demo so you can see how the bot works."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.698008",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.42737499999999995
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "74a936fd-968d-4661-9a62-d298efeedda5",
+      "question": "Which is the best, gold?",
+      "answer": "Yes, the gold bot in giving us exceptional returns.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Which is the best, gold?",
+          "answer_excerpt": "Yes, the gold bot in giving us exceptional returns."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Which is the best, gold?",
+          "answer_excerpt": "Yes, the gold bot in giving us exceptional returns."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.699989",
+      "quality": {
+        "question_clarity_score": 0.95,
+        "answer_completeness_score": 0.41912499999999997
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "85898e3e-9316-4de4-944a-04fafd80c567",
+      "question": "Can it work with an account of 100 USD?",
+      "answer": "the minimum is £300 for the Gold bot. This will give it enough capital and enough room to open and close good trades during the month\nAside your investment, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Can it work with an account of 100 USD?",
+          "answer_excerpt": "the minimum is £300 for the Gold bot. This will give it enough capital and enough room to open and close good trades during the month\nAside your investment, You don't have to pay anything upfront, We ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Can it work with an account of 100 USD?",
+          "answer_excerpt": "the minimum is £300 for the Gold bot. This will give it enough capital and enough room to open and close good trades during the month\nAside your investment, You don't have to pay anything upfront, We ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.702200",
+      "quality": {
+        "question_clarity_score": 0.9384615384615383,
+        "answer_completeness_score": 0.7147499999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "ca37ce08-b074-4378-abb5-9e4d17920ee7",
+      "question": "From your experience,by the end of the month I make how much?",
+      "answer": "Between 10% and 30% monthly\nDo you have the £300 or $400 to start?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "From your experience,by the end of the month I make how much?",
+          "answer_excerpt": "Between 10% and 30% monthly\nDo you have the £300 or $400 to start?"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "From your experience,by the end of the month I make how much?",
+          "answer_excerpt": "Between 10% and 30% monthly\nDo you have the £300 or $400 to start?"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.704591",
+      "quality": {
+        "question_clarity_score": 0.9573770491803278,
+        "answer_completeness_score": 0.62475
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "503c27a9-f3e2-4e4b-a94e-601632ad1c4e",
+      "question": "I don't understand here?",
+      "answer": "You don't have to pay anything for the bot\nto answer your questions, if we are selling it.\nWe are not. We will work by commission. And we will profit only if you do",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "I don't understand here?",
+          "answer_excerpt": "You don't have to pay anything for the bot\nto answer your questions, if we are selling it.\nWe are not. We will work by commission. And we will profit only if you do"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "I don't understand here?",
+          "answer_excerpt": "You don't have to pay anything for the bot\nto answer your questions, if we are selling it.\nWe are not. We will work by commission. And we will profit only if you do"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.706486",
+      "quality": {
+        "question_clarity_score": 0.9583333333333333,
+        "answer_completeness_score": 0.4615
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "40c8aaa7-d4db-481e-bf0a-003c22fffbc3",
+      "question": "How do you get your commission?",
+      "answer": "The only way we get paid, is at the end of the month whatever profits the bot makes for you we will do profit share 60:40. You keep 60% and we will provide you with form of payment. Via a wallet, directly from your broker.\nDo you have a broker you are already working with?\nPerfect, The way we connect our software is directly to the trading platform MT5\nWe will not have access to your funds, or your broker account. Only you will have access to that.\nWe will need access to MT5 so we can make the connection of the bot and be able to do any necessary updates if needed\n$500 is the minimum capital for the bot to have available, I have lowered it to $400 for you, so you can start small and try out the bots ‎<This message was edited>\nOk, please open a demo account on exness, with these parameters: Raw account / usd currency / MT5 ‎<This message was edited>\nWe will connect you to demo first, we give 10 day trail ‎<This message was edited>\nOk, once you have opened the account, please share with me the details to log in to MT5 and be able to make the connection of the software\nNo, the bot operates automatically. you just sit back and watch the results. ‎<This message was edited>",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How do you get your commission?",
+          "answer_excerpt": "The only way we get paid, is at the end of the month whatever profits the bot makes for you we will do profit share 60:40. You keep 60% and we will provide you with form of payment. Via a wallet, dire..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How do you get your commission?",
+          "answer_excerpt": "The only way we get paid, is at the end of the month whatever profits the bot makes for you we will do profit share 60:40. You keep 60% and we will provide you with form of payment. Via a wallet, dire..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.708557",
+      "quality": {
+        "question_clarity_score": 0.9612903225806451,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "9cf837ab-6c8a-4515-9fc8-8659899f34e0",
+      "question": "Meaning I can stay even for days without opening the account to see what is happening?",
+      "answer": "Yes, that is the idea with trading with AI. you don't have to lift a finger, or study the charts. The bot will generate profits for you, open and close trades during the week as it sees fit. When the market has the right conditions, it will open automatically\nPerfect, talk to you on Monday. Have a great weekend",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Meaning I can stay even for days without opening the account to see what is happening?",
+          "answer_excerpt": "Yes, that is the idea with trading with AI. you don't have to lift a finger, or study the charts. The bot will generate profits for you, open and close trades during the week as it sees fit. When the ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Meaning I can stay even for days without opening the account to see what is happening?",
+          "answer_excerpt": "Yes, that is the idea with trading with AI. you don't have to lift a finger, or study the charts. The bot will generate profits for you, open and close trades during the week as it sees fit. When the ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.711790",
+      "quality": {
+        "question_clarity_score": 0.9627906976744186,
+        "answer_completeness_score": 0.417
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "ec74f103-b82b-414a-8142-d78b8cdbd747",
+      "question": "How long have you since you made it?",
+      "answer": "3 years\nThere are months that are better than others. Sometimes we have the surprise that the bot generates more than expected ‎<This message was edited>",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How long have you since you made it?",
+          "answer_excerpt": "3 years\nThere are months that are better than others. Sometimes we have the surprise that the bot generates more than expected ‎<This message was edited>"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How long have you since you made it?",
+          "answer_excerpt": "3 years\nThere are months that are better than others. Sometimes we have the surprise that the bot generates more than expected ‎<This message was edited>"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.714854",
+      "quality": {
+        "question_clarity_score": 0.9555555555555555,
+        "answer_completeness_score": 0.6573749999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "b407471e-99a7-468e-875f-8319a1561b36",
+      "question": "Do you have a Whatsapp group or telegram",
+      "answer": "No, this chat is the direct channel of communication with us",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do you have a Whatsapp group or telegram",
+          "answer_excerpt": "No, this chat is the direct channel of communication with us"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Do you have a Whatsapp group or telegram",
+          "answer_excerpt": "No, this chat is the direct channel of communication with us"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.717025",
+      "quality": {
+        "question_clarity_score": 0.965,
+        "answer_completeness_score": 0.4225
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "1aaf922d-5a11-43ef-9ce0-8c5545a4fc83",
+      "question": "Why, because I would wish to from others who are using the same",
+      "answer": "https://www.vantagemarkets.com/open-live-account/?affid=7361340\nOh, great. On Monday, I can connect you to the bot.\nYou need to have more than 500 USD inside for the bot to work.\nIf you want the bot to work on a real account, it must have a minimum balance of $500.\nYou can also have a demo as well.\nLet's speak on Monday.\nWe need the name of the server\nHi will connect you in 48 hours . Tnx\nhttps://www.lucentiveclub.com/#home\nSounds perfect.\nHi! How may I help you?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Why, because I would wish to from others who are using the same",
+          "answer_excerpt": "https://www.vantagemarkets.com/open-live-account/?affid=7361340\nOh, great. On Monday, I can connect you to the bot.\nYou need to have more than 500 USD inside for the bot to work.\nIf you want the bot t..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Why, because I would wish to from others who are using the same",
+          "answer_excerpt": "https://www.vantagemarkets.com/open-live-account/?affid=7361340\nOh, great. On Monday, I can connect you to the bot.\nYou need to have more than 500 USD inside for the bot to work.\nIf you want the bot t..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.719430",
+      "quality": {
+        "question_clarity_score": 0.9587301587301587,
+        "answer_completeness_score": 0.8751249999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "6d579233-5b63-48e6-a728-0b700e656697",
+      "question": "Did you connect the bot?",
+      "answer": "Yes, the bot has been connected\nyou can see a trade open right now\nyou have been connected to the Gold bot\nI understand, please close this trade ‎<This message was edited>",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Did you connect the bot?",
+          "answer_excerpt": "Yes, the bot has been connected\nyou can see a trade open right now\nyou have been connected to the Gold bot\nI understand, please close this trade ‎<This message was edited>"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "Did you connect the bot?",
+          "answer_excerpt": "Yes, the bot has been connected\nyou can see a trade open right now\nyou have been connected to the Gold bot\nI understand, please close this trade ‎<This message was edited>"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.721409",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.464125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "19ef2e2c-a669-45bd-ae5b-350246dc33b6",
+      "question": "The bot is now at work, right?",
+      "answer": "",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "The bot is now at work, right?",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "The bot is now at work, right?",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.723461",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "733cf63a-85c0-416b-958c-84475d318ecf",
+      "question": "How are you? did you fix the bot?",
+      "answer": "Yes, the bot is now connected.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How are you? did you fix the bot?",
+          "answer_excerpt": "Yes, the bot is now connected."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +254 714 860040.txt",
+          "question_excerpt": "How are you? did you fix the bot?",
+          "answer_excerpt": "Yes, the bot is now connected."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.725545",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.4
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "5c824f4f-01a4-4aba-8c75-373412558974",
+      "question": "Vantage markets??? I will have a look",
+      "answer": "You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nYou mean the verification they need with a utility bill and your ID?\nOk perfect. Let me know when completed and we move on to the next step which will be opening the trading account. I'll guide you step by step. ‎<This message was edited>\nNo problem. Let me know when you have your documents to proceed with the verification\nThank you\nGreat, let's go to accounts\nOpen a DEMO account\nPlease remember to choose:\n-MT5\n-Standard Account\n-USD currency\n‎[25/11/2025, 4:49:19 pm] ~Simon: ‎image omitted\n1:500 leverage\nAnd the account balance, what option does it give you?\nthat's the one\n‎[25/11/2025, 4:51:04 pm] ~Simon: ‎image omitted\nTo see how results would be looking like  in your real account, choose the closest number to the real investment you have in mind\n$1000?\nthe minimum is £300\nso for purposes of creating the account just choose 1000\nHow much do you have to invest?\nOk, you should have received an email\n\"New Demo Account\"\nPlease take a screenshot of this email, and send it over. These are the credentials to connect to MT5 were we connect the bot\n‎[25/11/2025, 4:55:48 pm] ~Simon: ‎image omitted\nHopefully you like the results of the bot and can put some funds together in the future ‎<This message was edited>",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "Vantage markets??? I will have a look",
+          "answer_excerpt": "You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nYou mean the verification they need with a utility bill and your ID?\nOk perfect. ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "Vantage markets??? I will have a look",
+          "answer_excerpt": "You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nYou mean the verification they need with a utility bill and your ID?\nOk perfect. ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "Vantage markets??? I will have a look",
+          "answer_excerpt": "You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nYou mean the verification they need with a utility bill and your ID?\nOk perfect. ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "Vantage markets??? I will have a look",
+          "answer_excerpt": "You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nYou mean the verification they need with a utility bill and your ID?\nOk perfect. ..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.735102",
+      "quality": {
+        "question_clarity_score": 0.8513513513513513,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "3d38f95e-2dea-4ca6-a987-edcb1ae45aa3",
+      "question": "Do I need to do anything ?",
+      "answer": "That is it. We will connect the bot to your demo account. You will start seeing the first trades soon",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "Do I need to do anything ?",
+          "answer_excerpt": "That is it. We will connect the bot to your demo account. You will start seeing the first trades soon"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "Do I need to do anything ?",
+          "answer_excerpt": "That is it. We will connect the bot to your demo account. You will start seeing the first trades soon"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "Do I need to do anything ?",
+          "answer_excerpt": "That is it. We will connect the bot to your demo account. You will start seeing the first trades soon"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "Do I need to do anything ?",
+          "answer_excerpt": "That is it. We will connect the bot to your demo account. You will start seeing the first trades soon"
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.737076",
+      "quality": {
+        "question_clarity_score": 0.9461538461538461,
+        "answer_completeness_score": 0.637875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "f766025b-549d-4cee-92e0-54fb08c3e3f4",
+      "question": "How do I view the activity on the demo account ?",
+      "answer": "Download Vantage Markets app\nAt the bottom you will see \"Trades\"\nhere you can see the activity, open trades and history\n‎[25/11/2025, 5:25:02 pm] ~Simon: ‎image omitted\nIt takes 24-48h to see the first trades.\nYou can close the \"accounts\" section, and go back to the main page\nyou will be able to see the \"trades\" button at the bottom",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "How do I view the activity on the demo account ?",
+          "answer_excerpt": "Download Vantage Markets app\nAt the bottom you will see \"Trades\"\nhere you can see the activity, open trades and history\n‎[25/11/2025, 5:25:02 pm] ~Simon: ‎image omitted\nIt takes 24-48h to see the firs..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "How do I view the activity on the demo account ?",
+          "answer_excerpt": "Download Vantage Markets app\nAt the bottom you will see \"Trades\"\nhere you can see the activity, open trades and history\n‎[25/11/2025, 5:25:02 pm] ~Simon: ‎image omitted\nIt takes 24-48h to see the firs..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290 (1).txt",
+          "question_excerpt": "How do I view the activity on the demo account ?",
+          "answer_excerpt": "Download Vantage Markets app\nAt the bottom you will see \"Trades\"\nhere you can see the activity, open trades and history\n‎[25/11/2025, 5:25:02 pm] ~Simon: ‎image omitted\nIt takes 24-48h to see the firs..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7415 009290.txt",
+          "question_excerpt": "How do I view the activity on the demo account ?",
+          "answer_excerpt": "Download Vantage Markets app\nAt the bottom you will see \"Trades\"\nhere you can see the activity, open trades and history\n‎[25/11/2025, 5:25:02 pm] ~Simon: ‎image omitted\nIt takes 24-48h to see the firs..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.739367",
+      "quality": {
+        "question_clarity_score": 0.9541666666666666,
+        "answer_completeness_score": 0.92525
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "5fd112e3-38f4-4aa0-8a99-d10a0c1a343f",
+      "question": "Do you offer trail??",
+      "answer": "Yes we can offer a trail in Demo\nJust open a demo account for MT5 and provide me with the details so we can connect the bot\nYes, we make the connection manually directly to your MT5 platform",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7448 582709.txt",
+          "question_excerpt": "Do you offer trail??",
+          "answer_excerpt": "Yes we can offer a trail in Demo\nJust open a demo account for MT5 and provide me with the details so we can connect the bot\nYes, we make the connection manually directly to your MT5 platform"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7448 582709.txt",
+          "question_excerpt": "Do you offer trail??",
+          "answer_excerpt": "Yes we can offer a trail in Demo\nJust open a demo account for MT5 and provide me with the details so we can connect the bot\nYes, we make the connection manually directly to your MT5 platform"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.741264",
+      "quality": {
+        "question_clarity_score": 0.95,
+        "answer_completeness_score": 0.87125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "fc73c006-20e0-4ecb-9782-7344a16799b2",
+      "question": "What about lot size??",
+      "answer": "Hello! Lot size is proportional to your account size. Alway with risk management upfront\nHello Chirag! Would you like to continue our conversation about our AI trading bots?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7448 582709.txt",
+          "question_excerpt": "What about lot size??",
+          "answer_excerpt": "Hello! Lot size is proportional to your account size. Alway with risk management upfront\nHello Chirag! Would you like to continue our conversation about our AI trading bots?"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7448 582709.txt",
+          "question_excerpt": "What about lot size??",
+          "answer_excerpt": "Hello! Lot size is proportional to your account size. Alway with risk management upfront\nHello Chirag! Would you like to continue our conversation about our AI trading bots?"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.743162",
+      "quality": {
+        "question_clarity_score": 0.9523809523809523,
+        "answer_completeness_score": 0.664875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "fc74e62a-7dc3-4310-9b21-62b9dbe597b9",
+      "question": "How quickly would I get the £300 back",
+      "answer": "We are getting between 15% and 30% monthly returns, with a £300 investment you will be getting between £45 and £90 monthly\nThe returns are proportional to your investment. The higher the investment, the better returns you will have.\nHonestly some months are better than others. In crypto for example, we got 50% returns in November. So out of a £300 investment you would have gotten £150 this month",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7522 801202.txt",
+          "question_excerpt": "How quickly would I get the £300 back",
+          "answer_excerpt": "We are getting between 15% and 30% monthly returns, with a £300 investment you will be getting between £45 and £90 monthly\nThe returns are proportional to your investment. The higher the investment, t..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7522 801202.txt",
+          "question_excerpt": "How quickly would I get the £300 back",
+          "answer_excerpt": "We are getting between 15% and 30% monthly returns, with a £300 investment you will be getting between £45 and £90 monthly\nThe returns are proportional to your investment. The higher the investment, t..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.746528",
+      "quality": {
+        "question_clarity_score": 0.9405405405405405,
+        "answer_completeness_score": 0.74925
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "a5d9348e-b090-43d2-810d-f6cc95127488",
+      "question": "Will do! May have to be end of the mon to when I next get paid xx",
+      "answer": "Thanks, fine. Do you want to try the demo account to see how AI works?\nSend me some of your music you do ill like to listen.\nOk great",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Will do! May have to be end of the mon to when I next get paid xx",
+          "answer_excerpt": "Thanks, fine. Do you want to try the demo account to see how AI works?\nSend me some of your music you do ill like to listen.\nOk great"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Will do! May have to be end of the mon to when I next get paid xx",
+          "answer_excerpt": "Thanks, fine. Do you want to try the demo account to see how AI works?\nSend me some of your music you do ill like to listen.\nOk great"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.749333",
+      "quality": {
+        "question_clarity_score": 0.9476923076923076,
+        "answer_completeness_score": 0.549875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "647fb3db-e574-46dd-9a93-5d01de246522",
+      "question": "My own Piano Composition: https://youtube.com/shorts/ePGRPoKzils?si=qhLe9PIhAsW1Z5qz",
+      "answer": "",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "My own Piano Composition: https://youtube.com/shorts/ePGRPoKzils?si=qhLe9PIhAsW1Z5qz",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "My own Piano Composition: https://youtube.com/shorts/ePGRPoKzils?si=qhLe9PIhAsW1Z5qz",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.751561",
+      "quality": {
+        "question_clarity_score": 0.9619047619047618,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "622835d4-7b14-4634-b723-574def1b0074",
+      "question": "My own flute composition: 🎵 https://youtube.com/shorts/5AdaVm7JuPs?si=hAl0OuoDx6r3foZ9",
+      "answer": "How many instruments can you play?\nhttps://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWhen you register, you need to get verified. After verification, you see a Live account choose demo instead.\nWow I can't play anything:(",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "My own flute composition: 🎵 https://youtube.com/shorts/5AdaVm7JuPs?si=hAl0OuoDx6r3foZ9",
+          "answer_excerpt": "How many instruments can you play?\nhttps://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWhen you register, you need to get verified. After verification, you see a Live acc..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "My own flute composition: 🎵 https://youtube.com/shorts/5AdaVm7JuPs?si=hAl0OuoDx6r3foZ9",
+          "answer_excerpt": "How many instruments can you play?\nhttps://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWhen you register, you need to get verified. After verification, you see a Live acc..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.753921",
+      "quality": {
+        "question_clarity_score": 0.9511627906976744,
+        "answer_completeness_score": 0.894875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "d9831bba-0957-44f2-a6ff-c373525e5983",
+      "question": "What’s ur real name btw? I’m registering now x",
+      "answer": "Its Chris\nMaybe when I retire now time lol\nNo*\n‎[26/11/2025, 7:36:44 pm] ‪+44 7852 100621‬: ‎image omitted\nNo no you don't need to deposit anything now\nDid you receive an email for  mt5 info\n50k is your limit you can deposit lol\n‎[26/11/2025, 7:38:45 pm] ‪+44 7852 100621‬: ‎image omitted\nDo you have another email for mt5\nWait\nIm checking\nFirst you have to open a demo account, then you will receive the email with the credentials to log in to MT5\nGo to accounts\n‎[26/11/2025, 7:46:54 pm] ‪+44 7852 100621‬: ‎image omitted\nWhere it says Live account, click on that\n‎[26/11/2025, 7:47:23 pm] ‪+44 7852 100621‬: ‎image omitted\nit will drop down the option for demo\nchoose:\n-MetaTrader5\n-Standard Account\n-USD currency\n-1:500 leverage ‎<This message was edited>\nok keep GBP",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "What’s ur real name btw? I’m registering now x",
+          "answer_excerpt": "Its Chris\nMaybe when I retire now time lol\nNo*\n‎[26/11/2025, 7:36:44 pm] ‪+44 7852 100621‬: ‎image omitted\nNo no you don't need to deposit anything now\nDid you receive an email for  mt5 info\n50k is yo..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "What’s ur real name btw? I’m registering now x",
+          "answer_excerpt": "Its Chris\nMaybe when I retire now time lol\nNo*\n‎[26/11/2025, 7:36:44 pm] ‪+44 7852 100621‬: ‎image omitted\nNo no you don't need to deposit anything now\nDid you receive an email for  mt5 info\n50k is yo..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.756265",
+      "quality": {
+        "question_clarity_score": 0.9521739130434782,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "3c1e610f-1923-4c8b-a84a-573007fc621b",
+      "question": "What’s in account balance next?",
+      "answer": "$1000\ngreat! Now go to your email\nyou will receive \"New Demo Account\" ‎<This message was edited>\n‎[26/11/2025, 7:51:34 pm] ‪+44 7852 100621‬: ‎image omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "What’s in account balance next?",
+          "answer_excerpt": "$1000\ngreat! Now go to your email\nyou will receive \"New Demo Account\" ‎<This message was edited>\n‎[26/11/2025, 7:51:34 pm] ‪+44 7852 100621‬: ‎image omitted"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "What’s in account balance next?",
+          "answer_excerpt": "$1000\ngreat! Now go to your email\nyou will receive \"New Demo Account\" ‎<This message was edited>\n‎[26/11/2025, 7:51:34 pm] ‪+44 7852 100621‬: ‎image omitted"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.758300",
+      "quality": {
+        "question_clarity_score": 0.9612903225806451,
+        "answer_completeness_score": 0.8584999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "a340d6d4-21ac-4bd4-9570-f5c0ab83cd8a",
+      "question": "Should I download Meta5 app next?",
+      "answer": "Yes, you can\nThank you, you will be connected to the bot as soon as possible and will start to see trades being open soon\n‎[26/11/2025, 7:54:58 pm] ‪+44 7852 100621‬: ‎image omitted\nNo, here you go to manage accounts\nFind the broker Vantage International\nthen find the server Vantagelnternational-Demo\nEnter the credentials on this email\nand you are logged in\nIn MT5, to connect your account\nClick on the 3 bars at the top, then on manage accounts, or add account\n‎[26/11/2025, 7:59:50 pm] ‪+44 7852 100621‬: ‎image omitted\ngreat\nYou will be able to track the progress here\nperfect\n‎You deleted this message.\nIf you want to manually trade with the demo account of MT5 its ok, let's leave the other account only for the bot\nNever mind all ok lol\nFor this you will need a tutorial, Im sure you can find some in youtube that shows you step by step how to use the app and all of its features\nYou are welcome. The bot will be connected soon.\nThe beautiful thing the AI bot will do the trading for you.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Should I download Meta5 app next?",
+          "answer_excerpt": "Yes, you can\nThank you, you will be connected to the bot as soon as possible and will start to see trades being open soon\n‎[26/11/2025, 7:54:58 pm] ‪+44 7852 100621‬: ‎image omitted\nNo, here you go to..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Should I download Meta5 app next?",
+          "answer_excerpt": "Yes, you can\nThank you, you will be connected to the bot as soon as possible and will start to see trades being open soon\n‎[26/11/2025, 7:54:58 pm] ‪+44 7852 100621‬: ‎image omitted\nNo, here you go to..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.760360",
+      "quality": {
+        "question_clarity_score": 0.9575757575757575,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "ea33d811-4746-4cf6-9d25-fc39530360f8",
+      "question": "How? Lol\n‎[27/11/2025, 1:26:53 am] ‪+44 7852 100621‬: ‎image omitted",
+      "answer": "It will take 24-48h to see the first trades.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "How? Lol\n‎[27/11/2025, 1:26:53 am] ‪+44 7852 100621‬: ‎image omitted",
+          "answer_excerpt": "It will take 24-48h to see the first trades."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "How? Lol\n‎[27/11/2025, 1:26:53 am] ‪+44 7852 100621‬: ‎image omitted",
+          "answer_excerpt": "It will take 24-48h to see the first trades."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.764115",
+      "quality": {
+        "question_clarity_score": 0.8588235294117647,
+        "answer_completeness_score": 0.6
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "1bccd3c7-0976-407c-aae5-056d4a724791",
+      "question": "Do u think it’s hard for me to learn with learning difficulties as well, I do know how to copy and paste though x",
+      "answer": "That's the beautiful thing about AI trading, the AI system will do all the trading for you, buying and selling.\nHave a wonderful weekend.\n‎[29/11/2025, 6:19:54 pm] ‪+44 7852 100621‬: ‎image omitted\nAlmost 10% great\nIt's better than the bank lol\nWhat do you think of it?\n68.34\nGbp\nWhat it looks like",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Do u think it’s hard for me to learn with learning difficulties as well, I do know how to copy and paste though x",
+          "answer_excerpt": "That's the beautiful thing about AI trading, the AI system will do all the trading for you, buying and selling.\nHave a wonderful weekend.\n‎[29/11/2025, 6:19:54 pm] ‪+44 7852 100621‬: ‎image omitted\nAl..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "Do u think it’s hard for me to learn with learning difficulties as well, I do know how to copy and paste though x",
+          "answer_excerpt": "That's the beautiful thing about AI trading, the AI system will do all the trading for you, buying and selling.\nHave a wonderful weekend.\n‎[29/11/2025, 6:19:54 pm] ‪+44 7852 100621‬: ‎image omitted\nAl..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.767467",
+      "quality": {
+        "question_clarity_score": 0.9557522123893805,
+        "answer_completeness_score": 0.71175
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "0e5a29fa-3fc6-45a4-9b45-fc34cb9e8b04",
+      "question": "So u minus the first 10 bit?",
+      "answer": "That's what AI can achieve.\nSo are ready to open a live account?\nGood morning have a wonderful day.\nLet me know if you have any questions you like to ask.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "So u minus the first 10 bit?",
+          "answer_excerpt": "That's what AI can achieve.\nSo are ready to open a live account?\nGood morning have a wonderful day.\nLet me know if you have any questions you like to ask."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7852 100621.txt",
+          "question_excerpt": "So u minus the first 10 bit?",
+          "answer_excerpt": "That's what AI can achieve.\nSo are ready to open a live account?\nGood morning have a wonderful day.\nLet me know if you have any questions you like to ask."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.769557",
+      "quality": {
+        "question_clarity_score": 0.9357142857142856,
+        "answer_completeness_score": 0.65775
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "1766614e-c014-4ca8-ad14-0d7f38b641ed",
+      "question": "Is manual trading an option?",
+      "answer": "If you want our AI bots to trade for you, it is ideal the account you use for the bot is specifically and only for the bot. If you want to manually trade, it's not recommended using the same account.\nSheraz do you wish to try out the bot see how well it does?\nHello Sheraz! Would you like to continue our conversation about trading with AI?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +44 7985 392887.txt",
+          "question_excerpt": "Is manual trading an option?",
+          "answer_excerpt": "If you want our AI bots to trade for you, it is ideal the account you use for the bot is specifically and only for the bot. If you want to manually trade, it's not recommended using the same account.\n..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +44 7985 392887.txt",
+          "question_excerpt": "Is manual trading an option?",
+          "answer_excerpt": "If you want our AI bots to trade for you, it is ideal the account you use for the bot is specifically and only for the bot. If you want to manually trade, it's not recommended using the same account.\n..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.771520",
+      "quality": {
+        "question_clarity_score": 0.9642857142857142,
+        "answer_completeness_score": 0.7274999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "68173e80-9779-47be-be80-07691f4c2dfd",
+      "question": "Where are you located",
+      "answer": "We have offices in the UK, UAE, and Canada, and we operate globally, including in Australia.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 402 275 954.txt",
+          "question_excerpt": "Where are you located",
+          "answer_excerpt": "We have offices in the UK, UAE, and Canada, and we operate globally, including in Australia."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 402 275 954.txt",
+          "question_excerpt": "Where are you located",
+          "answer_excerpt": "We have offices in the UK, UAE, and Canada, and we operate globally, including in Australia."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.773387",
+      "quality": {
+        "question_clarity_score": 0.9714285714285714,
+        "answer_completeness_score": 0.4345
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7df5e9b4-d414-4868-b544-68200b585680",
+      "question": "What's the average dd you normally see?",
+      "answer": "Between 10% and 20% monthly returns\n5%\nGood evening when do you think you will be getting started?\nAre you still interested in the trading Bot?\nGood afternoon, you may find this interesting. the results for a client from last month.\n‎[24/11/2025, 11:24:32 am] Lucentive Club: ‎video omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 422 514 996 (1).txt",
+          "question_excerpt": "What's the average dd you normally see?",
+          "answer_excerpt": "Between 10% and 20% monthly returns\n5%\nGood evening when do you think you will be getting started?\nAre you still interested in the trading Bot?\nGood afternoon, you may find this interesting. the resul..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 422 514 996.txt",
+          "question_excerpt": "What's the average dd you normally see?",
+          "answer_excerpt": "Between 10% and 20% monthly returns\n5%\nGood evening when do you think you will be getting started?\nAre you still interested in the trading Bot?\nGood afternoon, you may find this interesting. the resul..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 422 514 996 (1).txt",
+          "question_excerpt": "What's the average dd you normally see?",
+          "answer_excerpt": "Between 10% and 20% monthly returns\n5%\nGood evening when do you think you will be getting started?\nAre you still interested in the trading Bot?\nGood afternoon, you may find this interesting. the resul..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 422 514 996.txt",
+          "question_excerpt": "What's the average dd you normally see?",
+          "answer_excerpt": "Between 10% and 20% monthly returns\n5%\nGood evening when do you think you will be getting started?\nAre you still interested in the trading Bot?\nGood afternoon, you may find this interesting. the resul..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.777754",
+      "quality": {
+        "question_clarity_score": 0.9589743589743589,
+        "answer_completeness_score": 0.70875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "4b225b1e-a038-4bde-809a-aac15c43204c",
+      "question": "Can I know how this works?",
+      "answer": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets\nThere is no experience needed. You don't have to study charts, you don't have to spend hours on a computer screen stressing over market moves, you don't have to lift a finger. Our bots will trade for you, you just sit back and watch the results\nYou don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Can I know how this works?",
+          "answer_excerpt": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets\nThere is no experience needed. You don't have to study charts, you don't have to spend hours on a computer sc..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Can I know how this works?",
+          "answer_excerpt": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets\nThere is no experience needed. You don't have to study charts, you don't have to spend hours on a computer sc..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.780279",
+      "quality": {
+        "question_clarity_score": 0.9538461538461538,
+        "answer_completeness_score": 0.781875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "4fcb9611-616b-4ad4-ab12-cc73e34674c7",
+      "question": "So how does it work and what's the platform?",
+      "answer": "We will send you now the performance of this month. In our crypto algorithm\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\nTo account.\nSmall one and big one\nAmazing results",
+      "topics": [
+        "platform"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "So how does it work and what's the platform?",
+          "answer_excerpt": "We will send you now the performance of this month. In our crypto algorithm\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\nTo accou..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "So how does it work and what's the platform?",
+          "answer_excerpt": "We will send you now the performance of this month. In our crypto algorithm\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\n‎[17/11/2025, 11:54:50 am] Lucentive Club: ‎video omitted\nTo accou..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.783164",
+      "quality": {
+        "question_clarity_score": 0.9545454545454545,
+        "answer_completeness_score": 0.890375
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "fcbce5f8-4530-45bb-af14-acf782864cc5",
+      "question": "Which platform/broker do you use?",
+      "answer": "We work with few of them\nVantage\nTickmill\nOx securities\nFusion markets",
+      "topics": [
+        "platform"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Which platform/broker do you use?",
+          "answer_excerpt": "We work with few of them\nVantage\nTickmill\nOx securities\nFusion markets"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Which platform/broker do you use?",
+          "answer_excerpt": "We work with few of them\nVantage\nTickmill\nOx securities\nFusion markets"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.785183",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.42625
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "64d0fcfc-7d3b-4797-8f17-5e9e7ed424b1",
+      "question": "Ok, I know Vantage and Fusion markets because I have accounts with them. What is the minimum AUD do I need?",
+      "answer": "If you want to start nice . 1000 Aud\nLet's start in vantage\nSend us your mt5 details so we can connect you",
+      "topics": [
+        "pricing"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Ok, I know Vantage and Fusion markets because I have accounts with them. What is the minimum AUD do I need?",
+          "answer_excerpt": "If you want to start nice . 1000 Aud\nLet's start in vantage\nSend us your mt5 details so we can connect you"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "Ok, I know Vantage and Fusion markets because I have accounts with them. What is the minimum AUD do I need?",
+          "answer_excerpt": "If you want to start nice . 1000 Aud\nLet's start in vantage\nSend us your mt5 details so we can connect you"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.788117",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.8397499999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "753e259a-5bd0-4890-9d55-07b3d7f73f9f",
+      "question": "What details are you after?",
+      "answer": "Server name\nLogin number\nTrading password\nLike that we can connect you to our bot\nWe just open no long time ago  in vantage a copy trading. So I can send you the link to connect.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "What details are you after?",
+          "answer_excerpt": "Server name\nLogin number\nTrading password\nLike that we can connect you to our bot\nWe just open no long time ago  in vantage a copy trading. So I can send you the link to connect."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "What details are you after?",
+          "answer_excerpt": "Server name\nLogin number\nTrading password\nLike that we can connect you to our bot\nWe just open no long time ago  in vantage a copy trading. So I can send you the link to connect."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.790077",
+      "quality": {
+        "question_clarity_score": 0.9629629629629629,
+        "answer_completeness_score": 0.46675
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "499557db-0beb-4819-8f4a-2d6c5e5598e5",
+      "question": "How can I share my login details? Is that not handing over my account?",
+      "answer": "You have account details\nAnd you have mt5 details.\nIt's different.\nWe can only trade in your account.\nBut can't touch the money.\nNo withdraw no deposit\nIf you have vantage account. I can send you link there for the copy trading . That's it\nGood afternoon, how's everything? Do you need help connecting with the trading bot?\nGood afternoon can you let me know if you still interested in AI trading bot.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "How can I share my login details? Is that not handing over my account?",
+          "answer_excerpt": "You have account details\nAnd you have mt5 details.\nIt's different.\nWe can only trade in your account.\nBut can't touch the money.\nNo withdraw no deposit\nIf you have vantage account. I can send you link..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 475 512 919.txt",
+          "question_excerpt": "How can I share my login details? Is that not handing over my account?",
+          "answer_excerpt": "You have account details\nAnd you have mt5 details.\nIt's different.\nWe can only trade in your account.\nBut can't touch the money.\nNo withdraw no deposit\nIf you have vantage account. I can send you link..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.792687",
+      "quality": {
+        "question_clarity_score": 0.9571428571428571,
+        "answer_completeness_score": 0.9503749999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "31123841-6a67-4017-be6a-a58c0c6308b8",
+      "question": "I’m available now if it’s not too late for you?",
+      "answer": "Good afteroon are you available?\nSorry i had to go into a meeting will you be available in a hour or let me k ow when is a good time for you.\nWaiting.\nTnx\nAre you available?\n‎[17/11/2025, 2:12:21 pm] Lucentive Club: ‎video omitted\nHi Steve, when do you think you will be able to start?\nAre you still interested in getting started?\nWould you like to set up a demo account to see how AI works? You don't need to add any funds.\nGood afternoon, how's everything going?",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +61 499 854 747.txt",
+          "question_excerpt": "I’m available now if it’s not too late for you?",
+          "answer_excerpt": "Good afteroon are you available?\nSorry i had to go into a meeting will you be available in a hour or let me k ow when is a good time for you.\nWaiting.\nTnx\nAre you available?\n‎[17/11/2025, 2:12:21 pm] ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +61 499 854 747.txt",
+          "question_excerpt": "I’m available now if it’s not too late for you?",
+          "answer_excerpt": "Good afteroon are you available?\nSorry i had to go into a meeting will you be available in a hour or let me k ow when is a good time for you.\nWaiting.\nTnx\nAre you available?\n‎[17/11/2025, 2:12:21 pm] ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.795530",
+      "quality": {
+        "question_clarity_score": 0.9489361702127659,
+        "answer_completeness_score": 0.9739999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "3167bb1b-8bdb-4ba9-8c8f-72569a5d58f5",
+      "question": "what this club all about",
+      "answer": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Are you interested in trading?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "what this club all about",
+          "answer_excerpt": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Are you interested in trading?"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "what this club all about",
+          "answer_excerpt": "We are working with 3 different AI bots that operate in the Gold, Forex and Crypto Markets. Are you interested in trading?"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.798333",
+      "quality": {
+        "question_clarity_score": 0.9666666666666667,
+        "answer_completeness_score": 0.6457499999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "b3cbb6d0-aace-4d07-8d28-5d2d977a1eb7",
+      "question": "are this bots 100% sure on returns?",
+      "answer": "We are getting between 10% and 30% monthly",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "are this bots 100% sure on returns?",
+          "answer_excerpt": "We are getting between 10% and 30% monthly"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "are this bots 100% sure on returns?",
+          "answer_excerpt": "We are getting between 10% and 30% monthly"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.800874",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.6
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "6350bb3e-7b15-4d29-aed6-5674d3042a49",
+      "question": "why not 50% and above",
+      "answer": "",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "why not 50% and above",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "why not 50% and above",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.802960",
+      "quality": {
+        "question_clarity_score": 0.9333333333333332,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "addcb2d6-2a45-4b4b-8a76-00803c2f8171",
+      "question": "what are your charges",
+      "answer": "Hello Joshua, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 60:40 you will keep 60% of the profits.\nHello Joshua! Should we continue our conversation about our AI trading bots?\nThank you, Do you have a broker you already work with?\nNo problem,  We recommend using Vantage Markets, a global multi-asset broker, which has over 5 million registered users worldwide.\nYou can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nIt's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trades during the month\nIs that possible for you?\nHello Joshua! How are you doing? I wanted to follow up with you and check if you were able to put some funds together to start trading with AI this month?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "what are your charges",
+          "answer_excerpt": "Hello Joshua, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3013 2254.txt",
+          "question_excerpt": "what are your charges",
+          "answer_excerpt": "Hello Joshua, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.804946",
+      "quality": {
+        "question_clarity_score": 0.9714285714285714,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "53b35649-edcc-4b56-bf9c-66f154d6df05",
+      "question": "Can I see the past and current performance",
+      "answer": "Perfect, let me show you a few videos with our results. One minute\n‎[12/11/2025, 6:51:03 pm] Lucentive Club: ‎video omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Can I see the past and current performance",
+          "answer_excerpt": "Perfect, let me show you a few videos with our results. One minute\n‎[12/11/2025, 6:51:03 pm] Lucentive Club: ‎video omitted"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Can I see the past and current performance",
+          "answer_excerpt": "Perfect, let me show you a few videos with our results. One minute\n‎[12/11/2025, 6:51:03 pm] Lucentive Club: ‎video omitted"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.807184",
+      "quality": {
+        "question_clarity_score": 0.9666666666666667,
+        "answer_completeness_score": 0.546125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "5e118ae8-a0a1-46a0-aa0a-4e37c4f78de8",
+      "question": "How is the bot?",
+      "answer": "It is an algorithm, we connect our software directly to the trading platform MT5\nDo you have a broker you already use?\nYou don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "How is the bot?",
+          "answer_excerpt": "It is an algorithm, we connect our software directly to the trading platform MT5\nDo you have a broker you already use?\nYou don't have to pay anything upfront, We will give you a free subscription. You..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "How is the bot?",
+          "answer_excerpt": "It is an algorithm, we connect our software directly to the trading platform MT5\nDo you have a broker you already use?\nYou don't have to pay anything upfront, We will give you a free subscription. You..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.809158",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.9005
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "ff3a6742-b34a-4535-a9c4-95af8a197522",
+      "question": "Okay, you do account management?",
+      "answer": "We will manage the bot, and any updates necessary. The algorithm will be always running smoothly and how it is supposed to\nThe first step is to open an account with a broker. We recommend using Vantage Markets, a global multi-asset broker, which has over 5 million registered users worldwide.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Okay, you do account management?",
+          "answer_excerpt": "We will manage the bot, and any updates necessary. The algorithm will be always running smoothly and how it is supposed to\nThe first step is to open an account with a broker. We recommend using Vantag..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Okay, you do account management?",
+          "answer_excerpt": "We will manage the bot, and any updates necessary. The algorithm will be always running smoothly and how it is supposed to\nThe first step is to open an account with a broker. We recommend using Vantag..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.811185",
+      "quality": {
+        "question_clarity_score": 0.9624999999999999,
+        "answer_completeness_score": 0.9094999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7403e202-4cc7-49ca-bbe9-23518346679a",
+      "question": "Can I create a demo first I watch Ur performance.",
+      "answer": "Yes you can, You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWe need to open a Demo Account\nPlease remember to choose:\n-MT5\n-Standard Account\n-USD currency\nPerfect, then it should only take a few minutes to open the demo account\nYou will receive an email \"New MT5 Demo Account\"\nPlease send me a screenshot of this email. These are the log in credentials I will need to connect the bot to MT5\nThank you\nWhich bot would you like to try first?\nPerfect, I will let you know when de bot is connected. Takes between 24 to 48 hours until you see the first trade being open automatically. ‎<This message was edited>",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Can I create a demo first I watch Ur performance.",
+          "answer_excerpt": "Yes you can, You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWe need to open a Demo Account\nPlease remember to choose:\n-MT5\n-Stan..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - +974 3147 6366.txt",
+          "question_excerpt": "Can I create a demo first I watch Ur performance.",
+          "answer_excerpt": "Yes you can, You can register to the broker here: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nWe need to open a Demo Account\nPlease remember to choose:\n-MT5\n-Stan..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.814521",
+      "quality": {
+        "question_clarity_score": 0.9591836734693877,
+        "answer_completeness_score": 0.9542499999999998
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "88e7c1e2-230b-4b39-9b38-0850ea4c8fb3",
+      "question": "Good morning...it's Laura right?..lol, sorry I think I may forgotten your name...😬",
+      "answer": "Yes, Laura\n🙂\nI just wanted to touch base and check how you were doing, and see if you gave it some thought during the weekend? ‎<This message was edited>\nThat is great to hear.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Chris.txt",
+          "question_excerpt": "Good morning...it's Laura right?..lol, sorry I think I may forgotten your name...😬",
+          "answer_excerpt": "Yes, Laura\n🙂\nI just wanted to touch base and check how you were doing, and see if you gave it some thought during the weekend? ‎<This message was edited>\nThat is great to hear."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Chris.txt",
+          "question_excerpt": "Good morning...it's Laura right?..lol, sorry I think I may forgotten your name...😬",
+          "answer_excerpt": "Yes, Laura\n🙂\nI just wanted to touch base and check how you were doing, and see if you gave it some thought during the weekend? ‎<This message was edited>\nThat is great to hear."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.817568",
+      "quality": {
+        "question_clarity_score": 0.8439024390243902,
+        "answer_completeness_score": 0.46599999999999997
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "4d9231f2-5372-4911-a485-650fd59fb9f0",
+      "question": "However, I will take the time to gather $500 as I have some bills to pay and xmas and all is around the corner. But I am still interested.",
+      "answer": "No problem, Just let me know when you are ready to proceed and I can guide you step by step on how to get you connected.\nLet me know when you would like me to follow up with you and we can talk when you are ready\nOf course, if you have any questions let me know, I am one text away. Thank you Chris. Hope to talk to you soon!",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Chris.txt",
+          "question_excerpt": "However, I will take the time to gather $500 as I have some bills to pay and xmas and all is around the corner. But I am still interested.",
+          "answer_excerpt": "No problem, Just let me know when you are ready to proceed and I can guide you step by step on how to get you connected.\nLet me know when you would like me to follow up with you and we can talk when y..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Chris.txt",
+          "question_excerpt": "However, I will take the time to gather $500 as I have some bills to pay and xmas and all is around the corner. But I am still interested.",
+          "answer_excerpt": "No problem, Just let me know when you are ready to proceed and I can guide you step by step on how to get you connected.\nLet me know when you would like me to follow up with you and we can talk when y..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.821060",
+      "quality": {
+        "question_clarity_score": 0.9492753623188405,
+        "answer_completeness_score": 0.521875
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "b1a38169-7421-4f95-b4c4-d6579306a0d4",
+      "question": "I am interested in crypto market.  I want to earn some money to pay off all my bills and to buy a car.\nWhat is the minimum amount to start?",
+      "answer": "Perfect, that is what we are here for. Help you achieve your trading goals. It's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trades during the month\nIs that possible for you?",
+      "topics": [
+        "pricing"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Ephraim Warria.txt",
+          "question_excerpt": "I am interested in crypto market.  I want to earn some money to pay off all my bills and to buy a car.\nWhat is the minimum amount to start?",
+          "answer_excerpt": "Perfect, that is what we are here for. Help you achieve your trading goals. It's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trade..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Ephraim Warria.txt",
+          "question_excerpt": "I am interested in crypto market.  I want to earn some money to pay off all my bills and to buy a car.\nWhat is the minimum amount to start?",
+          "answer_excerpt": "Perfect, that is what we are here for. Help you achieve your trading goals. It's ideal you have at least $500 for the bot. This will give it enough capital and enough room to open and close good trade..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.824662",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.5914999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "3226c3b0-3c6a-4ad8-ba5b-78d8f911b724",
+      "question": "How much will it cost to pass my prop firm challenge for me",
+      "answer": "",
+      "topics": [
+        "pricing"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "How much will it cost to pass my prop firm challenge for me",
+          "answer_excerpt": ""
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "How much will it cost to pass my prop firm challenge for me",
+          "answer_excerpt": ""
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.827014",
+      "quality": {
+        "question_clarity_score": 0.9593220338983051,
+        "answer_completeness_score": 0.0
+      },
+      "needs_answer": true
+    },
+    {
+      "id": "b7787add-adbd-42d7-976d-83358f335950",
+      "question": "Which was 35% pay right ?",
+      "answer": "Ok, have a good night, we will talk later.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Which was 35% pay right ?",
+          "answer_excerpt": "Ok, have a good night, we will talk later."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Which was 35% pay right ?",
+          "answer_excerpt": "Ok, have a good night, we will talk later."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.829428",
+      "quality": {
+        "question_clarity_score": 0.9279999999999999,
+        "answer_completeness_score": 0.4
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "6170b52e-7e32-42eb-8942-8dcb9499479c",
+      "question": "Can you manage a prop firm account for me 🙏 please",
+      "answer": "‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\n‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\nNo.  We not managing prop\nWe making money alone\nAnd alot\nDo you want to trade with us?.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Can you manage a prop firm account for me 🙏 please",
+          "answer_excerpt": "‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\n‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\nNo.  We not managing prop\nWe making money alone\nAnd alot\nDo you want to trade with us?..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Can you manage a prop firm account for me 🙏 please",
+          "answer_excerpt": "‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\n‎[18/11/2025, 1:22:28 pm] Lucentive Club: ‎video omitted\nNo.  We not managing prop\nWe making money alone\nAnd alot\nDo you want to trade with us?..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.832572",
+      "quality": {
+        "question_clarity_score": 0.956,
+        "answer_completeness_score": 0.675375
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "e6e034f7-b613-429a-bf81-1b93a1e4324c",
+      "question": "What is minimum trading capital account you can trade with?",
+      "answer": "500usd\nProfit share of 60:40. You keep 60% of the profits",
+      "topics": [
+        "pricing"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "What is minimum trading capital account you can trade with?",
+          "answer_excerpt": "500usd\nProfit share of 60:40. You keep 60% of the profits"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "What is minimum trading capital account you can trade with?",
+          "answer_excerpt": "500usd\nProfit share of 60:40. You keep 60% of the profits"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.834922",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.8213749999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "06dbdda6-838e-4ba7-b3c4-47338d3a8405",
+      "question": "Please are you the one calling me?",
+      "answer": "We have a few team members, from what number? That way I can check for you",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Please are you the one calling me?",
+          "answer_excerpt": "We have a few team members, from what number? That way I can check for you"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Franklin Enuma.txt",
+          "question_excerpt": "Please are you the one calling me?",
+          "answer_excerpt": "We have a few team members, from what number? That way I can check for you"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.836974",
+      "quality": {
+        "question_clarity_score": 0.9588235294117646,
+        "answer_completeness_score": 0.42774999999999996
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7392c9b0-c03a-446f-999b-23dfc5fecd6b",
+      "question": "So I need to wait now for verification?",
+      "answer": "Yes, you first need to be verified in order to open a Live MT5 account\nPerfect, It shouldn't take long.\nBe on the lookout for that email, and let me know when verified. We move on to the next step of opening the account with the correct parameters.\nDid you get the email Girish?\nLet me know if you got the verification email so we can move on to the next step. Thanks\nPerfect, the next step will be to open a Live Account\nPlease remember to choose:\n-MT5\n-Standard Account\n-USD currency\nOnce you open this account which takes only 1 minute. You will receive another email \"New Live MT5 Account\"\nPlease send me a screenshot of this email. These are the details we need to make the connection to your MT5\nThank you, it only takes a few moments for them to send you this confirmation email with the credentials for MT5 ‎<This message was edited>\n\"New MT5 Live Account\"\nit takes just a few seconds to arrive after you opened the account.",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "So I need to wait now for verification?",
+          "answer_excerpt": "Yes, you first need to be verified in order to open a Live MT5 account\nPerfect, It shouldn't take long.\nBe on the lookout for that email, and let me know when verified. We move on to the next step of ..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "So I need to wait now for verification?",
+          "answer_excerpt": "Yes, you first need to be verified in order to open a Live MT5 account\nPerfect, It shouldn't take long.\nBe on the lookout for that email, and let me know when verified. We move on to the next step of ..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.839221",
+      "quality": {
+        "question_clarity_score": 0.9589743589743589,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "586db0db-4963-4612-b114-2653c08ac206",
+      "question": "I  can Try again?",
+      "answer": "In your Vantage Markets platform, what do you see? can you see the new account number under accounts?\n‎[18/11/2025, 8:47:42 pm] Girish: ‎image omitted\nYes, I see.\nOk lets try again. Go to accounts.\nChoose:\n-MT5 or 5th\n-Standard Account\n-USD currency\n-Leverage 1:500 ‎<This message was edited>",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "I  can Try again?",
+          "answer_excerpt": "In your Vantage Markets platform, what do you see? can you see the new account number under accounts?\n‎[18/11/2025, 8:47:42 pm] Girish: ‎image omitted\nYes, I see.\nOk lets try again. Go to accounts.\nCh..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "I  can Try again?",
+          "answer_excerpt": "In your Vantage Markets platform, what do you see? can you see the new account number under accounts?\n‎[18/11/2025, 8:47:42 pm] Girish: ‎image omitted\nYes, I see.\nOk lets try again. Go to accounts.\nCh..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.841125",
+      "quality": {
+        "question_clarity_score": 0.9411764705882353,
+        "answer_completeness_score": 0.9094999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "f8939cbb-b938-4622-89a2-d60d95f39476",
+      "question": "This levrage is so much?",
+      "answer": "Ok, no problem, keep the leverage that you wish\nPerfect, let me know when done\nGreat, 1 step away 👏🏻👏🏻👏🏻\nOnce you receive the email, send me the screenshot and we will be good to go 🚀",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "This levrage is so much?",
+          "answer_excerpt": "Ok, no problem, keep the leverage that you wish\nPerfect, let me know when done\nGreat, 1 step away 👏🏻👏🏻👏🏻\nOnce you receive the email, send me the screenshot and we will be good to go 🚀"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "This levrage is so much?",
+          "answer_excerpt": "Ok, no problem, keep the leverage that you wish\nPerfect, let me know when done\nGreat, 1 step away 👏🏻👏🏻👏🏻\nOnce you receive the email, send me the screenshot and we will be good to go 🚀"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.843092",
+      "quality": {
+        "question_clarity_score": 0.9583333333333333,
+        "answer_completeness_score": 0.5686249999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "7a0788f7-9ca9-465f-ac83-ffd07d7d9870",
+      "question": "Your trading bot work good?",
+      "answer": "Yes! amazing results. This is November:\n‎[18/11/2025, 9:00:56 pm] Lucentive Club: ‎video omitted",
+      "topics": [
+        "technology"
+      ],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Your trading bot work good?",
+          "answer_excerpt": "Yes! amazing results. This is November:\n‎[18/11/2025, 9:00:56 pm] Lucentive Club: ‎video omitted"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Your trading bot work good?",
+          "answer_excerpt": "Yes! amazing results. This is November:\n‎[18/11/2025, 9:00:56 pm] Lucentive Club: ‎video omitted"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.845813",
+      "quality": {
+        "question_clarity_score": 1.0,
+        "answer_completeness_score": 0.636
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "51dbaacc-6c1b-45da-9a88-813636961dab",
+      "question": "How much investment need?",
+      "answer": "The minimum is $500 usd\nIf you can start with $1000 would be great, You will see results fast.\nSo you can fund the account with what you think will bring you better returns, that is totally up to you.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "How much investment need?",
+          "answer_excerpt": "The minimum is $500 usd\nIf you can start with $1000 would be great, You will see results fast.\nSo you can fund the account with what you think will bring you better returns, that is totally up to you."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "How much investment need?",
+          "answer_excerpt": "The minimum is $500 usd\nIf you can start with $1000 would be great, You will see results fast.\nSo you can fund the account with what you think will bring you better returns, that is totally up to you."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.848814",
+      "quality": {
+        "question_clarity_score": 0.968,
+        "answer_completeness_score": 0.8749999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "91618be5-8b6e-4c40-8670-417fa4b6f493",
+      "question": "Can I start with small investment first?",
+      "answer": "Yes, the minimum is £300 for UK customers. This is to give the bot enough capital.\nThat way you try it out, see the results. You will feel confident in the bot and will be very happy with the results, you'll see",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Can I start with small investment first?",
+          "answer_excerpt": "Yes, the minimum is £300 for UK customers. This is to give the bot enough capital.\nThat way you try it out, see the results. You will feel confident in the bot and will be very happy with the results,..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Can I start with small investment first?",
+          "answer_excerpt": "Yes, the minimum is £300 for UK customers. This is to give the bot enough capital.\nThat way you try it out, see the results. You will feel confident in the bot and will be very happy with the results,..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.851109",
+      "quality": {
+        "question_clarity_score": 0.965,
+        "answer_completeness_score": 0.679125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "08830d08-255f-4812-a370-cbfb1ba9c1b2",
+      "question": "Can I try with 50 pound fist",
+      "answer": "No sorry Girish, the minimum is £300\n‎[18/11/2025, 9:11:42 pm] Lucentive Club: ‎video omitted\nHere is another video, look at the profit number\n‎[18/11/2025, 9:12:55 pm] Lucentive Club: ‎image omitted\nThis is another customers account. only profit. look at the date. it's a few days ago\nCan I call you?\nOk got it\nanything?\nGreat! Please send me a screenshot of the email for the Standard Account\nI need the login credentials for MT5\nHello Girish! Let's finish the process and get you started with the crypto bot. ‎<This message was edited>\nCan you share with me the details to get you connected please.\nYou will see the first trades within the next 24 to 48 hours, and we will start making money! ‎<This message was edited>\nHello Girish! Were you able to open the Demo account?\n‎[19/11/2025, 10:11:53 pm] Girish: ‎image omitted\nPerfect, thank you so much. We will connect you to the crypto bot. You should start seeing the first trades open in 24 to 48 hours\nHello Girish! How are you? We connected the bot for you but for some reason we are not able to find crypto in your server. We will contact support to check what is the issue. May I have the email you signed up with? So they can find you in the system and assist us\n‎[20/11/2025, 10:51:37 pm] Girish: ‎image omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Can I try with 50 pound fist",
+          "answer_excerpt": "No sorry Girish, the minimum is £300\n‎[18/11/2025, 9:11:42 pm] Lucentive Club: ‎video omitted\nHere is another video, look at the profit number\n‎[18/11/2025, 9:12:55 pm] Lucentive Club: ‎image omitted\n..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Can I try with 50 pound fist",
+          "answer_excerpt": "No sorry Girish, the minimum is £300\n‎[18/11/2025, 9:11:42 pm] Lucentive Club: ‎video omitted\nHere is another video, look at the profit number\n‎[18/11/2025, 9:12:55 pm] Lucentive Club: ‎image omitted\n..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.853314",
+      "quality": {
+        "question_clarity_score": 0.9428571428571428,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "36ff5352-4d7a-4d58-9a4f-0d6891f4eabd",
+      "question": "I have this stock only?",
+      "answer": "Yes, we need crypto\nYou added it?\nI'll give you an update soon Girish ‎<This message was edited>\nHello Girish how are you?",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "I have this stock only?",
+          "answer_excerpt": "Yes, we need crypto\nYou added it?\nI'll give you an update soon Girish ‎<This message was edited>\nHello Girish how are you?"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "I have this stock only?",
+          "answer_excerpt": "Yes, we need crypto\nYou added it?\nI'll give you an update soon Girish ‎<This message was edited>\nHello Girish how are you?"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.855337",
+      "quality": {
+        "question_clarity_score": 0.9565217391304347,
+        "answer_completeness_score": 0.44575
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "ea252ff9-b800-40d9-8ff0-5849e4f89e39",
+      "question": "Did you solve problem?",
+      "answer": "We were looking into it, from this account we are not able to trade crypto. We will need a few more days for the reply from support to know how to proceed\nYes please, can you check why you cannot trade crypto in this account. And if what is needed to be able to do so.\nIm thinking it is the type of account, but you followed all necessary steps. So I'm not sure\nNot sure if that affects, can you check, and also check if you are able to open another demo account for crypto trading\nThank you\nHello Girish! How are you doing? Since we were not able to get you connected to crypto\nWe can get you connected to the gold bot\nYou have been successfully connected to the Gold bot\nYou should start seeing the first trade being made soon",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Did you solve problem?",
+          "answer_excerpt": "We were looking into it, from this account we are not able to trade crypto. We will need a few more days for the reply from support to know how to proceed\nYes please, can you check why you cannot trad..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Girish.txt",
+          "question_excerpt": "Did you solve problem?",
+          "answer_excerpt": "We were looking into it, from this account we are not able to trade crypto. We will need a few more days for the reply from support to know how to proceed\nYes please, can you check why you cannot trad..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.857264",
+      "quality": {
+        "question_clarity_score": 0.9636363636363636,
+        "answer_completeness_score": 0.8729999999999999
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "3b2c2802-fc77-4e12-b5ac-bace581736e2",
+      "question": "Don't understand,I was supposed to have a zoom meeting by 10.am ,it is after ten now.There is no link .\nTry to let me know what is happening.\nThanks",
+      "answer": "We need to open a Live Account\nPlease remember to choose:\n-MT5\n-Raw Account\n-USD currency\nYou will receive an email \"New Live MT5 Account\" Please send me a screenshoot of this email ‎<This message was edited>\nThis is the registration link https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nThank you Kelvin, it was nice talking to you. Since you are already a Vantage Markets customer it should take just a few minutes to open the new account. Please let me know if you have any questions\nHello Kelvin! How are you? Were you able to open the account for our Gold bot?\nWe are ready to connect you, how did it go with the process for the new account? It takes only a few minutes to get you set up\nYou can send me the details of the Demo account here please\nlaura.p@lucentiveclub.com\n‎[17/11/2025, 4:41:14 pm] Kelvin Asuelimen: ‎image omitted",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Kelvin Asuelimen.txt",
+          "question_excerpt": "Don't understand,I was supposed to have a zoom meeting by 10.am ,it is after ten now.There is no link .\nTry to let me know what is happening.\nThanks",
+          "answer_excerpt": "We need to open a Live Account\nPlease remember to choose:\n-MT5\n-Raw Account\n-USD currency\nYou will receive an email \"New Live MT5 Account\" Please send me a screenshoot of this email ‎<This message was..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Kelvin Asuelimen.txt",
+          "question_excerpt": "Don't understand,I was supposed to have a zoom meeting by 10.am ,it is after ten now.There is no link .\nTry to let me know what is happening.\nThanks",
+          "answer_excerpt": "We need to open a Live Account\nPlease remember to choose:\n-MT5\n-Raw Account\n-USD currency\nYou will receive an email \"New Live MT5 Account\" Please send me a screenshoot of this email ‎<This message was..."
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.860824",
+      "quality": {
+        "question_clarity_score": 0.65,
+        "answer_completeness_score": 1.0
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "d9276085-a6ce-4b78-91bf-b16360573b85",
+      "question": "When you finish kindly let me know",
+      "answer": "We will do it takes approximately 24 to 48 hours to be connected.\n‎You deleted this message.\nSorry, sent by mistake. How are you finding the trading software?\nI'll check on my end as well",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Kelvin Asuelimen.txt",
+          "question_excerpt": "When you finish kindly let me know",
+          "answer_excerpt": "We will do it takes approximately 24 to 48 hours to be connected.\n‎You deleted this message.\nSorry, sent by mistake. How are you finding the trading software?\nI'll check on my end as well"
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Kelvin Asuelimen.txt",
+          "question_excerpt": "When you finish kindly let me know",
+          "answer_excerpt": "We will do it takes approximately 24 to 48 hours to be connected.\n‎You deleted this message.\nSorry, sent by mistake. How are you finding the trading software?\nI'll check on my end as well"
+        }
+      ],
+      "source_count": 2,
+      "last_updated": "2026-03-25T09:42:18.864209",
+      "quality": {
+        "question_clarity_score": 0.9647058823529411,
+        "answer_completeness_score": 0.670125
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "8669c364-3c6f-40dd-82fc-f41cae1a8969",
+      "question": "How can I log in now\n‎[25/11/2025, 12:16:33 am] Shah Hussein: ‎image omitted",
+      "answer": "Ok lets create one\nGo to Accounts\nOk did you get the credentials in the email?\nSend me a screenshot of this email please\nWere it says enter company or server name\nYou need to find VantageInternational -Live6 ‎<This message was edited>\nThen enter your log in credentials\nHow much will you fund your account with?\nPerfect, you will be able to see the trades there.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein (1).txt",
+          "question_excerpt": "How can I log in now\n‎[25/11/2025, 12:16:33 am] Shah Hussein: ‎image omitted",
+          "answer_excerpt": "Ok lets create one\nGo to Accounts\nOk did you get the credentials in the email?\nSend me a screenshot of this email please\nWere it says enter company or server name\nYou need to find VantageInternational..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein.txt",
+          "question_excerpt": "How can I log in now\n‎[25/11/2025, 12:16:33 am] Shah Hussein: ‎image omitted",
+          "answer_excerpt": "Ok lets create one\nGo to Accounts\nOk did you get the credentials in the email?\nSend me a screenshot of this email please\nWere it says enter company or server name\nYou need to find VantageInternational..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein (1).txt",
+          "question_excerpt": "How can I log in now\n‎[25/11/2025, 12:16:33 am] Shah Hussein: ‎image omitted",
+          "answer_excerpt": "Ok lets create one\nGo to Accounts\nOk did you get the credentials in the email?\nSend me a screenshot of this email please\nWere it says enter company or server name\nYou need to find VantageInternational..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein.txt",
+          "question_excerpt": "How can I log in now\n‎[25/11/2025, 12:16:33 am] Shah Hussein: ‎image omitted",
+          "answer_excerpt": "Ok lets create one\nGo to Accounts\nOk did you get the credentials in the email?\nSend me a screenshot of this email please\nWere it says enter company or server name\nYou need to find VantageInternational..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.872975",
+      "quality": {
+        "question_clarity_score": 0.9052631578947368,
+        "answer_completeness_score": 0.83575
+      },
+      "needs_answer": false
+    },
+    {
+      "id": "78f14a4d-ba66-48ed-a785-b20745f0e0c4",
+      "question": "Will I can’t start from this month will start from 1 January",
+      "answer": "Ok sounds good. We will be in touch\nYou can reach us here at any time if you decide to start sooner ‎<This message was edited>\nThank you. Talk to you soon.\nLaura is my name.\nNice to meet you, and I am here anything you need.",
+      "topics": [],
+      "examples": [
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein (1).txt",
+          "question_excerpt": "Will I can’t start from this month will start from 1 January",
+          "answer_excerpt": "Ok sounds good. We will be in touch\nYou can reach us here at any time if you decide to start sooner ‎<This message was edited>\nThank you. Talk to you soon.\nLaura is my name.\nNice to meet you, and I am..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein.txt",
+          "question_excerpt": "Will I can’t start from this month will start from 1 January",
+          "answer_excerpt": "Ok sounds good. We will be in touch\nYou can reach us here at any time if you decide to start sooner ‎<This message was edited>\nThank you. Talk to you soon.\nLaura is my name.\nNice to meet you, and I am..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein (1).txt",
+          "question_excerpt": "Will I can’t start from this month will start from 1 January",
+          "answer_excerpt": "Ok sounds good. We will be in touch\nYou can reach us here at any time if you decide to start sooner ‎<This message was edited>\nThank you. Talk to you soon.\nLaura is my name.\nNice to meet you, and I am..."
+        },
+        {
+          "file": "_chat_WhatsApp Chat - Shah Hussein.txt",
+          "question_excerpt": "Will I can’t start from this month will start from 1 January",
+          "answer_excerpt": "Ok sounds good. We will be in touch\nYou can reach us here at any time if you decide to start sooner ‎<This message was edited>\nThank you. Talk to you soon.\nLaura is my name.\nNice to meet you, and I am..."
+        }
+      ],
+      "source_count": 4,
+      "last_updated": "2026-03-25T09:42:18.875448",
+      "quality": {
+        "question_clarity_score": 0.9566666666666667,
+        "answer_completeness_score": 0.384
+      },
+      "needs_answer": false
+    }
+  ]
+}

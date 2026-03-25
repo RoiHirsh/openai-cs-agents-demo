@@ -113,7 +113,7 @@ def faq_instructions(
 
 _faq_tools = []
 if _VECTOR_STORE_ID:
-    _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
+    _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID], rewrite_query=True))
 _faq_tools.append(get_country_offers)
 _faq_tools.append(request_human_handoff)
 

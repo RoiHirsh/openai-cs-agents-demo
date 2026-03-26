@@ -66,7 +66,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
             json={
-                "content": "Handed off from AI agent. Please take over this conversation.",
+                "content": "Handed off from AI agent. Please take over this conversation. @Laura",
                 "message_type": "outgoing",
                 "private": True,
             },

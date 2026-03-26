@@ -33,15 +33,29 @@ Questions to decide and build:
 
 ## Infrastructure
 
-### [ ] Update human handoff — assign to team, not a specific agent
+### [x] Update human handoff — assign to team + agent with notification
 **Location**: `agent/integrations/chatwoot.py` — `trigger_human_handoff()`
 
-Currently the handoff assigns the conversation to agent ID 1 (a hardcoded specific agent). This should be changed to assign to a **Chatwoot team** instead, so any available human agent on the team can pick it up.
+Done: assigns team_id 1 + agent_id 7 (Laura) and mentions @Boss Admin in the private note.
 
-**Changes needed:**
-- Replace the `assign_agent` API call (agent ID 1) with an `assign_team` API call using the appropriate team ID.
-- Confirm which Chatwoot team ID to use (check Chatwoot settings → Teams).
-- Optionally remove the hardcoded agent assignment entirely if team assignment is sufficient.
+---
+
+### [ ] Auto-reset conversation properties when status changes to pending
+
+When a conversation is moved from open → pending, Chatwoot keeps the assigned agent, team, priority (high), and label (jump_in_chat) set from the handoff. These should be cleared automatically.
+
+**Properties to clear:**
+- Assigned agent → None
+- Assigned team → None
+- Priority → None
+- Label `jump_in_chat` → removed
+
+**Recommended approach:**
+1. Try **Chatwoot native Automation** first (Settings → Automation): trigger on "Conversation Updated" where Status = Pending, actions: unassign agent, unassign team. May not support clearing priority or labels depending on version.
+2. For anything not covered by native automation, use **Chatwoot webhook → n8n**: register a webhook for `conversation_status_changed`, filter for status = pending, then fire API calls to clear all four properties:
+   - `PATCH /conversations/{id}` with `priority: null`
+   - `POST /conversations/{id}/assignments` with `assignee_id: null, team_id: null`
+   - `POST /conversations/{id}/labels` with `labels: []`
 
 ---
 

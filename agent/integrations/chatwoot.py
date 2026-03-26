@@ -38,13 +38,21 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
         )
         logger.debug("[handoff] Toggle status HTTP %s: %s", toggle_res.status_code, toggle_res.text)
 
+        # Assign to team 1 so any available agent can pick up
         assign_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
-            json={"assignee_id": 1},
+            json={"team_id": 1},
             headers=headers,
             timeout=10.0,
         )
         logger.debug("[handoff] Assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+        # Fallback: assign to specific agent (ID 1) — uncomment if team assignment is not available
+        # assign_res = await client.post(
+        #     f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
+        #     json={"assignee_id": 1},
+        #     headers=headers,
+        #     timeout=10.0,
+        # )
 
         priority_res = await client.patch(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}",

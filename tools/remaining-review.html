@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remaining Q&amp;A Review &mdash; Lucentive Club</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #222; padding: 32px 24px; }
+    header { max-width: 960px; margin: 0 auto 24px; }
+    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    header p  { font-size: 14px; color: #666; }
+    .stats { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .stat { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #444; }
+    .stat strong { font-size: 20px; font-weight: 700; color: #111; display: block; margin-bottom: 2px; }
+    .stat.s-faq strong      { color: #1565c0; }
+    .stat.s-handoff strong  { color: #6a1b9a; }
+    .stat.s-skip strong     { color: #c62828; }
+    .stat.s-undecided strong{ color: #e65100; }
+
+    .controls { max-width: 960px; margin: 0 auto 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .controls input[type="text"] { flex: 1; padding: 9px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; min-width: 200px; }
+    .controls input:focus { border-color: #555; }
+    .btn-export { padding: 9px 16px; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-export.faq     { background: #1a73e8; }
+    .btn-export.handoff { background: #7b1fa2; }
+    .btn-export.faq:hover     { background: #1558b0; }
+    .btn-export.handoff:hover { background: #6a1b9a; }
+
+    .tabs { max-width: 960px; margin: 0 auto 18px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .tab { padding: 7px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; font-size: 13px; cursor: pointer; font-weight: 500; color: #555; }
+    .tab:hover  { border-color: #999; color: #111; }
+    .tab.active { background: #111; color: #fff; border-color: #111; }
+
+    .pair-list { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .pair { background: #fff; border: 2px solid #e0e0e0; border-radius: 10px; overflow: hidden; transition: border-color 0.15s; }
+    .pair.status-faq     { border-color: #42a5f5; }
+    .pair.status-handoff { border-color: #ba68c8; }
+    .pair.status-skip    { border-color: #ef9a9a; background: #fff8f8; }
+    .pair.hidden { display: none; }
+
+    .pair-header { padding: 12px 16px 10px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: flex-start; }
+    .pair-meta { flex: 1; }
+    .pair-number { font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .question { font-size: 15px; font-weight: 600; color: #111; line-height: 1.4; }
+    .topics { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+    .topic-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #e8f5e9; color: #2e7d32; font-weight: 500; }
+
+    .pair-actions { display: flex; gap: 5px; flex-shrink: 0; padding-top: 2px; }
+    .btn-faq, .btn-handoff, .btn-skip {
+      padding: 5px 12px; border-radius: 6px; border: 1.5px solid;
+      font-size: 12px; font-weight: 600; cursor: pointer; background: #fff;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-faq     { border-color: #1a73e8; color: #1565c0; }
+    .btn-handoff { border-color: #7b1fa2; color: #6a1b9a; }
+    .btn-skip    { border-color: #ef5350; color: #c62828; }
+    .btn-faq:hover     { background: #e3f2fd; }
+    .btn-handoff:hover { background: #f3e5f5; }
+    .btn-skip:hover    { background: #ffebee; }
+    .btn-faq.active     { background: #1a73e8; color: #fff; }
+    .btn-handoff.active { background: #7b1fa2; color: #fff; }
+    .btn-skip.active    { background: #ef5350; color: #fff; }
+
+    .pair-body { padding: 10px 16px 12px; }
+    .answer-label { font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+    .btn-toggle { font-size: 11px; color: #1a73e8; background: none; border: none; cursor: pointer; font-weight: 500; padding: 0; }
+    .btn-toggle:hover { text-decoration: underline; }
+    .answer-text { font-size: 13px; color: #555; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+    .answer-text.collapsed { max-height: 60px; overflow: hidden; position: relative; }
+    .answer-text.collapsed::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 24px; background: linear-gradient(transparent, #fff); }
+    .pair.status-skip .answer-text.collapsed::after { background: linear-gradient(transparent, #fff8f8); }
+
+    .status-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
+    .badge-faq     { background: #e3f2fd; color: #1565c0; }
+    .badge-handoff { background: #f3e5f5; color: #6a1b9a; }
+    .badge-skip    { background: #ffebee; color: #c62828; }
+
+    .no-results { color: #999; font-size: 15px; padding: 40px; text-align: center; display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Remaining Q&amp;A &mdash; Classify for Knowledge Base</h1>
+  <p>68 questions not yet in FAQ or Handoff. Mark each as <strong>FAQ</strong> (add to knowledge base), <strong>Handoff</strong> (new trigger scenario), or <strong>Skip</strong> (not useful / conversational junk). Progress saves automatically.</p>
+  <div class="stats">
+    <div class="stat"><strong id="count-total">68</strong>Total</div>
+    <div class="stat s-faq"><strong id="count-faq">0</strong>FAQ</div>
+    <div class="stat s-handoff"><strong id="count-handoff">0</strong>Handoff</div>
+    <div class="stat s-skip"><strong id="count-skip">0</strong>Skip</div>
+    <div class="stat s-undecided"><strong id="count-undecided">68</strong>Undecided</div>
+  </div>
+</header>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search questions or answers&hellip;" oninput="applyFilters()" />
+  <button class="btn-export faq"     onclick="exportFAQ()">Export FAQ</button>
+  <button class="btn-export handoff" onclick="exportHandoff()">Export Handoff</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="all"       onclick="setTab(this)">All</button>
+  <button class="tab"        data-tab="undecided" onclick="setTab(this)">Undecided</button>
+  <button class="tab"        data-tab="faq"       onclick="setTab(this)">FAQ</button>
+  <button class="tab"        data-tab="handoff"   onclick="setTab(this)">Handoff</button>
+  <button class="tab"        data-tab="skip"      onclick="setTab(this)">Skip</button>
+</div>
+
+<div class="pair-list" id="pair-list"></div>
+<div class="no-results" id="no-results">No items match your current filter.</div>
+
+<script src="remaining_data.js"></script>
+<script>
+const STORAGE_KEY = "remaining_review_v1";
+let decisions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+let currentTab = "all";
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+}
+
+function decide(id, action) {
+  if (decisions[id] === action) delete decisions[id];
+  else decisions[id] = action;
+  save();
+  refreshPair(id);
+  updateStats();
+  applyFilters();
+}
+
+function clean(str) {
+  if (!str) return "";
+  return str
+    .replace(/\u200e/g, "")
+    .replace(/<This message was edited>/g, "")
+    .trim();
+}
+
+function escHtml(s) {
+  return (s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function refreshPair(id) {
+  const el = document.getElementById("pair-" + id);
+  if (!el) return;
+  const dec = decisions[id] || null;
+  el.className = "pair" + (dec ? " status-" + dec : "");
+
+  el.querySelectorAll(".pair-actions button").forEach(b => b.classList.remove("active"));
+  if (dec) {
+    const ab = el.querySelector(".btn-" + dec);
+    if (ab) ab.classList.add("active");
+  }
+
+  const badge = el.querySelector(".status-badge");
+  if (badge) {
+    badge.textContent = dec ? dec.toUpperCase() : "";
+    badge.className   = "status-badge" + (dec ? " badge-" + dec : "");
+  }
+}
+
+function toggleExpand(id) {
+  const at = document.getElementById("ans-" + id);
+  const btn = document.querySelector("#pair-" + id + " .btn-toggle");
+  if (!at) return;
+  const collapsed = at.classList.contains("collapsed");
+  at.classList.toggle("collapsed", !collapsed);
+  if (btn) btn.textContent = collapsed ? "Show less" : "Show more";
+}
+
+function renderAll() {
+  const list = document.getElementById("pair-list");
+  list.innerHTML = "";
+  pairs.forEach((p, i) => {
+    const answer = clean(p.answer || "");
+    const hasMore = answer.length > 200;
+    const topicsHTML = (p.topics || []).map(t => `<span class="topic-tag">${escHtml(t)}</span>`).join("");
+    const div = document.createElement("div");
+    div.id = "pair-" + p.id;
+    div.className = "pair";
+    div.innerHTML = `
+      <div class="pair-header">
+        <div class="pair-meta">
+          <div class="pair-number">#${i + 1}&nbsp;<span class="status-badge"></span></div>
+          <div class="question">${escHtml(p.question)}</div>
+          ${topicsHTML ? `<div class="topics">${topicsHTML}</div>` : ""}
+        </div>
+        <div class="pair-actions">
+          <button class="btn-faq"     onclick="decide('${p.id}', 'faq')">FAQ</button>
+          <button class="btn-handoff" onclick="decide('${p.id}', 'handoff')">Handoff</button>
+          <button class="btn-skip"    onclick="decide('${p.id}', 'skip')">Skip</button>
+        </div>
+      </div>
+      <div class="pair-body">
+        <div class="answer-label">
+          Answer
+          ${hasMore ? `<button class="btn-toggle" onclick="toggleExpand('${p.id}')">Show more</button>` : ""}
+        </div>
+        <div id="ans-${p.id}" class="answer-text${hasMore ? " collapsed" : ""}">
+          ${answer ? escHtml(answer) : '<em style="color:#bbb">No answer recorded</em>'}
+        </div>
+      </div>`;
+    list.appendChild(div);
+    refreshPair(p.id);
+  });
+  updateStats();
+  applyFilters();
+}
+
+function updateStats() {
+  let faqC = 0, handoffC = 0, skipC = 0;
+  pairs.forEach(p => {
+    const d = decisions[p.id];
+    if (d === "faq")         faqC++;
+    else if (d === "handoff") handoffC++;
+    else if (d === "skip")    skipC++;
+  });
+  const undecided = pairs.length - faqC - handoffC - skipC;
+  document.getElementById("count-total").textContent     = pairs.length;
+  document.getElementById("count-faq").textContent       = faqC;
+  document.getElementById("count-handoff").textContent   = handoffC;
+  document.getElementById("count-skip").textContent      = skipC;
+  document.getElementById("count-undecided").textContent = undecided;
+}
+
+function setTab(btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  currentTab = btn.dataset.tab;
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  let any = false;
+  pairs.forEach(p => {
+    const el = document.getElementById("pair-" + p.id);
+    if (!el) return;
+    const dec = decisions[p.id] || null;
+    const tabOk =
+      currentTab === "all" ||
+      (currentTab === "undecided" && !dec) ||
+      currentTab === dec;
+    const searchOk = !q ||
+      p.question.toLowerCase().includes(q) ||
+      (p.answer || "").toLowerCase().includes(q);
+    const show = tabOk && searchOk;
+    el.classList.toggle("hidden", !show);
+    if (show) any = true;
+  });
+  document.getElementById("no-results").style.display = any ? "none" : "block";
+}
+
+function download(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function exportFAQ() {
+  const items = pairs
+    .filter(p => decisions[p.id] === "faq")
+    .map(p => ({
+      id: p.id.slice(0, 8),
+      question: p.question,
+      answer: clean(p.answer || ""),
+      tags: p.topics || [],
+      edited: false
+    }));
+  if (!items.length) { alert("No items marked as FAQ yet."); return; }
+  download(items, "faq_remaining.json");
+}
+
+function exportHandoff() {
+  const items = pairs
+    .filter(p => decisions[p.id] === "handoff")
+    .map(p => ({
+      source_question: p.question,
+      scenario: "",
+      default_response: "Hi one sec please",
+      category: ""
+    }));
+  if (!items.length) { alert("No items marked as Handoff yet."); return; }
+  download(items, "handoff_remaining.json");
+}
+
+renderAll();
+</script>
+</body>
+</html>

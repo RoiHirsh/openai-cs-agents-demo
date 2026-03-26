@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "Customer reports or asks about a technical issue or problem with their bot, such as it not trading or behaving unexpectedly.",
+    "default_response": "Hi one sec please",
+    "category": "technical",
+    "source_question": "How are you? did you fix the bot?"
+  },
+  {
+    "scenario": "Customer is following up on an unresolved technical issue with their trading account or bot configuration.",
+    "default_response": "Hi one sec please",
+    "category": "technical",
+    "source_question": "Did you solve problem?"
+  },
+  {
+    "scenario": "Customer is complaining about a missed scheduled meeting, call, or commitment that was not fulfilled by the team.",
+    "default_response": "Hi one sec please",
+    "category": "complaint",
+    "source_question": "Don't understand, I was supposed to have a zoom meeting by 10am, it is after ten now. There is no link. Try to let me know what is happening."
+  },
+  {
+    "scenario": "Customer questions or pushes back on the commission or profit-sharing structure and tries to negotiate better terms.",
+    "default_response": "One sec please",
+    "category": "objection",
+    "source_question": "why not 50% and above"
+  },
+  {
+    "scenario": "Customer asks to see proof of past performance, results, or client testimonials before committing.",
+    "default_response": "Hi one sec please",
+    "category": "skepticism",
+    "source_question": "Can I see the past and current performance"
+  }
+]

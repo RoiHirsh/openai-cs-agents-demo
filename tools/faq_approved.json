@@ -1,0 +1,146 @@
+[
+  {
+    "id": "d495daca",
+    "question": "What is the smallest amount to invest?",
+    "answer": "the minimum is $500 usd",
+    "tags": [
+      "pricing"
+    ],
+    "edited": false
+  },
+  {
+    "id": "cd3a0353",
+    "question": "How much for the trading bot",
+    "answer": "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 65:35 so you keep 65% of the profits.",
+    "tags": [
+      "pricing"
+    ],
+    "edited": true
+  },
+  {
+    "id": "60d6a1db",
+    "question": "whats the starting fee?",
+    "answer": "For the bots, You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+    "tags": [
+      "pricing"
+    ],
+    "edited": true
+  },
+  {
+    "id": "addcb2d6",
+    "question": "what are your charges",
+    "answer": "You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do. At the end of the month we do profit share and split 65:35 you will keep 65% of the profits.",
+    "tags": [
+      "pricing"
+    ],
+    "edited": true
+  },
+  {
+    "id": "6d4e8a4e",
+    "question": "And I can withdraw my money anytime correct?",
+    "answer": "Yes you can withdraw your funds at any time",
+    "tags": [
+      "security"
+    ],
+    "edited": false
+  },
+  {
+    "id": "499557db",
+    "question": "How can I share my login details? Is that not handing over my account?",
+    "answer": "You have account details and you have mt5 details which is not the same thing. We can only trade in your account but can't touch the money.",
+    "tags": [
+      "security"
+    ],
+    "edited": true
+  },
+  {
+    "id": "4b225b1e",
+    "question": "Can I know how this works?",
+    "answer": "We are working with different AI bots that operate in the sectors such as Gold, Forex and Crypto Markets. There is no experience needed. You don't have to study charts, you don't have to spend hours on a computer screen stressing over market moves, you don't have to lift a finger. Our bots will trade for you, you just sit back and watch the results. You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": true
+  },
+  {
+    "id": "5e118ae8",
+    "question": "How is the bot?",
+    "answer": "It is an algorithm, we connect our software directly to the trading platform MT5. You don't have to pay anything upfront, We will give you a free subscription. You stay 100% in control of your funds. And we only profit when you do.",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": true
+  },
+  {
+    "id": "3167bb1b",
+    "question": "what this club all about",
+    "answer": "We are working with different AI bots that operate in sectors such as Gold, Forex and Crypto Markets.",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": true
+  },
+  {
+    "id": "9cf837ab",
+    "question": "Meaning I can stay even for days without opening the account to see what is happening?",
+    "answer": "Yes, that is the idea with trading with AI. you don't have to lift a finger, or study the charts. The bot will generate profits for you, open and close trades during the week as it sees fit. When the market has the right conditions, it will open automatically",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": false
+  },
+  {
+    "id": "1766614e",
+    "question": "Is manual trading an option?",
+    "answer": "If you want our AI bots to trade for you, it is ideal the account you use for the bot is specifically and only for the bot. If you want to manually trade, it's not recommended using the same account.",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": false
+  },
+  {
+    "id": "fc73c006",
+    "question": "What about lot size??",
+    "answer": "Lot size is proportional to your account size. Always with risk management upfront",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": false
+  },
+  {
+    "id": "6170b52e",
+    "question": "Can you manage a prop firm account for me please",
+    "answer": "No. We are not managing prop. We are making money alone.",
+    "tags": [
+      "how-it-works"
+    ],
+    "edited": true
+  },
+  {
+    "id": "5fd112e3",
+    "question": "Do you offer trial??",
+    "answer": "Yes we can offer a trial in Demo. You open a demo account for MT5 and provide the details so we can connect the bot. We make the connection manually directly to your MT5 platform",
+    "tags": [
+      "demo"
+    ],
+    "edited": true
+  },
+  {
+    "id": "b407471e",
+    "question": "Do you have a Whatsapp group or telegram",
+    "answer": "No, our whatsapp chat is the only direct channel of communication with us",
+    "tags": [
+      "general"
+    ],
+    "edited": true
+  },
+  {
+    "id": "fea1f330",
+    "question": "whats your license number",
+    "answer": "We dont have a license number since we are not a broker.",
+    "tags": [
+      "company"
+    ],
+    "edited": true
+  }
+]

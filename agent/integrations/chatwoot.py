@@ -41,7 +41,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
         # Assign to team 1 (shared queue) and agent 1 (personal notification)
         assign_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
-            json={"team_id": 1, "assignee_id": 1},
+            json={"team_id": 1, "assignee_id": 7},
             headers=headers,
             timeout=10.0,
         )
@@ -66,7 +66,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
             json={
-                "content": "Handed off from AI agent. Please take over this conversation. @Laura",
+                "content": "Handed off from AI agent. Please take over this conversation. @Boss Admin",
                 "message_type": "outgoing",
                 "private": True,
             },

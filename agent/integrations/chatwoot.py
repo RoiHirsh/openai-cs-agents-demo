@@ -38,14 +38,23 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
         )
         logger.debug("[handoff] Toggle status HTTP %s: %s", toggle_res.status_code, toggle_res.text)
 
-        # Assign to team 1 (shared queue) and agent 1 (personal notification)
+        # Assign to agent 7 (Laura) for personal notification
         assign_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
-            json={"team_id": 1, "assignee_id": 7},
+            json={"assignee_id": 7},
             headers=headers,
             timeout=10.0,
         )
-        logger.debug("[handoff] Assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+        logger.debug("[handoff] Agent assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+
+        # Assign to team 1 (shared queue) as a separate call
+        team_res = await client.post(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/assignments",
+            json={"team_id": 1},
+            headers=headers,
+            timeout=10.0,
+        )
+        logger.debug("[handoff] Team assignment HTTP %s: %s", team_res.status_code, team_res.text)
 
         priority_res = await client.patch(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}",

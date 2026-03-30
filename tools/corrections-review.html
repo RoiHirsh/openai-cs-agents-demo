@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corrections Review — Lucentive Club</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding: 32px 24px;
+    }
+
+    header { max-width: 960px; margin: 0 auto 24px; }
+    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    header p  { font-size: 14px; color: #666; }
+
+    .stats {
+      display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap;
+    }
+    .stat {
+      background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 10px 18px; font-size: 13px; color: #444;
+    }
+    .stat strong { font-size: 20px; font-weight: 700; color: #111; display: block; margin-bottom: 2px; }
+    .stat.s-done strong    { color: #2e7d32; }
+    .stat.s-pending strong { color: #e65100; }
+
+    .controls {
+      max-width: 960px; margin: 0 auto 16px;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .controls input[type="text"] {
+      flex: 1; padding: 9px 14px; border: 1px solid #ccc;
+      border-radius: 8px; font-size: 14px; outline: none; min-width: 200px;
+    }
+    .controls input:focus { border-color: #555; }
+
+    .btn-primary {
+      padding: 9px 18px; background: #111; color: #fff;
+      border: none; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .btn-primary:hover { background: #333; }
+
+    .tabs {
+      max-width: 960px; margin: 0 auto 20px;
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .tab {
+      padding: 7px 18px; border-radius: 20px; border: 1px solid #ccc;
+      background: #fff; font-size: 13px; cursor: pointer;
+      font-weight: 500; color: #555;
+    }
+    .tab:hover  { border-color: #999; color: #111; }
+    .tab.active { background: #111; color: #fff; border-color: #111; }
+
+    .card-list {
+      max-width: 960px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .card {
+      background: #fff; border: 2px solid #e0e0e0;
+      border-radius: 12px; overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .card.done    { border-color: #66bb6a; }
+    .card.hidden  { display: none; }
+
+    /* Card header */
+    .card-header {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .card-meta { flex: 1; }
+    .card-num {
+      font-size: 11px; color: #999; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+    }
+    .card-phone { font-size: 13px; color: #888; margin-top: 2px; }
+
+    .reviewer-note {
+      font-size: 15px; font-weight: 600; color: #111; line-height: 1.4;
+    }
+
+    /* Category selector */
+    .cat-wrap { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 2px; }
+    .cat-btn {
+      padding: 4px 12px; border-radius: 20px; border: 1.5px solid #ddd;
+      background: #fff; font-size: 12px; font-weight: 500;
+      cursor: pointer; color: #555; transition: all 0.12s;
+    }
+    .cat-btn:hover { border-color: #999; color: #111; }
+    .cat-btn.active { color: #fff; border-color: transparent; }
+
+    .cat-btn[data-cat="identity"]       { --c: #7b1fa2; }
+    .cat-btn[data-cat="stall"]          { --c: #e65100; }
+    .cat-btn[data-cat="wording"]        { --c: #1565c0; }
+    .cat-btn[data-cat="wrong-data"]     { --c: #c62828; }
+    .cat-btn[data-cat="routing"]        { --c: #2e7d32; }
+    .cat-btn[data-cat="context-miss"]   { --c: #5d4037; }
+    .cat-btn[data-cat="response-length"]{ --c: #00695c; }
+    .cat-btn[data-cat="regulation"]     { --c: #f57f17; }
+    .cat-btn.active { background: var(--c); border-color: var(--c); }
+
+    /* Conversation context */
+    .card-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+    .section-label {
+      font-size: 11px; color: #999; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+
+    .chat-window {
+      background: #fafafa; border: 1px solid #ebebeb;
+      border-radius: 8px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .msg { display: flex; flex-direction: column; gap: 2px; }
+    .msg-role {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .msg.user .msg-role  { color: #1565c0; }
+    .msg.bot .msg-role   { color: #555; }
+    .msg.flagged .msg-role { color: #c62828; }
+
+    .msg-text {
+      font-size: 13.5px; line-height: 1.55; color: #333;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.flagged .msg-text {
+      background: #fff3e0; border-left: 3px solid #e65100;
+      padding: 6px 10px; border-radius: 0 6px 6px 0;
+    }
+    .flagged-label {
+      font-size: 11px; color: #e65100; font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Original / Correct diff */
+    .diff-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    @media (max-width: 640px) { .diff-row { grid-template-columns: 1fr; } }
+
+    .diff-box {
+      border-radius: 8px; padding: 10px 14px;
+    }
+    .diff-box.original { background: #fff5f5; border: 1px solid #ffcdd2; }
+    .diff-box.correct  { background: #f1f8e9; border: 1px solid #c5e1a5; }
+    .diff-box .diff-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .diff-box.original .diff-label { color: #c62828; }
+    .diff-box.correct  .diff-label { color: #2e7d32; }
+    .diff-box p { font-size: 13.5px; color: #333; line-height: 1.55; white-space: pre-wrap; }
+
+    /* Action plan */
+    .action-section { display: flex; flex-direction: column; gap: 6px; }
+    .action-textarea {
+      width: 100%; min-height: 72px; padding: 9px 12px;
+      border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13.5px; font-family: inherit; line-height: 1.5;
+      color: #222; resize: vertical; outline: none;
+    }
+    .action-textarea:focus { border-color: #555; }
+    .action-textarea::placeholder { color: #aaa; }
+
+    .card-footer {
+      padding: 10px 18px; border-top: 1px solid #f0f0f0;
+      display: flex; gap: 8px; align-items: center; justify-content: space-between;
+    }
+    .cat-badge {
+      font-size: 12px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; background: #eee; color: #555;
+    }
+
+    .btn-done {
+      padding: 6px 18px; border-radius: 8px;
+      border: 1.5px solid #4caf50; color: #2e7d32;
+      background: #fff; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.12s;
+    }
+    .btn-done:hover   { background: #e8f5e9; }
+    .btn-done.active  { background: #4caf50; color: #fff; border-color: #4caf50; }
+
+    .no-results {
+      color: #999; font-size: 15px; padding: 40px; text-align: center; display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Corrections Review — Agent Behaviour</h1>
+  <p>Assign a category to each correction, add an action note, then mark as Done. Export when ready to action changes.</p>
+  <div class="stats">
+    <div class="stat"><strong id="cnt-total">—</strong>Total</div>
+    <div class="stat s-done"><strong id="cnt-done">0</strong>Done</div>
+    <div class="stat s-pending"><strong id="cnt-pending">—</strong>Pending</div>
+  </div>
+</header>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search notes, messages…" oninput="applyFilters()" />
+  <button class="btn-primary" onclick="exportDone()">Export Done</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="all"     onclick="setTab(this)">All</button>
+  <button class="tab"        data-tab="pending" onclick="setTab(this)">Pending</button>
+  <button class="tab"        data-tab="done"    onclick="setTab(this)">Done</button>
+  <button class="tab"        data-tab="identity"        onclick="setTab(this)">Identity</button>
+  <button class="tab"        data-tab="stall"           onclick="setTab(this)">Stall</button>
+  <button class="tab"        data-tab="wording"         onclick="setTab(this)">Wording</button>
+  <button class="tab"        data-tab="wrong-data"      onclick="setTab(this)">Wrong Data</button>
+  <button class="tab"        data-tab="routing"         onclick="setTab(this)">Routing</button>
+  <button class="tab"        data-tab="context-miss"    onclick="setTab(this)">Context Miss</button>
+  <button class="tab"        data-tab="response-length" onclick="setTab(this)">Too Long</button>
+  <button class="tab"        data-tab="regulation"      onclick="setTab(this)">Regulation</button>
+</div>
+
+<div class="card-list" id="card-list"></div>
+<div class="no-results" id="no-results">No corrections match your filter.</div>
+
+<script>
+const STORAGE_KEY = "corrections_review_v1";
+
+const CATEGORIES = [
+  { id: "identity",        label: "Identity" },
+  { id: "stall",           label: "Stall" },
+  { id: "wording",         label: "Wording" },
+  { id: "wrong-data",      label: "Wrong Data" },
+  { id: "routing",         label: "Routing" },
+  { id: "context-miss",    label: "Context Miss" },
+  { id: "response-length", label: "Too Long" },
+  { id: "regulation",      label: "Regulation" },
+];
+
+const corrections = [
+  {
+    id: "c1",
+    phone: "+972505267429",
+    thread: "thr_b3dcaeb9",
+    reviewerNote: "Bot should have routed the question to the FAQ agent instead of going to the bot mapping tool",
+    original: "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex)\n3) ByBit (Futures in crypto)",
+    correct: "Unfortunately no. We don't trade with US citizens because of the regulation.",
+    context: [
+      { role: "bot",  text: "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex)\n3) ByBit (Futures in crypto)", flagged: true },
+      { role: "user", text: "but what if i am a us citizen?" },
+    ]
+  },
+  {
+    id: "c2",
+    phone: "+972505267429",
+    thread: "thr_b3dcaeb9",
+    reviewerNote: "No handoff should have been here — the answer is simply 'no'",
+    original: "Please wait one sec while I check something for you.",
+    correct: "The answer is no.",
+    context: [
+      { role: "user", text: "but what if i am a us citizen?" },
+      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+      { role: "user", text: "hi are you still here?" },
+      { role: "bot",  text: "Yes, I'm here.\n\nIf you're a US citizen, unfortunately no — we don't trade with US citizens because of regulation." },
+    ]
+  },
+  {
+    id: "c3",
+    phone: "+972505267429",
+    thread: "thr_2cda389e",
+    reviewerNote: "(no note)",
+    original: "Forex is short for 'foreign exchange' trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?",
+    correct: "Forex is good.",
+    context: [
+      { role: "bot",  text: "Do you have prior trading experience?" },
+      { role: "user", text: "yeah" },
+      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?" },
+      { role: "user", text: "what do you mean forex" },
+      { role: "bot",  text: "Forex is short for 'foreign exchange' trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?", flagged: true },
+      { role: "user", text: "thanks" },
+      { role: "bot",  text: "What type of trading was your experience in (stocks, forex, crypto, or something else)?" },
+      { role: "user", text: "forex" },
+    ]
+  },
+  {
+    id: "c4",
+    phone: "+972505267429",
+    thread: "thr_2cda389e",
+    reviewerNote: "We should make sure bot acts as human",
+    original: "I'm an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?",
+    correct: "Ha ha no actually I am Shay",
+    context: [
+      { role: "bot",  text: "What type of trading was your experience in (stocks, forex, crypto, or something else)?" },
+      { role: "user", text: "forex" },
+      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
+      { role: "user", text: "r u bot?" },
+      { role: "bot",  text: "I'm an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?", flagged: true },
+    ]
+  },
+  {
+    id: "c5",
+    phone: "+50233418310",
+    thread: "thr_f8758f3f",
+    reviewerNote: "Incorrect wording",
+    original: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    correct: "Great, let me know what type of trading you have experience with?",
+    context: [
+      { role: "bot",  text: "Do you have prior trading experience?" },
+      { role: "user", text: "Yes" },
+      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?", flagged: true },
+      { role: "user", text: "I trade stocks" },
+      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
+    ]
+  },
+  {
+    id: "c6",
+    phone: "+50233418310",
+    thread: "thr_f8758f3f",
+    reviewerNote: "If customer says they trade stocks, the response should be 'we don't trade in the stocks market', not 'what broker do you use'",
+    original: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?",
+    correct: "We don't trade stocks.",
+    context: [
+      { role: "bot",  text: "Do you have prior trading experience?" },
+      { role: "user", text: "Yes" },
+      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?" },
+      { role: "user", text: "I trade stocks" },
+      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?", flagged: true },
+      { role: "user", text: "Exness" },
+    ]
+  },
+  {
+    id: "c7",
+    phone: "+50233418310",
+    thread: "thr_f8758f3f",
+    reviewerNote: "This message is too long",
+    original: "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable.\n\nHow you get started:\n- You use an MT5 broker account (we typically work with brokers like Vantage and PU Prime)\n- Minimum to start is generally $500\n- On...",
+    correct: ".",
+    context: [
+      { role: "user", text: "Tell me about gold" },
+      { role: "bot",  text: "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable.\n\nHow you get started:\n- You use an MT5 broker account (we typically work with brokers like Vantage and PU Prime)\n- Minimum to start is generally $500\n- On...", flagged: true },
+      { role: "user", text: "I don't have $500 I have $100" },
+    ]
+  },
+  {
+    id: "c8",
+    phone: "+50233418310",
+    thread: "thr_f8758f3f",
+    reviewerNote: "Confusing. If customer only has $100, better to just say the minimum is $500.",
+    original: "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management.\n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.",
+    correct: ".",
+    context: [
+      { role: "bot",  text: "...Minimum to start is generally $500..." },
+      { role: "user", text: "I don't have $500 I have $100" },
+      { role: "bot",  text: "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management.\n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.", flagged: true },
+      { role: "user", text: "What is demo on mt5" },
+    ]
+  },
+  {
+    id: "c9",
+    phone: "+50233418310",
+    thread: "thr_23cf67a7",
+    reviewerNote: "Respond with direct answer — at least 1 trade per day, may vary depending on market conditions",
+    original: "Please wait one sec while I check something for you.",
+    correct: "At least 1 trade per day, it might vary depending on the market conditions.",
+    context: [
+      { role: "user", text: "How many trades do you do in 1 day?" },
+      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    ]
+  },
+  {
+    id: "c10",
+    phone: "+50233418310",
+    thread: "thr_23f4d7cb",
+    reviewerNote: "Better wording",
+    original: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    correct: "Great! What type of trading do you have experience with?",
+    context: [
+      { role: "bot",  text: "Do you have prior trading experience?" },
+      { role: "user", text: "Yes" },
+      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?", flagged: true },
+      { role: "user", text: "Crypto" },
+    ]
+  },
+  {
+    id: "c11",
+    phone: "+50233418310",
+    thread: "thr_23f4d7cb",
+    reviewerNote: "Customer already said crypto, and the bot is offering all other markets again",
+    original: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    correct: ".",
+    context: [
+      { role: "bot",  text: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?", flagged: true },
+      { role: "user", text: "I said crypto" },
+    ]
+  },
+  {
+    id: "c12",
+    phone: "+50233418310",
+    thread: "thr_23f4d7cb",
+    reviewerNote: "Vantage and Bybit for futures are both options, not only Vantage",
+    original: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?",
+    correct: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage and Bybit. Which would you prefer?",
+    context: [
+      { role: "bot",  text: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?", flagged: true },
+      { role: "user", text: "What is Vantage" },
+    ]
+  },
+  {
+    id: "c13",
+    phone: "+50233418310",
+    thread: "thr_252332eb",
+    reviewerNote: "Incorrect. To trade Gold, we can connect to MT5 OR create a copy trading account in PU Prime (no MT5 credentials needed — customer connects manually). The bot needs to ask more questions before explaining the process.",
+    original: "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...",
+    correct: "...",
+    context: [
+      { role: "bot",  text: "Yes, we do trade gold and we specialize in it.\n\nHow it works is we connect our AI trading software to your MT5 trading account and it trades automatically when conditions are suitable.\n\nA few key points:\n- Minimum to start is generally $500\n- No upfront cost; profit sharing at month-end (you keep 65%, we take 35%)\n- You can test on a demo MT5 account for 10 days" },
+      { role: "user", text: "How do I connect" },
+      { role: "bot",  text: "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...", flagged: true },
+    ]
+  },
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+const STORE = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(STORE)); }
+function stateFor(id) { return STORE[id] || (STORE[id] = { cat: null, action: "", done: false }); }
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderChat(ctx) {
+  return ctx.map(m => {
+    const cls = m.flagged ? "msg flagged" : `msg ${m.role}`;
+    const roleLabel = m.role === "user" ? "User" : "Bot";
+    const flag = m.flagged ? `<div class="flagged-label">▲ Flagged</div>` : "";
+    return `<div class="${cls}">
+      <div class="msg-role">${roleLabel}</div>
+      <div class="msg-text">${escHtml(m.text)}</div>
+      ${flag}
+    </div>`;
+  }).join("");
+}
+
+function renderCatBtns(id) {
+  const current = stateFor(id).cat;
+  return CATEGORIES.map(c => {
+    const active = current === c.id ? " active" : "";
+    return `<button class="cat-btn${active}" data-cat="${c.id}" onclick="setCat('${id}','${c.id}')">${c.label}</button>`;
+  }).join("");
+}
+
+function catLabel(catId) {
+  const c = CATEGORIES.find(x => x.id === catId);
+  return c ? c.label : "—";
+}
+
+function render() {
+  const list = document.getElementById("card-list");
+  list.innerHTML = "";
+
+  corrections.forEach((c, i) => {
+    const st = stateFor(c.id);
+    const el = document.createElement("div");
+    el.className = "card" + (st.done ? " done" : "");
+    el.dataset.id = c.id;
+    el.dataset.cat = st.cat || "";
+
+    const hasDiff = c.correct && c.correct !== "." && c.correct !== "...";
+
+    el.innerHTML = `
+      <div class="card-header">
+        <div class="card-meta">
+          <div class="card-num">Correction ${i+1} of ${corrections.length} · ${c.thread.slice(0,12)}</div>
+          <div class="reviewer-note">${escHtml(c.reviewerNote)}</div>
+          <div class="card-phone">${escHtml(c.phone)}</div>
+        </div>
+      </div>
+
+      <div class="card-body">
+
+        <div>
+          <div class="section-label">Category</div>
+          <div class="cat-wrap">${renderCatBtns(c.id)}</div>
+        </div>
+
+        <div>
+          <div class="section-label">Conversation context</div>
+          <div class="chat-window">${renderChat(c.context)}</div>
+        </div>
+
+        ${hasDiff ? `
+        <div class="diff-row">
+          <div class="diff-box original">
+            <div class="diff-label">Wrong response</div>
+            <p>${escHtml(c.original)}</p>
+          </div>
+          <div class="diff-box correct">
+            <div class="diff-label">Correct response</div>
+            <p>${escHtml(c.correct)}</p>
+          </div>
+        </div>` : `
+        <div class="diff-box original" style="grid-column:span 2">
+          <div class="diff-label">Wrong response</div>
+          <p>${escHtml(c.original)}</p>
+        </div>`}
+
+        <div class="action-section">
+          <div class="section-label">Action plan</div>
+          <textarea class="action-textarea"
+            placeholder="What change needs to be made? Which file? What wording?"
+            oninput="saveAction('${c.id}', this.value)"
+          >${escHtml(st.action)}</textarea>
+        </div>
+
+      </div>
+
+      <div class="card-footer">
+        <span class="cat-badge" id="badge-${c.id}">${catLabel(st.cat)}</span>
+        <button class="btn-done${st.done ? " active" : ""}" onclick="toggleDone('${c.id}')">
+          ${st.done ? "✓ Done" : "Mark Done"}
+        </button>
+      </div>
+    `;
+
+    list.appendChild(el);
+  });
+
+  updateStats();
+  applyFilters();
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+function setCat(id, cat) {
+  const st = stateFor(id);
+  st.cat = st.cat === cat ? null : cat;
+  save();
+  // Re-render just this card's buttons + badge
+  const el = document.querySelector(`.card[data-id="${id}"]`);
+  el.dataset.cat = st.cat || "";
+  el.querySelector(".cat-wrap").innerHTML = renderCatBtns(id);
+  document.getElementById(`badge-${id}`).textContent = catLabel(st.cat);
+  applyFilters();
+}
+
+function saveAction(id, val) {
+  stateFor(id).action = val;
+  save();
+}
+
+function toggleDone(id) {
+  const st = stateFor(id);
+  st.done = !st.done;
+  save();
+  const el = document.querySelector(`.card[data-id="${id}"]`);
+  el.classList.toggle("done", st.done);
+  const btn = el.querySelector(".btn-done");
+  btn.classList.toggle("active", st.done);
+  btn.textContent = st.done ? "✓ Done" : "Mark Done";
+  updateStats();
+  applyFilters();
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+let activeTab = "all";
+
+function setTab(btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  activeTab = btn.dataset.tab;
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.toLowerCase();
+  let visible = 0;
+  document.querySelectorAll(".card").forEach(el => {
+    const id  = el.dataset.id;
+    const cat = el.dataset.cat;
+    const st  = stateFor(id);
+    const c   = corrections.find(x => x.id === id);
+    const text = (c.reviewerNote + " " + c.original + " " + c.correct + " " + st.action).toLowerCase();
+
+    let show = true;
+    if (q && !text.includes(q)) show = false;
+    if (activeTab === "pending" && st.done) show = false;
+    if (activeTab === "done"    && !st.done) show = false;
+    if (!["all","pending","done"].includes(activeTab) && cat !== activeTab) show = false;
+
+    el.classList.toggle("hidden", !show);
+    if (show) visible++;
+  });
+  document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
+}
+
+function updateStats() {
+  const done    = corrections.filter(c => stateFor(c.id).done).length;
+  const pending = corrections.length - done;
+  document.getElementById("cnt-total").textContent   = corrections.length;
+  document.getElementById("cnt-done").textContent    = done;
+  document.getElementById("cnt-pending").textContent = pending;
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function exportDone() {
+  const out = corrections
+    .filter(c => stateFor(c.id).done)
+    .map(c => ({
+      id:           c.id,
+      thread:       c.thread,
+      phone:        c.phone,
+      category:     stateFor(c.id).cat,
+      reviewerNote: c.reviewerNote,
+      original:     c.original,
+      correct:      c.correct,
+      action:       stateFor(c.id).action,
+    }));
+
+  if (out.length === 0) { alert("Mark some corrections as Done first."); return; }
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "corrections_actioned.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+render();
+</script>
+</body>
+</html>

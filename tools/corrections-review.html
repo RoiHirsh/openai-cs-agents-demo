@@ -194,6 +194,81 @@
     .no-results {
       color: #999; font-size: 15px; padding: 40px; text-align: center; display: none;
     }
+
+    /* ── View switcher ──────────────────────────────────────── */
+    .view-nav {
+      max-width: 960px; margin: 0 auto 24px;
+      display: flex; gap: 6px;
+    }
+    .view-btn {
+      padding: 8px 22px; border-radius: 8px;
+      border: 1.5px solid #ccc; background: #fff;
+      font-size: 14px; font-weight: 600; color: #555;
+      cursor: pointer; transition: all 0.12s;
+    }
+    .view-btn:hover { border-color: #888; color: #222; }
+    .view-btn.active { background: #111; color: #fff; border-color: #111; }
+
+    /* ── Categories view ────────────────────────────────────── */
+    #view-categories { max-width: 960px; margin: 0 auto 40px; }
+    .cat-group { margin-bottom: 20px; }
+    .cat-group-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; background: #fff;
+      border: 1px solid #e0e0e0; border-radius: 10px 10px 0 0;
+      border-bottom: 2px solid #111;
+    }
+    .cat-group-header h2 { font-size: 15px; font-weight: 700; margin: 0; }
+    .cat-count {
+      font-size: 12px; background: #111; color: #fff;
+      padding: 2px 9px; border-radius: 20px; font-weight: 600;
+    }
+    .cat-items {
+      border: 1px solid #e0e0e0; border-top: none;
+      border-radius: 0 0 10px 10px; overflow: hidden;
+    }
+    .cat-item {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 9px 16px; background: #fff;
+      border-bottom: 1px solid #f0f0f0; font-size: 13.5px;
+    }
+    .cat-item:last-child { border-bottom: none; }
+    .cat-item-id { font-weight: 700; color: #888; min-width: 28px; flex-shrink: 0; }
+    .cat-item-note { color: #222; flex: 1; }
+
+    /* ── Fixes view ─────────────────────────────────────────── */
+    #view-fixes { max-width: 1160px; margin: 0 auto 40px; }
+    .fixes-table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid #e0e0e0; font-size: 13px;
+    }
+    .fixes-table th {
+      background: #111; color: #fff; font-weight: 600;
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .fixes-table td {
+      padding: 10px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: top;
+    }
+    .fixes-table tr:last-child td { border-bottom: none; }
+    .fixes-table tr:hover td { background: #fafafa; }
+    .fix-id { font-weight: 700; color: #888; white-space: nowrap; }
+    .fix-note { color: #444; font-size: 12.5px; line-height: 1.45; max-width: 220px; }
+    .fix-cat-select {
+      font-size: 12px; padding: 3px 6px; border-radius: 6px;
+      border: 1.5px solid #ddd; background: #fff; cursor: pointer;
+      outline: none; max-width: 130px;
+    }
+    .fix-cat-select:focus { border-color: #555; }
+    .editable-cell {
+      min-height: 38px; padding: 6px 8px; border-radius: 6px;
+      border: 1.5px solid transparent; outline: none;
+      white-space: pre-wrap; line-height: 1.5; color: #222;
+      transition: border-color 0.12s; min-width: 180px;
+    }
+    .editable-cell:hover { border-color: #ddd; }
+    .editable-cell:focus { border-color: #555; background: #fafff7; }
   </style>
 </head>
 <body>
@@ -208,27 +283,45 @@
   </div>
 </header>
 
-<div class="controls">
-  <input type="text" id="search" placeholder="Search notes, messages…" oninput="applyFilters()" />
-  <button class="btn-primary" onclick="exportDone()">Export Done</button>
+<div class="view-nav">
+  <button class="view-btn active" id="vbtn-list"       onclick="setView('list')">Feedback List</button>
+  <button class="view-btn"        id="vbtn-categories" onclick="setView('categories')">By Category</button>
+  <button class="view-btn"        id="vbtn-fixes"      onclick="setView('fixes')">Fix Recommendations</button>
 </div>
 
-<div class="tabs">
-  <button class="tab active" data-tab="all"     onclick="setTab(this)">All</button>
-  <button class="tab"        data-tab="pending" onclick="setTab(this)">Pending</button>
-  <button class="tab"        data-tab="done"    onclick="setTab(this)">Done</button>
-  <button class="tab"        data-tab="identity"        onclick="setTab(this)">Identity</button>
-  <button class="tab"        data-tab="stall"           onclick="setTab(this)">Stall</button>
-  <button class="tab"        data-tab="wording"         onclick="setTab(this)">Wording</button>
-  <button class="tab"        data-tab="wrong-data"      onclick="setTab(this)">Wrong Data</button>
-  <button class="tab"        data-tab="routing"         onclick="setTab(this)">Routing</button>
-  <button class="tab"        data-tab="context-miss"    onclick="setTab(this)">Context Miss</button>
-  <button class="tab"        data-tab="response-length" onclick="setTab(this)">Too Long</button>
-  <button class="tab"        data-tab="regulation"      onclick="setTab(this)">Regulation</button>
+<div id="view-list">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search notes, messages…" oninput="applyFilters()" />
+    <button class="btn-primary" onclick="exportDone()">Export Done</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="all"     onclick="setTab(this)">All</button>
+    <button class="tab"        data-tab="pending" onclick="setTab(this)">Pending</button>
+    <button class="tab"        data-tab="done"    onclick="setTab(this)">Done</button>
+    <button class="tab"        data-tab="identity"        onclick="setTab(this)">Identity</button>
+    <button class="tab"        data-tab="stall"           onclick="setTab(this)">Stall</button>
+    <button class="tab"        data-tab="wording"         onclick="setTab(this)">Wording</button>
+    <button class="tab"        data-tab="wrong-data"      onclick="setTab(this)">Wrong Data</button>
+    <button class="tab"        data-tab="routing"         onclick="setTab(this)">Routing</button>
+    <button class="tab"        data-tab="context-miss"    onclick="setTab(this)">Context Miss</button>
+    <button class="tab"        data-tab="response-length" onclick="setTab(this)">Too Long</button>
+    <button class="tab"        data-tab="regulation"      onclick="setTab(this)">Regulation</button>
+    <button class="tab"        data-tab="mt5-copy"        onclick="setTab(this)">MT5/Copy Trading</button>
+    <button class="tab"        data-tab="source-unknown"  onclick="setTab(this)">Source Unknown</button>
+  </div>
+
+  <div class="card-list" id="card-list"></div>
+  <div class="no-results" id="no-results">No corrections match your filter.</div>
 </div>
 
-<div class="card-list" id="card-list"></div>
-<div class="no-results" id="no-results">No corrections match your filter.</div>
+<div id="view-categories" style="display:none">
+  <div id="cat-list"></div>
+</div>
+
+<div id="view-fixes" style="display:none">
+  <div id="fixes-container"></div>
+</div>
 
 <script>
 const STORAGE_KEY = "corrections_review_v1";
@@ -242,6 +335,8 @@ const CATEGORIES = [
   { id: "context-miss",    label: "Context Miss" },
   { id: "response-length", label: "Too Long" },
   { id: "regulation",      label: "Regulation" },
+  { id: "mt5-copy",        label: "MT5/Copy Trading" },
+  { id: "source-unknown",  label: "Source Unknown" },
 ];
 
 const corrections = [
@@ -425,6 +520,256 @@ const corrections = [
       { role: "bot",  text: "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...", flagged: true },
     ]
   },
+  {
+    id: "c14",
+    phone: "+50233418310",
+    thread: "thr_7a248f4c",
+    reviewerNote: "We are not working with MT5 accounts. They have to be copy trading accounts. Also I would send in a separate message the fact that \"(we can trade, but we can't deposit, withdraw, or move your funds).\"",
+    original: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds).",
+    correct: "..",
+    context: [
+      { role: "user", text: "What is pu prime" },
+      { role: "bot",  text: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds).", flagged: true },
+      { role: "user", text: "What is mt5" },
+      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you." },
+      { role: "user", text: "Ok" },
+    ]
+  },
+  {
+    id: "c15",
+    phone: "+50233418310",
+    thread: "thr_7a248f4c",
+    reviewerNote: "If we are connecting them to a copy trading account, there is no need for MT5",
+    original: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds)." },
+      { role: "user", text: "What is mt5" },
+      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.", flagged: true },
+      { role: "user", text: "Ok" },
+      { role: "bot",  text: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?" },
+      { role: "user", text: "How much does it cost" },
+    ]
+  },
+  {
+    id: "c16",
+    phone: "+50233418310",
+    thread: "thr_7a248f4c",
+    reviewerNote: "Offering Demo in MT5 won't work for Silver in PU Prime",
+    original: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?",
+    correct: "..",
+    context: [
+      { role: "user", text: "What is mt5" },
+      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you." },
+      { role: "user", text: "Ok" },
+      { role: "bot",  text: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?", flagged: true },
+      { role: "user", text: "How much does it cost" },
+      { role: "bot",  text: "There's no upfront cost for the bot subscription — it's free to use, and we only earn through profit sharing at the end of the month.\n\nProfit sharing is 65:35 (you keep 65% of the profits, we take 35%).\n\nTo start, the minimum investment is generally $500 USD." },
+      { role: "user", text: "Ok" },
+    ]
+  },
+  {
+    id: "c17",
+    phone: "+50233418310",
+    thread: "thr_7a248f4c",
+    reviewerNote: "Asked twice the same question",
+    original: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "Perfect, $500 works.\n\nYou might have seen monthly subscription prices on our ads. Ignore that. I'm waiving the subscription fee for you. We switched to a profit share model. We take zero upfront. We only take 35% of the profit we make you at the end of the month. Fair deal?" },
+      { role: "user", text: "Ok" },
+      { role: "bot",  text: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?", flagged: true },
+      { role: "user", text: "I said yes $500" },
+      { role: "bot",  text: "Perfect, thank you for confirming.\n\nDo you already have an account with PU Prime?" },
+    ]
+  },
+  {
+    id: "c18",
+    phone: "+50233418310",
+    thread: "thr_73af994f",
+    reviewerNote: "If it's Gold in PU Prime, no MT5 account is needed since we connect to copy trading",
+    original: "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit).\n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you.\n\nIf you want, tell me whether you already have an MT5 account, or you'd like to create one from scratch.",
+    correct: "..",
+    context: [
+      { role: "user", text: "What is pu prime" },
+      { role: "bot",  text: "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit).\n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you.\n\nIf you want, tell me whether you already have an MT5 account, or you'd like to create one from scratch.", flagged: true },
+      { role: "user", text: "What is mt5" },
+      { role: "bot",  text: "MT5 means 'MetaTrader 5'. It's the trading account/platform you open with a broker (like PU Prime or Vantage), and it's what we connect our AI trading software to so the bot can place trades automatically on your behalf.\n\nOnce you provide your MT5 login/credentials, it typically takes 24-48 hours to connect the bot and start trading." },
+      { role: "user", text: "Ok" },
+    ]
+  },
+  {
+    id: "c19",
+    phone: "+50233418310",
+    thread: "thr_73af994f",
+    reviewerNote: "About the traded in cents part: I'm sure a customer sees this number and will back out. Better to stick to the minimum of $500 and that's it. That can be explained later.",
+    original: "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?",
+    correct: "...",
+    context: [
+      { role: "bot",  text: "Here's your Vantage registration link: https://www.vantagemarkets.com/...\n\nOnce you've created your Vantage account, tell me and I'll send the next step to set up the copy trading connection for the Gold bot." },
+      { role: "user", text: "What if I want PuPrime instead?" },
+      { role: "bot",  text: "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?", flagged: true },
+      { role: "user", text: "Yes" },
+    ]
+  },
+  {
+    id: "c20",
+    phone: "+50233418310",
+    thread: "thr_1e349510",
+    reviewerNote: "This question has already been asked. It should go directly to sending the registration link for Silver since in this conversation it was already stated that was what the customer wanted.",
+    original: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    correct: "...",
+    context: [
+      { role: "bot",  text: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?", flagged: true },
+    ]
+  },
+  {
+    id: "c21",
+    phone: "+50233418310",
+    thread: "thr_1e349510",
+    reviewerNote: "Not sure why it is circling back to this. Customer already stated that they have $1000 to start with Silver.",
+    original: "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?", flagged: true },
+      { role: "user", text: "All" },
+      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
+      { role: "user", text: "I have several" },
+    ]
+  },
+  {
+    id: "c22",
+    phone: "+50233418310",
+    thread: "thr_9b18a4f3",
+    reviewerNote: "A big round number is what they want to hear — ask Shay what is the best answer here.",
+    original: "Please wait one sec while I check something for you.",
+    correct: "..",
+    context: [
+      { role: "user", text: "How many customers do you have?" },
+      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    ]
+  },
+  {
+    id: "c23",
+    phone: "+50233418310",
+    thread: "thr_de00443c",
+    reviewerNote: "Ask Shay what is the best answer here. Some customers want to be very active and trade every day, some customers are ok with whatever we present them with.",
+    original: "Please wait one sec while I check something for you.",
+    correct: "At least one, but there are days that it won't trade because the market doesn't have the right conditions.",
+    context: [
+      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    ]
+  },
+  {
+    id: "c24",
+    phone: "+50233418310",
+    thread: "thr_2e8a36eb",
+    reviewerNote: "If a customer wants to try 'all of them', it is best to give them a breakdown of the next steps for each bot.",
+    original: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading.\n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?" },
+      { role: "user", text: "Live" },
+      { role: "bot",  text: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading.\n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?", flagged: true },
+    ]
+  },
+  {
+    id: "c25",
+    phone: "+50233418310",
+    thread: "thr_2e8a36eb",
+    reviewerNote: "I see it offers Demo quite often. I would offer Demo only if they are hesitant, or if they actually say they are unsure.",
+    original: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "Risk is managed the same core way across all our bots: the system automatically adjusts lot size and overall trade volume based on your account size, with built-in risk management." },
+      { role: "user", text: "Ok" },
+      { role: "bot",  text: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?", flagged: true },
+      { role: "user", text: "Live" },
+      { role: "bot",  text: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account." },
+    ]
+  },
+  {
+    id: "c26",
+    phone: "+50233418310",
+    thread: "thr_bb77711b",
+    reviewerNote: "Usually here, we send them a live video with the results of the past week/month. Next step would be to ask which market they would like to see results of, then ask Shay to record the video and send the live video with current results.",
+    original: "Hi one sec please",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "The main way you protect yourself is by keeping control.\n\n1) Your money stays in your own broker account — We connect to your MT5 account to place trades, but we cannot deposit, withdraw, or move your funds. And you can withdraw your money anytime.\n\n2) There's no 'guaranteed returns' claim — Trading involves risk and results aren't guaranteed." },
+      { role: "user", text: "Can you show proof of your results?" },
+      { role: "bot",  text: "Hi one sec please", flagged: true },
+      { role: "user", text: "Where are you based?" },
+      { role: "bot",  text: "We operate globally, with offices in locations such as the UK, UAE, and Bulgaria." },
+      { role: "user", text: "Who is behind Lucentive Club? Do you have a license?" },
+    ]
+  },
+  {
+    id: "c27",
+    phone: "+50233418310",
+    thread: "thr_87af7889",
+    reviewerNote: "\"In this chat info\"? I think it is better to answer with a variety of pairs that are actually traded in our Vantage Markets link.",
+    original: "We do trade Forex, but we don't lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4-8% per month, depending on conditions).\n\nIf you tell me the broker you're using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize...",
+    correct: "..",
+    context: [
+      { role: "user", text: "Yes a lot I trade forex What pairs do you trade in Forex" },
+      { role: "bot",  text: "We do trade Forex, but we don't lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4-8% per month, depending on conditions).\n\nIf you tell me the broker you're using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize...", flagged: true },
+    ]
+  },
+  {
+    id: "c28",
+    phone: "+50233418310",
+    thread: "thr_2ba574cc",
+    reviewerNote: "They don't need to install anything, other than the broker app",
+    original: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading.",
+    correct: "..",
+    context: [
+      { role: "bot",  text: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)" },
+      { role: "user", text: "Do I need to install anything?" },
+      { role: "bot",  text: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading.", flagged: true },
+    ]
+  },
+  {
+    id: "c29",
+    phone: "+50233418310",
+    thread: "thr_80b5d697",
+    reviewerNote: "Better to hand off immediately to make the call",
+    original: "Perfect, I'll call you in about 10 minutes.",
+    correct: ".",
+    context: [
+      { role: "bot",  text: "Perfect, I'll call you in about 10 minutes.", flagged: true },
+      { role: "user", text: "I can't talk in 10 minutes I can talk right now" },
+      { role: "bot",  text: "Please wait one sec" },
+    ]
+  },
+  {
+    id: "c30",
+    phone: "+50233418310",
+    thread: "thr_2ba574cc",
+    reviewerNote: "We need to understand if this answer came from the bot's parametric knowledge or from the FAQ.",
+    original: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)",
+    correct: ".",
+    context: [
+      { role: "user", text: "Which one is better" },
+      { role: "bot",  text: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)", flagged: true },
+      { role: "user", text: "Do I need to install anything?" },
+      { role: "bot",  text: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading." },
+    ]
+  },
+  {
+    id: "c31",
+    phone: "+50233418310",
+    thread: "thr_efaa926c",
+    reviewerNote: "No need to connect MT5 so we need to understand where the bot got the info from. Same with the timing — we need to check where the 24-48 hours comes from.",
+    original: "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nAs for seeing profits: it depends on market conditions (so it isn't guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.",
+    correct: ".",
+    context: [
+      { role: "user", text: "Yes How long does it take to see profits with your bots?" },
+      { role: "bot",  text: "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nAs for seeing profits: it depends on market conditions (so it isn't guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.", flagged: true },
+      { role: "user", text: "When can I withdraw my profits?" },
+      { role: "bot",  text: "You can withdraw your profits (and funds) at any time, since you have full control of the trading account." },
+    ]
+  },
 ];
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -452,7 +797,7 @@ function renderChat(ctx) {
 }
 
 function renderCatBtns(id) {
-  const current = stateFor(id).cat;
+  const current = catFor(id);
   return CATEGORIES.map(c => {
     const active = current === c.id ? " active" : "";
     return `<button class="cat-btn${active}" data-cat="${c.id}" onclick="setCat('${id}','${c.id}')">${c.label}</button>`;
@@ -473,7 +818,7 @@ function render() {
     const el = document.createElement("div");
     el.className = "card" + (st.done ? " done" : "");
     el.dataset.id = c.id;
-    el.dataset.cat = st.cat || "";
+    el.dataset.cat = catFor(c.id) || "";
 
     const hasDiff = c.correct && c.correct !== "." && c.correct !== "...";
 
@@ -525,7 +870,7 @@ function render() {
       </div>
 
       <div class="card-footer">
-        <span class="cat-badge" id="badge-${c.id}">${catLabel(st.cat)}</span>
+        <span class="cat-badge" id="badge-${c.id}">${catLabel(catFor(c.id))}</span>
         <button class="btn-done${st.done ? " active" : ""}" onclick="toggleDone('${c.id}')">
           ${st.done ? "✓ Done" : "Mark Done"}
         </button>
@@ -546,9 +891,9 @@ function setCat(id, cat) {
   save();
   // Re-render just this card's buttons + badge
   const el = document.querySelector(`.card[data-id="${id}"]`);
-  el.dataset.cat = st.cat || "";
+  el.dataset.cat = catFor(id) || "";
   el.querySelector(".cat-wrap").innerHTML = renderCatBtns(id);
-  document.getElementById(`badge-${id}`).textContent = catLabel(st.cat);
+  document.getElementById(`badge-${id}`).textContent = catLabel(catFor(id));
   applyFilters();
 }
 
@@ -632,6 +977,160 @@ function exportDone() {
   const a    = document.createElement("a");
   a.href = url; a.download = "corrections_actioned.json"; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── Meta: root cause + fix defaults ───────────────────────────────────────
+const META = {
+  c1:  { defaultCat: "routing",          rootCause: "get_country_offers was called for a US regulation question and returned positive data; the FAQ (which has the correct answer) was never consulted", fix: "Always run file_search first for country/regulation questions; fix USA entry in country_offers.json to flag regulatory exclusion" },
+  c2:  { defaultCat: "stall",            rootCause: "Handoff trigger fired on a simple yes/no regulation question instead of answering directly from the FAQ", fix: "Add FAQ entry: 'US citizens cannot trade — regulation'; tighten handoff trigger conditions to not fire on simple factual questions" },
+  c3:  { defaultCat: "wording",          rootCause: "Agent gave a full definition of forex then immediately repeated the same question verbatim instead of resuming naturally", fix: "Instruction: after a brief clarification, resume the interrupted question naturally — do not repeat it word for word" },
+  c4:  { defaultCat: "identity",         rootCause: "No instruction exists in any agent to deflect 'are you a bot?' questions", fix: "Add rule to all agents: never confirm or deny being AI — deflect naturally (e.g. 'Ha, I get that a lot — I'm Shay from Lucentive Club')" },
+  c5:  { defaultCat: "wording",          rootCause: "Hardcoded phrase 'it will save us a lot of time' baked into onboarding prompt", fix: "Rewrite onboarding prompt with natural language; remove that specific phrase" },
+  c6:  { defaultCat: "wrong-data",       rootCause: "No branch in onboarding flow for when customer mentions stocks trading experience", fix: "Add rule: if customer mentions stocks → respond 'we don't operate in the stocks market' before continuing onboarding" },
+  c7:  { defaultCat: "response-length",  rootCause: "No response length constraint on product description answers", fix: "Instruction: max 3 short bullets for product descriptions; offer to elaborate only if customer asks" },
+  c8:  { defaultCat: "wording",          rootCause: "Bot tries to offer alternatives (demo) when budget is below minimum instead of simply stating the minimum", fix: "Rule: if stated budget < $500, state minimum is $500 only — do not introduce demo or workarounds unprompted" },
+  c9:  { defaultCat: "stall",            rootCause: "Missing FAQ entry for 'how many trades per day'; handoff trigger fired instead of answering directly", fix: "Add FAQ entry: 'At least 1 trade per day, varies by market conditions'" },
+  c10: { defaultCat: "wording",          rootCause: "Same hardcoded phrase as c5 — 'it will save us a lot of time'", fix: "Same fix as c5 — rewrite onboarding prompt with natural language" },
+  c11: { defaultCat: "context-miss",     rootCause: "Bot preference not saved to state when first mentioned; agent re-offered options without checking prior conversation", fix: "Call update_onboarding_state as soon as bot/market is mentioned; check state before re-offering options" },
+  c12: { defaultCat: "wrong-data",       rootCause: "country_offers.json has incomplete broker-bot mapping for Guatemala — Bybit missing for Crypto", fix: "Audit and correct country_offers.json — add missing broker-bot-country combinations" },
+  c13: { defaultCat: "mt5-copy",         rootCause: "Agent instructions describe a generic MT5 credential flow for all brokers/bots; no differentiation by broker or connection type", fix: "Add broker-specific connection flows to KB: PU Prime Gold/Silver = copy trading (no MT5 creds needed); Vantage = MT5 credentials" },
+  c14: { defaultCat: "mt5-copy",         rootCause: "Same as c13 — generic MT5 flow applied to PU Prime Silver", fix: "Same fix as c13" },
+  c15: { defaultCat: "mt5-copy",         rootCause: "Same as c13 — bot explained MT5 setup when copy trading account doesn't require it", fix: "Same fix as c13" },
+  c16: { defaultCat: "mt5-copy",         rootCause: "Generic demo offer not filtered by broker capability — PU Prime Silver is copy trading only, no MT5 demo available", fix: "Only offer demo when broker supports it; gate the demo option to MT5-compatible brokers (Vantage)" },
+  c17: { defaultCat: "context-miss",     rootCause: "Budget not checked in onboarding_state before asking; agent re-asked a question that was already answered", fix: "Read onboarding_state.budget before asking the budget question; skip if already set" },
+  c18: { defaultCat: "mt5-copy",         rootCause: "Same as c13 — generic MT5 flow applied to PU Prime Gold", fix: "Same fix as c13" },
+  c19: { defaultCat: "wording",          rootCause: "The 'traded in cents / $500–$10,000 range' detail is surfaced from KB unnecessarily and confuses/discourages customers", fix: "Remove 'traded in cents' and the $500–$10,000 range from bot responses; only explain if customer directly asks" },
+  c20: { defaultCat: "context-miss",     rootCause: "Bot selection not persisted to state when first stated; agent re-entered the offer flow without checking", fix: "Same as c11 — save selection to state immediately; check onboarding_state before re-offering" },
+  c21: { defaultCat: "context-miss",     rootCause: "Onboarding agent re-asked a step that was already completed earlier in the conversation", fix: "Check onboarding_state for completed steps before asking; never re-ask what's already recorded" },
+  c22: { defaultCat: "stall",            rootCause: "No FAQ entry for 'how many customers'; handoff trigger fired instead of answering", fix: "Get approved answer from Shay; add to FAQ KB" },
+  c23: { defaultCat: "stall",            rootCause: "Same as c9 — missing FAQ entry for trades per day; handoff trigger fired", fix: "Same fix as c9 — add FAQ entry: 'At least 1 trade per day, varies by market conditions'" },
+  c24: { defaultCat: "routing",          rootCause: "No handling in onboarding flow for multi-bot / 'all bots' selection; jumped straight to single-bot MT5 setup", fix: "Add scenario: if customer wants multiple bots, give per-bot next-step breakdown before moving to setup" },
+  c25: { defaultCat: "wording",          rootCause: "Demo is included in the default onboarding flow regardless of customer sentiment", fix: "Remove demo from default path; only offer if customer expresses hesitation or asks about it" },
+  c26: { defaultCat: "stall",            rootCause: "No defined process for handling proof-of-results requests; stall/handoff fired with no useful response", fix: "Define process: ask which market → 'I'll send you a recent results video' → hand off to Shay to record and send" },
+  c27: { defaultCat: "wrong-data",       rootCause: "No specific Forex pair list in KB; agent hedged with vague language ('in this chat info')", fix: "Add actual traded Forex pairs to KB; remove vague hedge language from agent instructions" },
+  c28: { defaultCat: "mt5-copy",         rootCause: "Same MT5/copy trading confusion as c13–c18 applied to the 'do I need to install anything?' question", fix: "Answer: only the broker app needed; no MT5 credentials for copy trading setup. Add FAQ entry for this question" },
+  c29: { defaultCat: "routing",          rootCause: "No handoff trigger exists for when customer contradicts a scheduled callback time and says they're available now", fix: "Add handoff trigger: if customer says available now / contradicts scheduled time → trigger immediate human handoff" },
+  c30: { defaultCat: "source-unknown",   rootCause: "No traceability between file_search results and final agent response; unclear if answer is grounded in KB or generated from parametric model knowledge", fix: "Ensure this Q&A ('which bot is better') exists in FAQ KB; verify answer matches KB content — if it doesn't, the model is hallucinating from parametric knowledge" },
+  c31: { defaultCat: "mt5-copy",         rootCause: "MT5 credentials + 24-48 hour timing language likely hardcoded in agent instructions or FAQ and applied universally instead of being gated to MT5-only flows", fix: "Audit agent instructions and FAQ for '24-48 hours' and MT5 credential language; gate it to MT5-only flows; remove from copy trading flows" },
+};
+
+function metaFor(id, field) {
+  const stored = stateFor(id)[field];
+  if (stored !== undefined && stored !== null) return stored;
+  return (META[id] && META[id][field]) || "";
+}
+
+// Returns user-assigned category if set, otherwise falls back to META default
+function catFor(id) {
+  const st = stateFor(id);
+  return st.cat !== null ? st.cat : (META[id] && META[id].defaultCat) || null;
+}
+
+function saveField(id, field, value) {
+  stateFor(id)[field] = value;
+  save();
+}
+
+// ── View switching ─────────────────────────────────────────────────────────
+let activeView = "list";
+
+function setView(name) {
+  activeView = name;
+  ["list", "categories", "fixes"].forEach(v => {
+    document.getElementById("view-" + v).style.display = v === name ? "" : "none";
+    document.getElementById("vbtn-" + v).classList.toggle("active", v === name);
+  });
+  if (name === "categories") renderCategoriesView();
+  if (name === "fixes")      renderFixesView();
+}
+
+// ── Categories view ────────────────────────────────────────────────────────
+function renderCategoriesView() {
+  const container = document.getElementById("cat-list");
+
+  // Group by assigned category
+  const groups = {};
+  corrections.forEach(c => {
+    const cat = catFor(c.id) || "__none__";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(c);
+  });
+
+  // Sort: named categories first (in CATEGORIES order), then uncategorised
+  const orderedKeys = [...CATEGORIES.map(c => c.id), "__none__"].filter(k => groups[k]);
+
+  container.innerHTML = orderedKeys.map(key => {
+    const label = key === "__none__"
+      ? "Uncategorised"
+      : (CATEGORIES.find(c => c.id === key) || { label: key }).label;
+    const items = groups[key];
+    return `
+      <div class="cat-group">
+        <div class="cat-group-header">
+          <h2>${escHtml(label)}</h2>
+          <span class="cat-count">${items.length}</span>
+        </div>
+        <div class="cat-items">
+          ${items.map(c => `
+            <div class="cat-item">
+              <span class="cat-item-id">${escHtml(c.id)}</span>
+              <span class="cat-item-note">${escHtml(c.reviewerNote)}</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// ── Fix Recommendations view ───────────────────────────────────────────────
+function renderFixesView() {
+  const container = document.getElementById("fixes-container");
+
+  const catOptions = `<option value="">— unset —</option>` +
+    CATEGORIES.map(c => `<option value="${c.id}">${escHtml(c.label)}</option>`).join("");
+
+  const rows = corrections.map((c, i) => {
+    const currentCat = catFor(c.id) || "";
+    const rootCause  = escHtml(metaFor(c.id, "rootCause"));
+    const fix        = escHtml(metaFor(c.id, "fix"));
+
+    const catSel = `<select class="fix-cat-select" onchange="setCat('${c.id}', this.value); renderCategoriesView();">
+      ${CATEGORIES.map(cat =>
+        `<option value="${cat.id}"${currentCat === cat.id ? " selected" : ""}>${escHtml(cat.label)}</option>`
+      ).join("")}
+      ${!currentCat ? `<option value="" selected>— unset —</option>` : ""}
+    </select>`;
+
+    return `<tr>
+      <td class="fix-id">${escHtml(c.id)}</td>
+      <td class="fix-note">${escHtml(c.reviewerNote)}</td>
+      <td>${catSel}</td>
+      <td>
+        <div class="editable-cell" contenteditable="true"
+          onblur="saveField('${c.id}','rootCause',this.innerText)"
+        >${rootCause}</div>
+      </td>
+      <td>
+        <div class="editable-cell" contenteditable="true"
+          onblur="saveField('${c.id}','fix',this.innerText)"
+        >${fix}</div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+    <table class="fixes-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Reviewer Note</th>
+          <th>Category</th>
+          <th>Root Cause</th>
+          <th>Proposed Fix</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 render();

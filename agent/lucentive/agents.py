@@ -46,6 +46,7 @@ PLAIN_TEXT_RULE = (
 
 _SCHEDULING_SKILL: str | None = None
 _ONBOARDING_SKILL: str | None = None
+_PRODUCT_INFO_SKILL: str | None = None
 _HANDOFF_SKILL_STATIC: str | None = None
 
 
@@ -94,6 +95,17 @@ def _load_onboarding_skill() -> str:
         except OSError:
             _ONBOARDING_SKILL = ""
     return _ONBOARDING_SKILL
+
+
+def _load_product_info_skill() -> str:
+    global _PRODUCT_INFO_SKILL
+    if _PRODUCT_INFO_SKILL is None:
+        skill_path = Path(__file__).parent / "skills" / "product_info" / "SKILL.md"
+        try:
+            _PRODUCT_INFO_SKILL = skill_path.read_text(encoding="utf-8")
+        except OSError:
+            _PRODUCT_INFO_SKILL = ""
+    return _PRODUCT_INFO_SKILL
 
 
 def faq_instructions(
@@ -252,6 +264,9 @@ def onboarding_instructions(
         "## Onboarding skill\n"
         "\n"
         f"{skill_content}"
+        "\n\n---\n"
+        "## Product Information Skill\n\n"
+        f"{_load_product_info_skill()}"
         "\n\n---\n"
         "## Human Handoff Skill\n\n"
         f"{handoff_skill}"

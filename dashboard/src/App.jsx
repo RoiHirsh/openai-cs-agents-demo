@@ -1499,11 +1499,12 @@ function ThreadsTab() {
       {filteredThreads.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr><th>Phone</th><th>Last active</th><th>Events</th><th>Status</th><th>Feedback</th><th></th></tr>
+            <tr><th>Thread ID</th><th>Phone</th><th>Last active</th><th>Events</th><th>Status</th><th>Feedback</th><th></th></tr>
           </thead>
           <tbody>
             {filteredThreads.map(t => (
               <tr key={t.thread_id}>
+                <td style={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{t.thread_id || '—'}</td>
                 <td>{t.phone_number || '—'}</td>
                 <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
                 <td>{t.event_count}</td>
@@ -1767,12 +1768,13 @@ function ConversationsTab() {
       {filteredThreads.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr><th>#</th><th>Phone</th><th>Last active</th><th>Messages</th><th>Status</th><th>Feedback</th><th></th></tr>
+            <tr><th>#</th><th>Thread ID</th><th>Phone</th><th>Last active</th><th>Messages</th><th>Status</th><th>Feedback</th><th></th></tr>
           </thead>
           <tbody>
             {filteredThreads.map((t, i) => (
               <tr key={t.thread_id}>
                 <td style={{ color: '#94a3b8', fontSize: 12 }}>{filteredThreads.length - i}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>{t.thread_id || '—'}</td>
                 <td>{t.phone_number || '—'}</td>
                 <td>{t.last_active ? new Date(t.last_active).toLocaleString() : '—'}</td>
                 <td>{t.message_count ?? '—'}</td>

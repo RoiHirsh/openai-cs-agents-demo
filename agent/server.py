@@ -52,7 +52,6 @@ from lucentive.agents import (
     investments_faq_agent,
     onboarding_agent,
     scheduling_agent,
-    triage_agent,
 )
 from memory_store import MemoryStore
 
@@ -189,12 +188,11 @@ class GuardrailCheck(BaseModel):
 def _get_agent_by_name(name: str):
     """Return the agent object by name."""
     agents = {
-        triage_agent.name: triage_agent,
         investments_faq_agent.name: investments_faq_agent,
         scheduling_agent.name: scheduling_agent,
         onboarding_agent.name: onboarding_agent,
     }
-    return agents.get(name, triage_agent)
+    return agents.get(name, onboarding_agent)
 
 
 def _get_guardrail_name(g) -> str:
@@ -224,10 +222,9 @@ def _build_agents_list() -> List[Dict[str, Any]]:
         }
 
     return [
-        make_agent_dict(triage_agent),
+        make_agent_dict(onboarding_agent),
         make_agent_dict(investments_faq_agent),
         make_agent_dict(scheduling_agent),
-        make_agent_dict(onboarding_agent),
     ]
 
 
@@ -255,7 +252,7 @@ def _parse_tool_args(raw_args: Any) -> Any:
 class ConversationState:
     input_items: List[Any] = field(default_factory=list)
     context: LucentiveAgentContext = field(default_factory=create_initial_context)
-    current_agent_name: str = triage_agent.name
+    current_agent_name: str = onboarding_agent.name
     events: List[AgentEvent] = field(default_factory=list)
     guardrails: List[GuardrailCheck] = field(default_factory=list)
 

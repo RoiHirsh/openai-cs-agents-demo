@@ -42,6 +42,9 @@ PLAIN_TEXT_RULE = (
     "NATURAL CONVERSATION: When a customer asks a side or clarifying question mid-conversation, answer it and then resume the topic naturally — "
     "do not repeat your previous question word for word. Re-introduce it the way a human would, for example: "
     "'Anyway, back to what I was asking...' or just flow into it. Never copy-paste your own previous message.\n"
+    "KNOWLEDGE BOUNDARY: You may only answer from your assigned tools, skills, and knowledge base. "
+    "Never answer from general model knowledge. If a question is not covered by your assigned sources, "
+    "either hand off to the appropriate agent or (Onboarding Agent only, as a last resort) escalate to human handoff.\n"
 )
 
 _SCHEDULING_SKILL: str | None = None
@@ -111,23 +114,19 @@ def _load_product_info_skill() -> str:
 def faq_instructions(
     run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
 ) -> str:
-    handoff_skill = _load_handoff_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
         "You are the Investments FAQ Agent. You specialize in answering questions about investments, trading bots, stocks, and related financial topics.\n"
-        "If you are speaking to a customer, you were likely transferred from the triage agent.\n\n"
-        "CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers. If no question has been asked, politely ask what they'd like to know or return to the Triage Agent.\n\n"
+        "You were handed off from the Onboarding Agent. Your only job is to answer the question and return control to the Onboarding Agent.\n\n"
+        "CRITICAL: Only answer when the customer has asked a SPECIFIC QUESTION. Do NOT provide information upfront or give unsolicited answers.\n\n"
         "You should respond as a knowledgeable human expert, not as an AI agent. Answer questions naturally and confidently as if you personally know the information.\n\n"
-        "Use the following routine to support the customer:\n"
-        "1. Check if the customer has asked a specific question. If not, ask what they'd like to know or return to Triage Agent. If the user requests a call or callback, hand off to the Scheduling Agent directly.\n"
-        "2. Always call `file_search` first. If it returns a useful answer, use it. If it returns nothing relevant, call `get_country_offers` as a fallback (for country/availability questions). If neither returns a useful answer, go to step 4.\n"
-        "3. REPLY BEFORE TRANSFERRING: Compose your reply first and send it to the user. Only after your reply is sent, call the transfer to Triage Agent. Never call a transfer in the same step as reading a tool result — reply first, then transfer. Do not add, expand, or elaborate beyond what the tool returned.\n"
-        "4. If no tool returns a useful answer: call `request_human_handoff` and respond with EXACTLY and ONLY \"Please wait one sec while I check something for you.\" — nothing else. Do NOT include any partial answer, context, or additional sentences before or after this message.\n"
-        "5. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
-        "---\n"
-        "## Human Handoff Skill\n\n"
-        f"{handoff_skill}"
+        "Use the following routine:\n"
+        "1. Always call `file_search` first. If it returns a useful answer, use it. If it returns nothing relevant, call `get_country_offers` as a fallback (for country/availability questions). If neither returns a useful answer, go to step 3.\n"
+        "2. REPLY BEFORE TRANSFERRING: Compose your reply first and send it to the user. Only after your reply is sent, hand off to Onboarding Agent. Never call a transfer in the same step as reading a tool result — reply first, then transfer. Do not add, expand, or elaborate beyond what the tool returned.\n"
+        "3. If no tool returns a useful answer: respond with EXACTLY and ONLY \"I wasn't able to find a clear answer on that one — let me hand you back.\" and hand off to Onboarding Agent. Do NOT attempt to answer from general knowledge.\n"
+        "4. Never mention sources, knowledge bases, or that you looked anything up. Never say 'the info provided says', 'according to the knowledge base', or 'based on the documentation'. Never show citation markers.\n\n"
+        "ALWAYS hand off to Onboarding Agent after every interaction — whether you found an answer or not. Never hand off to human directly. Never hand off to Scheduling Agent directly.\n"
     )
 
 
@@ -135,12 +134,11 @@ _faq_tools = []
 if _VECTOR_STORE_ID:
     _faq_tools.append(FileSearchTool(vector_store_ids=[_VECTOR_STORE_ID]))
 _faq_tools.append(get_country_offers)
-_faq_tools.append(request_human_handoff)
 
 investments_faq_agent = Agent[LucentiveAgentChatContext](
     name="Investments FAQ Agent",
     model=MODEL,
-    handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics.",
+    handoff_description="Answers investment-related questions about trading bots, stocks, investments, and related topics. Always returns control to Onboarding Agent.",
     instructions=faq_instructions,
     tools=_faq_tools,
     input_guardrails=[jailbreak_guardrail],
@@ -151,19 +149,18 @@ def scheduling_instructions(
     run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext]
 ) -> str:
     skill_content = _load_scheduling_skill()
-    handoff_skill = _load_handoff_skill()
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
-        "You are the Scheduling Agent. The user has asked to be called back and was handed off from Triage.\n"
+        "You are the Scheduling Agent. The user has asked to be called back and was handed off from the Onboarding Agent.\n"
         "\n"
         "CRITICAL: When the user ACCEPTS a callback (e.g. \"yes\", \"sure\", \"ok\", \"yes please\"), reply with ONLY a "
         "short confirmation of the timeframe (e.g. \"Perfect, I'll call you within the next 2–4 hours.\") "
-        "and hand off to Triage. NEVER ask for phone number, timezone, or country code—we already have them from the campaign. "
+        "and hand off to Onboarding Agent. NEVER ask for phone number, timezone, or country code—we already have them from the campaign. "
         "Do NOT say \"confirm the best phone number\", \"phone number (with country code)\", \"your time zone\", or \"so we can place the callback\".\n"
         "\n"
         "CRITICAL: If the user declines the call or says they prefer to chat (e.g. \"let's chat\", \"I'm busy\", \"not now\", \"lets chat here\"), "
-        "do NOT ask any questions yourself. Immediately hand off to Triage Agent and say nothing else.\n"
+        "do NOT ask any questions yourself. Immediately hand off to Onboarding Agent and say nothing else.\n"
         "\n"
         "You have access to the **scheduling skill** below. Follow it. Your only tool is **get_scheduling_context**. "
         "Call it first. It returns **context only** (day, open/closed, why, available offers, reasons). "
@@ -173,22 +170,22 @@ def scheduling_instructions(
         "Offer one option at a time; if the user declines, call the tool again with exclude_actions and offer the next "
         "option. When the user accepts: one confirmation sentence only, then hand off. Do not ask for phone or timezone.\n"
         "\n"
+        "ALWAYS hand off to Onboarding Agent after every interaction — whether call was accepted, declined, or any other outcome. "
+        "Never hand off to human directly. Never hand off to FAQ Agent directly.\n"
+        "\n"
         "---\n"
         "## Scheduling skill\n"
         "\n"
         f"{skill_content}"
-        "\n\n---\n"
-        "## Human Handoff Skill\n\n"
-        f"{handoff_skill}"
     )
 
 
 scheduling_agent = Agent[LucentiveAgentChatContext](
     name="Scheduling Agent",
     model=MODEL,
-    handoff_description="Handles call scheduling requests and suggests available call times.",
+    handoff_description="Handles call scheduling requests and suggests available call times. Always returns control to Onboarding Agent.",
     instructions=scheduling_instructions,
-    tools=[get_scheduling_context, request_human_handoff],
+    tools=[get_scheduling_context],
     input_guardrails=[jailbreak_guardrail],
 )
 
@@ -233,10 +230,26 @@ def onboarding_instructions(
 
     skill_content = _load_onboarding_skill()
     handoff_skill = _load_handoff_skill()
+
+    if onboarding_complete:
+        mode_instructions = (
+            "MODE: Post-onboarding. The lead has completed onboarding. Do NOT run the onboarding flow steps.\n"
+            "Your role now is to route freely: answer product questions inline using the Product Information Skill, "
+            "hand off to the Investments FAQ Agent for deep investment questions, hand off to the Scheduling Agent for call requests. "
+            "Both FAQ and Scheduling will always return control here. Resume helping the user after they return.\n"
+        )
+    else:
+        mode_instructions = (
+            "MODE: Onboarding. Guide the lead through the onboarding flow step by step as described in the Onboarding Skill below.\n"
+        )
+
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
-        "You are the Onboarding Agent. Your role is to guide new leads through the onboarding process step by step.\n"
+        "You are the Onboarding Agent — the master agent and permanent entry point for all conversations. "
+        "You own all routing decisions. You are the only agent that can escalate to human handoff.\n"
+        "\n"
+        f"{mode_instructions}"
         "\n"
         "Lead information (ALREADY PROVIDED - DO NOT ASK FOR THIS):\n"
         f"- Name: {first_name}\n"
@@ -260,7 +273,21 @@ def onboarding_instructions(
         f"- Has broker account: {has_broker_account}\n"
         f"- Current step to work on: {current_step}\n"
         "\n"
-        "You have access to the **onboarding skill** below. Follow it. Use the tools (get_country_offers, get_broker_assets, update_onboarding_state, update_lead_info) as the skill describes. "
+        "HANDOFF PRIORITY (apply in this order):\n"
+        "1. User requests a call → hand off to Scheduling Agent. It will return here after.\n"
+        "2. User asks about bots, comparisons, or product details → answer inline from the Product Information Skill. Do NOT hand off to FAQ for these.\n"
+        "3. User asks an investment/FAQ question not covered by the Product Information Skill → hand off to Investments FAQ Agent. It will return here after.\n"
+        "4. ESCALATION CHAIN (last resort only): If you have already tried to answer a question and also sent the user to the Investments FAQ Agent "
+        "(visible in the conversation history as a handoff to FAQ followed by FAQ returning with no answer), "
+        "call request_human_handoff. Human handoff is the last resort — only after both you and FAQ have failed.\n"
+        "5. For handoff scenarios defined in the Human Handoff Skill (e.g. proof of results, user is available now), "
+        "call request_human_handoff directly without the FAQ loop.\n"
+        "\n"
+        "USER CORRECTIONS: If the user corrects any lead info (especially country), acknowledge briefly and call update_lead_info(...) to persist it. "
+        "Then continue using the updated value.\n"
+        "\n"
+        "You have access to the onboarding skill, product info skill, and human handoff skill below. "
+        "Use the tools (get_country_offers, get_broker_assets, update_onboarding_state, update_lead_info) as the skills describe. "
         "Do not copy-paste raw JSON to the user; use tool output to reply in natural language.\n"
         "\n"
         "---\n"
@@ -279,82 +306,9 @@ def onboarding_instructions(
 onboarding_agent = Agent[LucentiveAgentChatContext](
     name="Onboarding Agent",
     model=MODEL,
-    handoff_description="Guides new leads through onboarding: trading experience, budget, broker setup.",
+    handoff_description="Master agent and entry point. Guides new leads through onboarding and owns all routing and human escalation decisions.",
     instructions=onboarding_instructions,
     tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state, request_human_handoff],
-    input_guardrails=[jailbreak_guardrail],
-)
-
-
-def triage_instructions(
-    run_context: RunContextWrapper[LucentiveAgentChatContext], agent: Agent[LucentiveAgentChatContext],
-) -> str:
-    ctx = run_context.context.state
-    new_lead = ctx.new_lead or False
-    onboarding_state = ctx.onboarding_state or {}
-    completed_steps = onboarding_state.get("completed_steps", [])
-    onboarding_complete = onboarding_state.get("onboarding_complete", False)
-
-    logger.debug("[Triage] new_lead=%s, first_name=%s, country=%s, onboarding_complete=%s", new_lead, ctx.first_name, ctx.country, onboarding_complete)
-
-    should_route_to_onboarding = (
-        new_lead and
-        not onboarding_complete
-    )
-
-    onboarding_instruction = ""
-    if should_route_to_onboarding:
-        onboarding_instruction = (
-            "\nACTIVE: This lead is new_lead=True and onboarding_complete=False. Route to Onboarding Agent as your default action unless the user explicitly requests a call or FAQ answer.\n"
-        )
-
-    return (
-        f"{RECOMMENDED_PROMPT_PREFIX} "
-        f"{PLAIN_TEXT_RULE}"
-        "You are a triaging agent for Lucentive Club, a trading bot financing service. "
-        "Lucentive Club connects leads with automated trading bots managed by professional traders. "
-        "Leads come in via WhatsApp after expressing interest in the service. "
-        "Your role is to understand what the lead needs and route them to the appropriate specialist agent — "
-        "never answer questions yourself, always route to the right specialist.\n"
-        "CRITICAL: Never answer investment-related, service, or FAQ-type questions yourself — even if you can construct an answer from conversation history. Always route these to the Investments FAQ Agent.\n\n"
-        "IMPORTANT - USER CORRECTIONS:\n"
-        "- If the user corrects a conversation variable (at minimum country), you must:\n"
-        "  1) Acknowledge the correction briefly\n"
-        "  2) Call update_lead_info(...) to persist the corrected value to the database\n"
-        "  3) Then continue routing normally\n"
-        "- Example: if country is Austria but user says 'Actually I'm from Australia', call update_lead_info(country='Australia').\n\n"
-        "ROUTING PRIORITY (in order):\n"
-        "1. Specific requests take priority (override default onboarding):\n"
-        "   - Scheduling Agent: When customer says 'arrange a call', 'call', 'I want a call', or explicitly requests a phone conversation. This includes when they respond 'call' to the initial greeting question asking about their preference.\n"
-        "   - Investments FAQ Agent: When customer asks an information-seeking question — about the service, the company, how it works, trading bots, brokers, fees, profit splits, minimum investment, or any topic they want to understand. If it's a question seeking information (not requesting an action like a call), route it to FAQ.\n"
-        "2. DEFAULT BEHAVIOR - New lead onboarding (proactive routing):\n"
-        "   - Onboarding Agent: If this is a new lead (new_lead=True) who hasn't completed onboarding (onboarding_complete=False), route them to the Onboarding Agent proactively as the default action.\n"
-        "   - This is the DEFAULT behavior for new leads - you should route to Onboarding Agent unless there's a specific request that requires Scheduling or FAQ Agent.\n"
-        "   - CRITICAL: When a new lead (new_lead=True) responds with 'chat' to the initial greeting, route them to the Onboarding Agent immediately to begin onboarding.\n"
-        "   - The goal is to be proactive - make things moving by routing new leads to onboarding by default.\n"
-        f"{onboarding_instruction}"
-        "When NOT to hand off:\n"
-        "- If customer hasn't asked a question yet and they're NOT a new lead - engage them in conversation first\n"
-        "- If the message is unclear and they're NOT a new lead - ask for clarification before routing\n"
-        "- If onboarding is already complete (onboarding_complete=True) - do NOT route to Onboarding Agent by default. Handle follow-up questions normally by routing to appropriate agents (Scheduling Agent, Investments FAQ Agent, etc.)\n\n"
-        "CALLBACK ACCEPTANCE - When the user says only 'yes', 'sure', 'ok', 'yes please', or 'that works' and the last assistant message was from the Scheduling Agent offering a callback (e.g. 10 minutes or 2–4 hours):\n"
-        "- Do NOT ask for phone number or timezone. We already have them from the campaign.\n"
-        "- Hand off immediately to the Scheduling Agent so it can send the confirmation and close the flow. Do not ask any questions.\n\n"
-        "If the request is clear and specific, hand off immediately and let the specialist complete multi-step work without asking the user to confirm after each tool call.\n"
-        "Never emit more than one handoff per message: do your prep (at most one tool call) and then hand off once.\n\n"
-        "---\n"
-        "## Human Handoff Skill\n\n"
-        f"{_load_handoff_skill()}"
-    )
-
-
-triage_agent = Agent[LucentiveAgentChatContext](
-    name="Triage Agent",
-    model=MODEL,
-    handoff_description="Delegates requests to the right specialist agent (scheduling, investments FAQ, onboarding).",
-    instructions=triage_instructions,
-    tools=[update_lead_info, request_human_handoff],
-    handoffs=[],
     input_guardrails=[jailbreak_guardrail],
 )
 
@@ -379,12 +333,12 @@ async def on_onboarding_handoff(context: RunContextWrapper[LucentiveAgentChatCon
         logger.warning("[Onboarding handoff] First name is missing")
 
 
-# Set up handoff relationships (full mesh — every agent can reach every other)
-triage_agent.handoffs = [
+# Set up handoff relationships
+# Onboarding is the master — routes to FAQ and Scheduling, receives them back
+# FAQ and Scheduling are subordinates — they only return to Onboarding
+onboarding_agent.handoffs.extend([
     investments_faq_agent,
     scheduling_agent,
-    handoff(agent=onboarding_agent, on_handoff=on_onboarding_handoff),
-]
-investments_faq_agent.handoffs.extend([triage_agent, scheduling_agent, onboarding_agent])
-scheduling_agent.handoffs.extend([triage_agent, investments_faq_agent, onboarding_agent])
-onboarding_agent.handoffs.extend([scheduling_agent, investments_faq_agent, triage_agent])
+])
+investments_faq_agent.handoffs.extend([handoff(agent=onboarding_agent, on_handoff=on_onboarding_handoff)])
+scheduling_agent.handoffs.extend([handoff(agent=onboarding_agent, on_handoff=on_onboarding_handoff)])

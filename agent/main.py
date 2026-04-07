@@ -27,7 +27,6 @@ from lucentive.agents import (
     investments_faq_agent,
     onboarding_agent,
     scheduling_agent,
-    triage_agent,
 )
 from lucentive.context import (
     LucentiveAgentChatContext,
@@ -387,7 +386,7 @@ async def api_chat(
             server._state[thread_id] = ConversationState(
                 input_items=row.get("input_items") or [],
                 context=LucentiveAgentContext(**stored_context) if stored_context else create_initial_context(),
-                current_agent_name=row.get("current_agent_name") or triage_agent.name,
+                current_agent_name=row.get("current_agent_name") or onboarding_agent.name,
                 events=restored_events,
                 guardrails=restored_guardrails,
             )
@@ -722,5 +721,4 @@ __all__ = [
     "onboarding_agent",
     "public_context",
     "scheduling_agent",
-    "triage_agent",
 ]

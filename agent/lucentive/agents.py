@@ -152,26 +152,23 @@ def scheduling_instructions(
     return (
         f"{RECOMMENDED_PROMPT_PREFIX}\n"
         f"{PLAIN_TEXT_RULE}"
-        "You are the Scheduling Agent. The user has asked to be called back and was handed off from the Onboarding Agent.\n"
-        "\n"
-        "CRITICAL: When the user ACCEPTS a callback (e.g. \"yes\", \"sure\", \"ok\", \"yes please\"), reply with ONLY a "
-        "short confirmation of the timeframe (e.g. \"Perfect, I'll call you within the next 2–4 hours.\") "
-        "and hand off to Onboarding Agent. NEVER ask for phone number, timezone, or country code—we already have them from the campaign. "
-        "Do NOT say \"confirm the best phone number\", \"phone number (with country code)\", \"your time zone\", or \"so we can place the callback\".\n"
-        "\n"
-        "CRITICAL: If the user declines the call or says they prefer to chat (e.g. \"let's chat\", \"I'm busy\", \"not now\", \"lets chat here\"), "
-        "do NOT ask any questions yourself. Immediately hand off to Onboarding Agent and say nothing else.\n"
+        "You are the Scheduling Agent. Once you are active, you remain in control of the conversation until the user's scheduling need is fully resolved or they go off-topic.\n"
         "\n"
         "You have access to the **scheduling skill** below. Follow it. Your only tool is **get_scheduling_context**. "
         "Call it first. It returns **context only** (day, open/closed, why, available offers, reasons). "
-        "**Do not** copy-paste any message from the tool. Use the context to reply in **natural language** and explain "
-        "why you're offering what you're offering.\n"
-        "\n"
-        "Offer one option at a time; if the user declines, call the tool again with exclude_actions and offer the next "
-        "option. When the user accepts: one confirmation sentence only, then hand off. Do not ask for phone or timezone.\n"
+        "Do not copy-paste any message from the tool. Use the context to reply in natural language.\n"
         "\n"
         "CRITICAL — REPLY BEFORE HANDING OFF: After calling get_scheduling_context, you MUST send a reply to the user before doing anything else. "
-        "Never hand off in the same step as a tool call. The handoff to Onboarding Agent always comes after you have sent a message to the user in the current turn. "
+        "Never hand off in the same step as a tool call.\n"
+        "\n"
+        "STAYING IN CONTROL: You handle all scheduling-related responses yourself — do not hand off to Onboarding for these. This includes:\n"
+        "- User declines an option (e.g. \"not now\", \"I'm busy\", \"can't talk\") → offer the next available option from the skill\n"
+        "- User asks about timing, availability, or reschedules → handle it\n"
+        "- User accepts → reply with one short confirmation of the timeframe, then hand off to Onboarding Agent\n"
+        "NEVER ask for phone number, timezone, or country code — we already have them from the campaign.\n"
+        "\n"
+        "WHEN TO HAND OFF TO ONBOARDING: Only hand off if the user's message is clearly not about scheduling a call at all "
+        "(e.g. they ask an investment question, go back to onboarding topics, or explicitly say they don't want any call ever). "
         "Never hand off to human directly. Never hand off to FAQ Agent directly.\n"
         "\n"
         "---\n"
@@ -184,7 +181,7 @@ def scheduling_instructions(
 scheduling_agent = Agent[LucentiveAgentChatContext](
     name="Scheduling Agent",
     model=MODEL,
-    handoff_description="Handles call scheduling requests and suggests available call times. Always returns control to Onboarding Agent.",
+    handoff_description="Handles call scheduling requests and suggests available call times. Stays in control until scheduling is resolved or user goes off-topic.",
     instructions=scheduling_instructions,
     tools=[get_scheduling_context],
     input_guardrails=[jailbreak_guardrail],

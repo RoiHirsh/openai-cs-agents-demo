@@ -1798,6 +1798,98 @@ function ConversationsTab() {
   )
 }
 
+// ─── Results Videos Tab ───────────────────────────────────────────────────────
+
+const MARKETS = ['gold', 'crypto', 'forex']
+
+function ResultsVideosTab() {
+  const [rows, setRows]               = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [fetchError, setFetchError]   = useState('')
+  const [market, setMarket]           = useState('gold')
+  const [file, setFile]               = useState(null)
+  const [uploading, setUploading]     = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true); setFetchError('')
+    try { setRows(await apiFetch('/knowledge/results-videos')) }
+    catch (e) { setFetchError(e.message) }
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleUpload(e) {
+    e.preventDefault()
+    if (!file) { setUploadError('Please select a video file.'); return }
+    setUploading(true); setUploadError(''); setUploadSuccess('')
+    try {
+      const fd = new FormData()
+      fd.append('market', market)
+      fd.append('file', file)
+      await fetch(`${API_BASE}/knowledge/results-videos/upload`, {
+        method: 'POST',
+        headers: { 'x-dashboard-key': API_KEY },
+        body: fd,
+      }).then(async r => {
+        if (!r.ok) throw new Error((await r.text()))
+        return r.json()
+      })
+      setUploadSuccess(`Video for ${market} updated successfully.`)
+      setFile(null)
+      e.target.reset()
+      await load()
+    } catch (err) {
+      setUploadError(err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="tab-content">
+      <div style={{ marginBottom: 24, padding: 16, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8 }}>
+        <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600 }}>Upload Results Video</h3>
+        <form onSubmit={handleUpload} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select value={market} onChange={e => setMarket(e.target.value)} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db' }}>
+            {MARKETS.map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
+          </select>
+          <input type="file" accept="video/*" onChange={e => setFile(e.target.files[0])} required />
+          <button className="btn-primary" type="submit" disabled={uploading}>
+            {uploading ? 'Uploading…' : 'Upload'}
+          </button>
+        </form>
+        {uploadError   && <p style={{ margin: '8px 0 0', color: '#dc2626', fontSize: 13 }}>{uploadError}</p>}
+        {uploadSuccess && <p style={{ margin: '8px 0 0', color: '#16a34a', fontSize: 13 }}>{uploadSuccess}</p>}
+      </div>
+
+      {loading    && <p className="status-msg">Loading…</p>}
+      {fetchError && <p className="status-msg error">{fetchError}</p>}
+
+      {!loading && rows.length === 0 && <p className="status-msg">No videos uploaded yet.</p>}
+
+      {rows.length > 0 && (
+        <table className="data-table">
+          <thead>
+            <tr><th>Market</th><th>URL</th><th>Last Updated</th></tr>
+          </thead>
+          <tbody>
+            {rows.map(r => (
+              <tr key={r.market}>
+                <td style={{ textTransform: 'capitalize', fontWeight: 500 }}>{r.market}</td>
+                <td><a href={r.url} target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontSize: 13 }}>{r.url}</a></td>
+                <td style={{ fontSize: 13, color: '#6b7280' }}>{r.updated_at ? new Date(r.updated_at).toLocaleString() : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
+
 // ─── Corrections Tab (developer review) ──────────────────────────────────────
 
 
@@ -1826,6 +1918,7 @@ export default function App() {
         <button className={`tab-btn ${tab === 'brokers'        ? 'active' : ''}`} onClick={() => setTab('brokers')}>Brokers</button>
         <button className={`tab-btn ${tab === 'countries'      ? 'active' : ''}`} onClick={() => setTab('countries')}>Countries</button>
         <button className={`tab-btn ${tab === 'bots'           ? 'active' : ''}`} onClick={() => setTab('bots')}>Bots</button>
+        <button className={`tab-btn ${tab === 'results-videos' ? 'active' : ''}`} onClick={() => setTab('results-videos')}>Results Videos</button>
         <button className={`tab-btn ${tab === 'threads'        ? 'active' : ''}`} onClick={() => setTab('threads')}>Threads</button>
         <button className={`tab-btn ${tab === 'conversations'  ? 'active' : ''}`} onClick={() => setTab('conversations')}>Conversations</button>
       </nav>
@@ -1837,6 +1930,7 @@ export default function App() {
       {tab === 'brokers'        && <BrokersTab />}
       {tab === 'countries'      && <CountriesTab />}
       {tab === 'bots'           && <BotsTab />}
+      {tab === 'results-videos' && <ResultsVideosTab />}
       {tab === 'threads'        && <ThreadsTab />}
       {tab === 'conversations'  && <ConversationsTab />}
     </div>

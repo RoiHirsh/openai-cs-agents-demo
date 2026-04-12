@@ -36,6 +36,9 @@ _BROKER_ASSETS_CACHE_TIME: float = 0
 _COUNTRY_OFFERS_CACHE: dict[str, dict[str, Any]] | None = None
 _COUNTRY_OFFERS_CACHE_TIME: float = 0
 
+_RESULTS_VIDEOS_CACHE: dict[str, Any] | None = None
+_RESULTS_VIDEOS_CACHE_TIME: float = 0
+
 
 def _load_broker_assets_data() -> dict[str, Any]:
     """Load broker assets from Supabase. Reconstructs the nested dict used by get_broker_assets."""
@@ -483,6 +486,46 @@ async def get_country_offers(country: str, bot_preference: Optional[str] = None)
 
     logger.debug("Returning %d bot(s) and %d broker(s) for %s (bot_preference=%r)", len(all_bots), len(filtered_brokers), normalized_group, bot_preference)
     return json.dumps(result)
+
+
+# ─── Results videos tool ─────────────────────────────────────────────────────
+
+def _load_results_videos() -> dict[str, Any]:
+    global _RESULTS_VIDEOS_CACHE, _RESULTS_VIDEOS_CACHE_TIME
+    now = time.time()
+    if _RESULTS_VIDEOS_CACHE is not None and now - _RESULTS_VIDEOS_CACHE_TIME < _CACHE_TTL:
+        return _RESULTS_VIDEOS_CACHE
+    try:
+        from integrations.supabase_client import get_supabase_client
+        sb = get_supabase_client()
+        rows = sb.table("results_videos").select("market,url,updated_at").execute().data
+        data = {row["market"]: {"url": row["url"], "updated_at": row.get("updated_at", "")} for row in rows}
+        _RESULTS_VIDEOS_CACHE = data
+        _RESULTS_VIDEOS_CACHE_TIME = now
+        return data
+    except Exception as e:
+        logger.error("[results_videos] Failed to load: %s", e)
+        return _RESULTS_VIDEOS_CACHE or {}
+
+
+@function_tool(
+    name_override="get_results_video",
+    description_override="Get the latest results/performance video URL for a given trading market (gold, crypto, or forex).",
+)
+async def get_results_video(market: str) -> str:
+    """Returns the public URL of the latest results video for the given market."""
+    logger.debug("[TOOL EXEC] get_results_video(market=%r)", market)
+    data = _load_results_videos()
+    key = market.lower().strip()
+    if key not in data:
+        return json.dumps({"ok": False, "url": None, "error": f"No results video available for '{market}' yet."})
+    entry = data[key]
+    url = entry["url"]
+    updated_at = entry.get("updated_at", "")
+    if updated_at:
+        ts = updated_at.replace(":", "").replace("-", "").replace("T", "").replace("Z", "")[:14]
+        url = f"{url}?v={ts}"
+    return json.dumps({"ok": True, "url": url, "market": key, "error": None})
 
 
 # ─── Human handoff tool ───────────────────────────────────────────────────────

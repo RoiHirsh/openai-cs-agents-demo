@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import openai
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTTPException, UploadFile, status
 from pydantic import BaseModel, field_validator
 
 from integrations.supabase_client import get_supabase_client
@@ -524,3 +524,49 @@ def update_bot(row_id: UUID, body: BotUpdate) -> Dict[str, Any]:
 def delete_bot(row_id: UUID) -> None:
     sb = get_supabase_client()
     sb.table("bots").delete().eq("id", str(row_id)).execute()
+
+
+# ── results_videos ────────────────────────────────────────────────────────────
+
+RESULTS_BUCKET = "results-videos"
+VALID_MARKETS  = {"gold", "crypto", "forex"}
+
+
+@router.get("/results-videos", response_model=List[Dict[str, Any]])
+def list_results_videos() -> List[Dict[str, Any]]:
+    sb = get_supabase_client()
+    return sb.table("results_videos").select("*").order("market").execute().data
+
+
+@router.post("/results-videos/upload", response_model=Dict[str, Any])
+async def upload_results_video(
+    market: str = Form(...),
+    file: UploadFile = File(...),
+) -> Dict[str, Any]:
+    market = market.lower().strip()
+    if market not in VALID_MARKETS:
+        raise HTTPException(status_code=400, detail=f"market must be one of {sorted(VALID_MARKETS)}")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "mp4"
+    storage_path = f"{market}/{market}.{ext}"
+    contents = await file.read()
+
+    sb = get_supabase_client()
+    sb.storage.from_(RESULTS_BUCKET).upload(
+        storage_path,
+        contents,
+        file_options={"content-type": file.content_type or "video/mp4", "upsert": "true"},
+    )
+
+    public_url = sb.storage.from_(RESULTS_BUCKET).get_public_url(storage_path)
+
+    from datetime import datetime, timezone
+    now_iso = datetime.now(timezone.utc).isoformat()
+    sb.table("results_videos").upsert({
+        "market": market,
+        "url": public_url,
+        "updated_at": now_iso,
+    }).execute()
+
+    logger.info("[results_videos] Uploaded %s → %s", storage_path, public_url)
+    return {"market": market, "url": public_url}

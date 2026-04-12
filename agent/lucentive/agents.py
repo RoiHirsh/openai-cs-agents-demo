@@ -18,6 +18,7 @@ from .guardrails import jailbreak_guardrail
 from .tools import (
     get_broker_assets,
     get_country_offers,
+    get_results_video,
     get_scheduling_context,
     request_human_handoff,
     update_lead_info,
@@ -309,7 +310,7 @@ onboarding_agent = Agent[LucentiveAgentChatContext](
     model=MODEL,
     handoff_description="Master agent and entry point. Guides new leads through onboarding and owns all routing and human escalation decisions.",
     instructions=onboarding_instructions,
-    tools=[get_country_offers, get_broker_assets, update_lead_info, update_onboarding_state, request_human_handoff],
+    tools=[get_country_offers, get_broker_assets, get_results_video, update_lead_info, update_onboarding_state, request_human_handoff],
     input_guardrails=[jailbreak_guardrail],
 )
 

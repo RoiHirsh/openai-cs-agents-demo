@@ -1,0 +1,46 @@
+# [MANUAL FIX - RoiHirsh] Silver option incorrectly shown to users
+#   - Remove silver bot from country_offers in the dashboard
+#   - Ensure no links o OK I think that does it with the Mt five group of issues OK r videos reference silver
+#   - Amend any FAQ questions that mention silver
+#   Status: pending manual fix via dashboard
+
+  MT5 group (c13, c14, c15, c16, c18, c28, c31)
+    Problem: agent responses incorrectly reference MT5, implying users need to interact
+    with it. In reality, users do not need to touch MT5 at all — this is causing confusion.
+    Fix: single manual fix via the dashboard FAQ section. Review and update any FAQ
+    entries that mention MT5, removing or correcting the references so the agent stops
+    surfacing it in responses. No code changes required.
+    Status: pending manual fix via dashboard.
+
+  Context-aware onboarding (c17, c20, c21)
+
+  Isolated pending identification (c29)
+
+  Deferred (c19, c24, c25, c26)
+
+  C8 — Budget minimum ($500) + demo account handling
+    Problem: users who don't have $500 should not be led easily to a demo, as demos
+    cost the team real setup work with zero revenue (10-day trial only).
+    Approach (layered friction by design):
+      1. Bot behavior: during budget step, if user is under $500, do NOT mention demo.
+         Clarify the minimum and ask if they expect to have $500 available soon, or
+         are just exploring. Most will self-select out or confirm they can proceed.
+      2. Demo only as last resort: if user explicitly and repeatedly says they cannot
+         invest $500 and is about to disengage, the bot may mention demo once — with
+         neutral/low-enthusiasm framing (limited 10-day trial, same setup effort as
+         a live account).
+      3. Confirmation gate (mandatory): before any handoff, bot must ask:
+         "Just to confirm — you'd like to move forward with a demo account only,
+         with no real investment at this stage?" — this filters out casual interest.
+      4. Handoff trigger: handled entirely within bot behavior (onboarding skill),
+         NOT via a Supabase handoff scenario. A handoff scenario would only see the
+         last message ("yes") with no context. The skill file describes the full
+         multi-turn flow, so the agent knows at which exact point to send a closing
+         line ("I'll connect you with a team member to get your demo set up") and
+         trigger the handoff. No new handoff scenario needed.
+      5. FAQ entry: one passive Q&A ("Do you offer a demo account?") that explains
+         the demo exists, 10-day trial, requires setup, and is for users not yet
+         ready to invest. Answers direct questions without bot proactively offering it.
+    Implementation: onboarding skill file (skills/onboarding/SKILL.md) + one new
+    FAQ entry in Supabase. No handoff scenario required.
+  

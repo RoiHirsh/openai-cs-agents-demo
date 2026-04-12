@@ -70,6 +70,16 @@
     "action": ""
   },
   {
+    "id": "c8",
+    "thread": "thr_f8758f3f",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Confusing. If customer only has $100, better to just say the minimum is $500.",
+    "original": "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management.\n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.",
+    "correct": ".",
+    "action": ""
+  },
+  {
     "id": "c9",
     "thread": "thr_23cf67a7",
     "phone": "+50233418310",
@@ -90,6 +100,16 @@
     "action": ""
   },
   {
+    "id": "c11",
+    "thread": "thr_23f4d7cb",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Customer already said crypto, and the bot is offering all other markets again",
+    "original": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": ".",
+    "action": ""
+  },
+  {
     "id": "c12",
     "thread": "thr_23f4d7cb",
     "phone": "+50233418310",
@@ -97,6 +117,96 @@
     "reviewerNote": "Vantage and Bybit for futures are both options, not only Vantage",
     "original": "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?",
     "correct": "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage and Bybit. Which would you prefer?",
+    "action": ""
+  },
+  {
+    "id": "c13",
+    "thread": "thr_252332eb",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Incorrect. To trade Gold, we can connect to MT5 OR create a copy trading account in PU Prime (no MT5 credentials needed — customer connects manually). The bot needs to ask more questions before explaining the process.",
+    "original": "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...",
+    "correct": "...",
+    "action": ""
+  },
+  {
+    "id": "c14",
+    "thread": "thr_7a248f4c",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "We are not working with MT5 accounts. They have to be copy trading accounts. Also I would send in a separate message the fact that \"(we can trade, but we can't deposit, withdraw, or move your funds).\"",
+    "original": "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds).",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c15",
+    "thread": "thr_7a248f4c",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "If we are connecting them to a copy trading account, there is no need for MT5",
+    "original": "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c16",
+    "thread": "thr_7a248f4c",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Offering Demo in MT5 won't work for Silver in PU Prime",
+    "original": "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c17",
+    "thread": "thr_7a248f4c",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Asked twice the same question",
+    "original": "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c18",
+    "thread": "thr_73af994f",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "If it's Gold in PU Prime, no MT5 account is needed since we connect to copy trading",
+    "original": "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit).\n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you.\n\nIf you want, tell me whether you already have an MT5 account, or you'd like to create one from scratch.",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c19",
+    "thread": "thr_73af994f",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "About the traded in cents part: I'm sure a customer sees this number and will back out. Better to stick to the minimum of $500 and that's it. That can be explained later.",
+    "original": "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?",
+    "correct": "...",
+    "action": ""
+  },
+  {
+    "id": "c20",
+    "thread": "thr_1e349510",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "This question has already been asked. It should go directly to sending the registration link for Silver since in this conversation it was already stated that was what the customer wanted.",
+    "original": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "...",
+    "action": ""
+  },
+  {
+    "id": "c21",
+    "thread": "thr_1e349510",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Not sure why it is circling back to this. Customer already stated that they have $1000 to start with Silver.",
+    "original": "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?",
+    "correct": "..",
     "action": ""
   },
   {
@@ -120,6 +230,36 @@
     "action": ""
   },
   {
+    "id": "c24",
+    "thread": "thr_2e8a36eb",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "If a customer wants to try 'all of them', it is best to give them a breakdown of the next steps for each bot.",
+    "original": "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading.\n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c25",
+    "thread": "thr_2e8a36eb",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "I see it offers Demo quite often. I would offer Demo only if they are hesitant, or if they actually say they are unsure.",
+    "original": "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c26",
+    "thread": "thr_bb77711b",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Usually here, we send them a live video with the results of the past week/month. Next step would be to ask which market they would like to see results of, then ask Shay to record the video and send the live video with current results.",
+    "original": "Hi one sec please",
+    "correct": "..",
+    "action": ""
+  },
+  {
     "id": "c27",
     "thread": "thr_87af7889",
     "phone": "+50233418310",
@@ -130,12 +270,42 @@
     "action": ""
   },
   {
+    "id": "c28",
+    "thread": "thr_2ba574cc",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "They don't need to install anything, other than the broker app",
+    "original": "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading.",
+    "correct": "..",
+    "action": ""
+  },
+  {
+    "id": "c29",
+    "thread": "thr_80b5d697",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "Better to hand off immediately to make the call",
+    "original": "Perfect, I'll call you in about 10 minutes.",
+    "correct": ".",
+    "action": ""
+  },
+  {
     "id": "c30",
     "thread": "thr_2ba574cc",
     "phone": "+50233418310",
     "category": null,
     "reviewerNote": "We need to understand if this answer came from the bot's parametric knowledge or from the FAQ.",
     "original": "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)",
+    "correct": ".",
+    "action": ""
+  },
+  {
+    "id": "c31",
+    "thread": "thr_efaa926c",
+    "phone": "+50233418310",
+    "category": null,
+    "reviewerNote": "No need to connect MT5 so we need to understand where the bot got the info from. Same with the timing — we need to check where the 24-48 hours comes from.",
+    "original": "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nAs for seeing profits: it depends on market conditions (so it isn't guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.",
     "correct": ".",
     "action": ""
   }

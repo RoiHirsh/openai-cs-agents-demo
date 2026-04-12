@@ -1800,13 +1800,12 @@ function ConversationsTab() {
 
 // ─── Results Videos Tab ───────────────────────────────────────────────────────
 
-const MARKETS = ['gold', 'crypto', 'forex']
-
 function ResultsVideosTab() {
   const [rows, setRows]               = useState([])
+  const [bots, setBots]               = useState([])
   const [loading, setLoading]         = useState(true)
   const [fetchError, setFetchError]   = useState('')
-  const [market, setMarket]           = useState('gold')
+  const [market, setMarket]           = useState('')
   const [file, setFile]               = useState(null)
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -1814,7 +1813,16 @@ function ResultsVideosTab() {
 
   const load = useCallback(async () => {
     setLoading(true); setFetchError('')
-    try { setRows(await apiFetch('/knowledge/results-videos')) }
+    try {
+      const [videos, botList] = await Promise.all([
+        apiFetch('/knowledge/results-videos'),
+        apiFetch('/knowledge/bots'),
+      ])
+      setRows(videos)
+      const activeBots = (botList || []).filter(b => b.active).map(b => b.name.toLowerCase())
+      setBots(activeBots)
+      if (activeBots.length > 0 && !market) setMarket(activeBots[0])
+    }
     catch (e) { setFetchError(e.message) }
     finally { setLoading(false) }
   }, [])
@@ -1854,7 +1862,7 @@ function ResultsVideosTab() {
         <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 600 }}>Upload Results Video</h3>
         <form onSubmit={handleUpload} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <select value={market} onChange={e => setMarket(e.target.value)} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d1d5db' }}>
-            {MARKETS.map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
+            {bots.map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
           </select>
           <input type="file" accept="video/*" onChange={e => setFile(e.target.files[0])} required />
           <button className="btn-primary" type="submit" disabled={uploading}>

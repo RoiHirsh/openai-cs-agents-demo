@@ -529,7 +529,6 @@ def delete_bot(row_id: UUID) -> None:
 # ── results_videos ────────────────────────────────────────────────────────────
 
 RESULTS_BUCKET = "results-videos"
-VALID_MARKETS  = {"gold", "crypto", "forex"}
 
 
 @router.get("/results-videos", response_model=List[Dict[str, Any]])
@@ -544,8 +543,8 @@ async def upload_results_video(
     file: UploadFile = File(...),
 ) -> Dict[str, Any]:
     market = market.lower().strip()
-    if market not in VALID_MARKETS:
-        raise HTTPException(status_code=400, detail=f"market must be one of {sorted(VALID_MARKETS)}")
+    if not market:
+        raise HTTPException(status_code=400, detail="market is required")
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "mp4"
     storage_path = f"{market}/{market}.{ext}"

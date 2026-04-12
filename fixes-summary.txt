@@ -1,119 +1,59 @@
 LUCENTIVE AI AGENT — QA FIXES SUMMARY
-======================================
-Prepared for team review | April 2026
+April 2026
+================================================================================
 
-
-LEGEND
-------
-Status:
-  [DONE]    Code deployed to feature/api-chat branch
-  [MANUAL]  Requires manual action via dashboard or SQL (no code change)
-  [QA]      Code done, pending QA sign-off before merging
-
-
-───────────────────────────────────────────────────────────────────────────────
- ID(s)      ISSUE                        ROOT CAUSE                  FIX                                         STATUS
-───────────────────────────────────────────────────────────────────────────────
-
- C8,        Bot proactively offered       Demo was part of the        Removed demo from all default paths.         [DONE]
- C16,       demo account too early —      default onboarding flow     Demo only mentioned if user explicitly
- C25        even to confident users       regardless of budget or     pushes back after being told the $500
-            who had the budget.           sentiment.                  minimum. Mandatory confirmation gate
-                                                                      before any handoff. Handoff to human
-                                                                      managed by onboarding skill, not a
-                                                                      separate handoff scenario.
-
- C13,       Agent responses incorrectly   Old FAQ entries and agent   Manual review and update of all FAQ          [MANUAL]
- C14,       referenced MT5 credentials    instructions referenced      entries that mention MT5. New broker-        (dashboard)
- C15,       and implied users needed to   the old MT5 copy-trading    specific FAQ pairs added for Vantage,
- C16,       interact with it directly.    method. We no longer use    PU Prime, and Bybit explaining the
- C18,       Users were confused about     MT5 credentials — all       copy-trade link setup process without
- C28,       why MT5 was mentioned.        connections are now via      any MT5 credential sharing.
- C31                                      copy-trade links inside
-                                          each broker platform.
-
- C17,       Bot re-asked questions        Agent only looked forward    Added a history pre-scan rule to the         [DONE]
- C20,       the user had already          through its checklist.      onboarding skill: before starting any        (pending QA)
- C21        answered earlier in the       If a step was not in        phase, the agent scans full conversation
-            conversation — e.g. re-       completed_steps it asked    history, infers any already-known
-            asking budget when user        the question regardless     answers (budget, bot preference, broker,
-            already mentioned $500,        of what the user had        trading experience), updates state
-            or re-asking bot preference   said earlier.               immediately, and skips those questions.
-            when user clearly expressed
-            interest in Gold/Silver.
-
- C19        Bot surfaced broker           Technical constraint notes  Added rule: broker constraint details        [DONE]
-            constraints like "traded      (cents/range limits) were   are never mentioned unless the user
-            in cents" and "$500–          included in KB and surfaced directly asks about limits or account
-            $10,000 range only" which     without filtering.          specifics. Also added a general
-            confused and discouraged                                  response length rule: all replies
-            customers. Also, off-flow                                 capped at 2–3 short sentences; no
-            answers were too long and                                 multi-result FAQ dumps.
-            detailed.
-
- C24        When a user said they         No scenario existed for     Added rule: if user selects multiple         [DONE]
-            wanted multiple bots or       multi-bot selection.        bots or asks what the difference is,
-            "all of them", agent          Agent jumped straight to    give one short sentence per bot then
-            jumped to single-bot setup    single-bot MT5 setup.       ask which one they want to start with.
-            with no explanation.                                       Only one bot can be set up at a time.
-
- C26        When users asked for          No process defined for      Built a full results video system:           [DONE]
-            proof of results, agent       handling proof-of-results   - Supabase Storage bucket for video
-            stalled or gave a generic     requests. Bot had no         files
-            handoff with no useful        content to share and no     - results_videos table (market + URL)
-            response.                     tool to retrieve results.   - get_results_video(market) tool on
-                                                                         the onboarding agent
-                                                                      - Results Videos tab in dashboard
-                                                                         (upload per market, auto-updates URL)
-                                                                      - Skill rule: bot fetches and shares
-                                                                         video when user asks for proof
-
- C29        User had a scheduled          No handoff trigger existed  New handoff scenario added in Supabase:      [MANUAL]
-            callback but came back        for when a user expresses   trigger fires when user expresses            (SQL to run)
-            saying they were available    immediate availability      immediate availability or urgency to
-            now. Bot continued            mid-conversation.           speak now (e.g. "I'm free now",
-            standard flow instead of                                  "call me now", "I'm available").
-            connecting them immediately.
-
- SILVER     Silver bot was shown to       Silver was included in      Manual removal of Silver from country        [MANUAL]
-            users in some countries       country offers and some     offers in dashboard. Ensure no links         (dashboard)
-            even though it is not         FAQ entries.                or videos reference Silver. Amend
-            currently offered.                                        any FAQ entries that mention Silver.
-
-
-───────────────────────────────────────────────────────────────────────────────
-ADDITIONAL IMPROVEMENTS (not tied to a specific issue)
-───────────────────────────────────────────────────────────────────────────────
-
-- Broker setup FAQ entries: Three new standalone FAQ pairs added explaining
-  the full account setup and copy-trade connection process for Vantage,
-  PU Prime, and Bybit — each self-contained with no cross-references.
-  SQL migration provided to insert these via the Supabase SQL editor.
-
-- Demo FAQ entry: One passive FAQ entry ("Do you offer a demo account?")
-  to be added via the dashboard, explaining the demo exists but is limited,
-  requires full setup, and is for users not yet ready to invest.
-
-
-───────────────────────────────────────────────────────────────────────────────
-PENDING MANUAL ACTIONS (owner: Roi)
-───────────────────────────────────────────────────────────────────────────────
-
-  1. Remove Silver from country offers in the dashboard
-  2. Update MT5-related FAQ entries via the dashboard
-  3. Run SQL to add the 3 broker-specific FAQ pairs (Vantage, PU Prime, Bybit)
-  4. Add "Do you offer a demo account?" FAQ entry via the dashboard
-  5. Run SQL to add C29 handoff scenario (query provided separately)
-  6. Run SQL to drop the CHECK constraint on results_videos table:
-       ALTER TABLE results_videos DROP CONSTRAINT results_videos_market_check;
-  7. Create Supabase Storage bucket named "results-videos" (set to Public)
-
-
-───────────────────────────────────────────────────────────────────────────────
-PENDING QA SIGN-OFF
-───────────────────────────────────────────────────────────────────────────────
-
-  - C17, C20, C21: history pre-scan rule — verify bot skips already-answered
-    questions without re-asking them
-  - C8: demo handling — verify demo is not offered proactively; verify
-    confirmation gate works; verify handoff fires correctly after confirmation
++----------------------------------+-----------------------------+---------------------------------------------+
+| ISSUE                            | ROOT CAUSE                  | FIX APPLIED                                 |
++----------------------------------+-----------------------------+---------------------------------------------+
+| Bot offered demo account to      | Demo was part of the        | Demo removed from all default paths.        |
+| users who had the budget and      | default onboarding flow     | Only mentioned if user explicitly pushes    |
+| were ready to invest. Also        | regardless of sentiment     | back after being told the $500 minimum.     |
+| offered demo to users who said   | or budget level.            | Confirmation gate added before any          |
+| they had less than $500 without  |                             | handoff to a human. Bot asks: "Just to      |
+| first trying to close them.      |                             | confirm — demo only, no real investment?"   |
++----------------------------------+-----------------------------+---------------------------------------------+
+| Agent responses incorrectly      | Old FAQ entries referenced  | All FAQ entries updated to remove MT5       |
+| referenced MT5 credentials and   | the old MT5 copy-trading    | language. Three new standalone FAQ pairs    |
+| implied users needed to share    | method. We now connect      | added explaining the full account setup     |
+| login details with us. Users     | via copy-trade links        | and copy-trade connection process for       |
+| were confused and concerned.     | inside each broker.         | Vantage, PU Prime, and Bybit separately.   |
++----------------------------------+-----------------------------+---------------------------------------------+
+| Bot re-asked questions the user  | Agent only looked forward   | Added a history pre-scan rule: before       |
+| had already answered earlier     | through its checklist.      | asking any question, the bot now scans      |
+| in the conversation — e.g.       | If a step was not           | the full conversation history, infers       |
+| re-asking about budget when      | formally recorded it        | already-known answers, and skips those      |
+| the user already mentioned       | asked the question again    | steps automatically.                        |
+| having $500, or re-asking which  | regardless of context.      |                                             |
+| bot they wanted after they       |                             |                                             |
+| already expressed a preference.  |                             |                                             |
++----------------------------------+-----------------------------+---------------------------------------------+
+| Bot responses outside the        | No response length rule     | All replies capped at 2–3 short sentences   |
+| onboarding flow were too long    | existed. When answering     | regardless of topic. If multiple FAQ        |
+| and detailed. Multiple FAQ        | off-flow questions, agent   | results are retrieved, only the most        |
+| answers were dumped into one     | returned everything it      | relevant one is used. Broker constraint     |
+| reply. Technical broker details  | found from the knowledge    | details (e.g. cents/range limits) are       |
+| like "traded in cents" were      | base without filtering.     | hidden unless the user specifically asks.   |
+| surfaced unnecessarily.          |                             |                                             |
++----------------------------------+-----------------------------+---------------------------------------------+
+| When a user said they wanted     | No scenario existed for     | Bot now gives one short sentence per        |
+| multiple bots or "all of them",  | multi-bot selection.        | available bot when asked, then asks which   |
+| the agent skipped straight to    | Agent assumed single-bot    | one the user wants to start with.           |
+| single-bot setup with no         | selection and proceeded     | Only one bot can be set up at a time.       |
+| explanation of the options.      | incorrectly.                |                                             |
++----------------------------------+-----------------------------+---------------------------------------------+
+| When users asked for proof of    | No process or content       | Built a full results video system:          |
+| results or performance, the bot  | existed for handling        | videos are uploaded per market via the      |
+| stalled or fired a generic       | proof-of-results requests.  | dashboard (new Results Videos tab),         |
+| handoff with no useful response. |                             | stored in Supabase, and served by the       |
+|                                  |                             | bot automatically when users ask.           |
++----------------------------------+-----------------------------+---------------------------------------------+
+| User had a scheduled callback    | No handoff trigger existed  | New handoff scenario added: fires when      |
+| but returned saying they were    | for when a user expresses   | a user says they are available now or       |
+| free now. Bot continued the      | immediate availability      | wants to speak immediately — e.g.           |
+| standard flow instead of         | mid-conversation.           | "I'm free now", "call me now".              |
+| connecting them with the team.   |                             |                                             |
++----------------------------------+-----------------------------+---------------------------------------------+
+| Silver bot was shown to users    | Silver was included in      | Removed from country offers, broker         |
+| in some countries even though    | country offers and some     | links, and FAQ entries. No references       |
+| it is not currently offered.     | FAQ entries by mistake.     | to Silver remain in the system.             |
++----------------------------------+-----------------------------+---------------------------------------------+

@@ -58,7 +58,8 @@ If `bot_recommendation` is **not** in completed_steps:
 2. Use **only** the tool's `bots` array. Do **not** mention brokers, minimum capital, or links.
 3. **If the tool returns exactly one bot:** Present that bot and ask for **confirmation** to proceed (e.g. "For [country] we have a [bot name] trading bot available. Shall we proceed with that?"). When the user confirms, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<that one bot>")`**. There is no choice—only confirmation.
 4. **If the tool returns two or more bots:** List all bots and ask the user which one they want. Ask: "We have bots for [list all bots]. Which one would you like to go with?" Wait for the user's response. Use their choice. When the choice is clear, call **`update_onboarding_state(step_name="bot_recommendation", bot_preference="<their choice>")`**
-5. Do not proceed to brokers in this message.
+5. **If the user says they want all bots, multiple bots, or asks what the difference is:** Give one short sentence per bot (e.g. "Gold trades gold commodities, Crypto trades Bitcoin and Ethereum, Forex trades currency pairs.") then ask: "Which one would you like to start with?" We can only set up one bot at a time — do not attempt multi-bot setup. Once they pick one, continue normally with that selection.
+6. Do not proceed to brokers in this message.
 
 ---
 

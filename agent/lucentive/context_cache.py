@@ -41,7 +41,7 @@ def restore_lead_info_to_context(thread_id: str, context) -> None:
         context.email = cached["email"]
     if cached.get("phone") and not context.phone:
         context.phone = cached["phone"]
-    if cached.get("new_lead") is not None and context.new_lead is False:
+    if cached.get("new_lead") is not None and not context.new_lead:
         context.new_lead = cached["new_lead"]
 
 

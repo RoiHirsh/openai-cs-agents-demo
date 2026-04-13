@@ -46,6 +46,9 @@ PLAIN_TEXT_RULE = (
     "KNOWLEDGE BOUNDARY: You may only answer from your assigned tools, skills, and knowledge base. "
     "Never answer from general model knowledge. If a question is not covered by your assigned sources, "
     "either hand off to the appropriate agent or (Onboarding Agent only, as a last resort) escalate to human handoff.\n"
+    "LANGUAGE: Always respond in English only, no matter what language the customer writes in. "
+    "If you receive a message in any other language, do not reply in that language. "
+    "Instead respond in English and let them know naturally: for example, 'Hey, just so you know I can only chat in English — what did you want to ask?'\n"
 )
 
 _SCHEDULING_SKILL: str | None = None

@@ -11,6 +11,7 @@ from agents import RunContextWrapper, function_tool
 from .context import LucentiveAgentChatContext
 from .context_cache import set_lead_info, set_onboarding_state
 from .scheduling import CALENDLY_BOOKING_URL, compute_scheduling_context
+from integrations.supabase_client import get_supabase_client
 
 # Import here to avoid circular dependency — chatwoot is a top-level module
 try:
@@ -47,7 +48,6 @@ def _load_broker_assets_data() -> dict[str, Any]:
     if _BROKER_ASSETS_CACHE is not None and now - _BROKER_ASSETS_CACHE_TIME < _CACHE_TTL:
         return _BROKER_ASSETS_CACHE
     try:
-        from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
         rows = sb.table("broker_assets").select("broker,purpose,asset_type,title,url,bot").eq("active", True).order("sort_order").execute().data
         data: dict[str, Any] = {}
@@ -77,7 +77,6 @@ def _load_country_offers_data() -> dict[str, dict[str, Any]]:
     if _COUNTRY_OFFERS_CACHE is not None and now - _COUNTRY_OFFERS_CACHE_TIME < _CACHE_TTL:
         return _COUNTRY_OFFERS_CACHE
     try:
-        from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
         rows = sb.table("country_offers").select("country_group,broker_name,bots,broker_notes,group_notes").eq("active", True).order("sort_order").execute().data
         data: dict[str, dict[str, Any]] = {}
@@ -116,7 +115,6 @@ def _load_brokers_for_norm() -> list[dict]:
     if _BROKERS_NORM_CACHE is not None and now - _BROKERS_NORM_CACHE_TIME < _CACHE_TTL:
         return _BROKERS_NORM_CACHE
     try:
-        from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
         _BROKERS_NORM_CACHE = sb.table("brokers").select("broker_id,display_name,aliases").eq("active", True).execute().data
         _BROKERS_NORM_CACHE_TIME = now
@@ -133,7 +131,6 @@ def _load_country_groups_for_norm() -> list[dict]:
     if _COUNTRY_GROUPS_NORM_CACHE is not None and now - _COUNTRY_GROUPS_NORM_CACHE_TIME < _CACHE_TTL:
         return _COUNTRY_GROUPS_NORM_CACHE
     try:
-        from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
         _COUNTRY_GROUPS_NORM_CACHE = sb.table("country_groups").select("name,aliases").eq("active", True).execute().data
         _COUNTRY_GROUPS_NORM_CACHE_TIME = now
@@ -496,7 +493,6 @@ def _load_results_videos() -> dict[str, Any]:
     if _RESULTS_VIDEOS_CACHE is not None and now - _RESULTS_VIDEOS_CACHE_TIME < _CACHE_TTL:
         return _RESULTS_VIDEOS_CACHE
     try:
-        from integrations.supabase_client import get_supabase_client
         sb = get_supabase_client()
         rows = sb.table("results_videos").select("market,url,updated_at").execute().data
         data = {row["market"]: {"url": row["url"], "updated_at": row.get("updated_at", "")} for row in rows}

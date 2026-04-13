@@ -37,6 +37,8 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Toggle status HTTP %s: %s", toggle_res.status_code, toggle_res.text)
+        if toggle_res.status_code >= 400:
+            logger.error("[handoff] Toggle status failed: %s %s", toggle_res.status_code, toggle_res.text)
 
         # Assign to agent 7 (Laura) for personal notification
         assign_res = await client.post(
@@ -46,6 +48,8 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Agent assignment HTTP %s: %s", assign_res.status_code, assign_res.text)
+        if assign_res.status_code >= 400:
+            logger.error("[handoff] Agent assignment failed: %s %s", assign_res.status_code, assign_res.text)
 
         # Assign to team 1 (shared queue) as a separate call
         team_res = await client.post(
@@ -55,6 +59,8 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Team assignment HTTP %s: %s", team_res.status_code, team_res.text)
+        if team_res.status_code >= 400:
+            logger.error("[handoff] Team assignment failed: %s %s", team_res.status_code, team_res.text)
 
         priority_res = await client.patch(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}",
@@ -63,6 +69,8 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Priority HTTP %s: %s", priority_res.status_code, priority_res.text)
+        if priority_res.status_code >= 400:
+            logger.error("[handoff] Priority update failed: %s %s", priority_res.status_code, priority_res.text)
 
         label_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/labels",
@@ -71,6 +79,8 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Label HTTP %s: %s", label_res.status_code, label_res.text)
+        if label_res.status_code >= 400:
+            logger.error("[handoff] Label apply failed: %s %s", label_res.status_code, label_res.text)
 
         note_res = await client.post(
             f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
@@ -83,5 +93,7 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             timeout=10.0,
         )
         logger.debug("[handoff] Private note HTTP %s: %s", note_res.status_code, note_res.text)
+        if note_res.status_code >= 400:
+            logger.error("[handoff] Private note failed: %s %s", note_res.status_code, note_res.text)
 
     return {"ok": True}

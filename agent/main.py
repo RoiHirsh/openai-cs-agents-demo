@@ -12,7 +12,7 @@ load_dotenv()
 
 from chatkit.server import StreamingResult
 import httpx
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
@@ -38,6 +38,7 @@ from server import LucentiveServer
 from lucentive.context_cache import clear_thread_cache
 from integrations.chatwoot import trigger_human_handoff
 from knowledge.knowledge import router as knowledge_router
+from auth_utils import require_dashboard_key as _require_key
 
 app = FastAPI()
 
@@ -369,7 +370,7 @@ async def api_chat(
                 try:
                     restored_events.append(AgentEvent(**{k: ev[k] for k in AgentEvent.model_fields if k in ev}))
                 except Exception:
-                    pass
+                    logger.warning("[restore] Skipped malformed event: %s", ev)
                 if ev.get("type") == "guardrail":
                     try:
                         meta = ev.get("metadata") or {}
@@ -382,7 +383,7 @@ async def api_chat(
                             timestamp=ev.get("timestamp", 0),
                         ))
                     except Exception:
-                        pass
+                        logger.warning("[restore] Skipped malformed guardrail event: %s", ev)
             server._state[thread_id] = ConversationState(
                 input_items=row.get("input_items") or [],
                 context=LucentiveAgentContext(**stored_context) if stored_context else create_initial_context(),
@@ -474,25 +475,6 @@ def _format_event(ev: dict) -> dict:
         "active_agent": active_agent,
     }
 
-
-def _require_dashboard_key_dep(x_dashboard_key: Optional[str] = None) -> None:
-    from fastapi import Header, HTTPException
-    expected = os.environ.get("DASHBOARD_API_KEY", "")
-    if not expected:
-        raise __import__("fastapi").HTTPException(status_code=500, detail="DASHBOARD_API_KEY not configured")
-    if x_dashboard_key != expected:
-        raise __import__("fastapi").HTTPException(status_code=401, detail="Invalid dashboard key")
-
-
-from fastapi import Header, HTTPException
-
-
-def _require_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
-    expected = os.environ.get("DASHBOARD_API_KEY", "")
-    if not expected:
-        raise HTTPException(status_code=500, detail="DASHBOARD_API_KEY not configured")
-    if x_dashboard_key != expected:
-        raise HTTPException(status_code=401, detail="Invalid dashboard key")
 
 
 @app.get("/admin/threads")

@@ -240,8 +240,6 @@ def _user_message_to_text(message: UserMessageItem) -> str:
 def _parse_tool_args(raw_args: Any) -> Any:
     if isinstance(raw_args, str):
         try:
-            import json
-
             return json.loads(raw_args)
         except Exception:
             return raw_args

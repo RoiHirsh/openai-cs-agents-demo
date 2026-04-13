@@ -15,23 +15,13 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import openai
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel, field_validator
 
 from integrations.supabase_client import get_supabase_client
+from auth_utils import require_dashboard_key as _require_dashboard_key
 
 logger = logging.getLogger(__name__)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Auth dependency
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _require_dashboard_key(x_dashboard_key: Optional[str] = Header(default=None)) -> None:
-    expected = os.environ.get("DASHBOARD_API_KEY", "")
-    if not expected:
-        raise HTTPException(status_code=500, detail="DASHBOARD_API_KEY not configured on server")
-    if x_dashboard_key != expected:
-        raise HTTPException(status_code=401, detail="Invalid dashboard key")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

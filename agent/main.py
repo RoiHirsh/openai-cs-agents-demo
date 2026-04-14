@@ -612,12 +612,43 @@ async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -
 
 @app.get("/admin/conversations/{thread_id}/messages")
 async def admin_conversation_messages(thread_id: str, _: None = Depends(_require_key)) -> list:
-    """Return just user + assistant messages for a clean chat view."""
+    """Return just user + assistant messages for a clean chat view.
+
+    For WhatsApp threads that have a Chatwoot conversation_id stored in context,
+    messages are fetched directly from Chatwoot so the view reflects the actual
+    conversation (including chat-batched consecutive user messages) rather than
+    the internal input_items which may contain intermediate bot responses that
+    were never delivered to the user.  Falls back to input_items if Chatwoot is
+    unavailable or the thread has no conversation_id (e.g. dashboard/ChatKit sessions).
+    """
+    from integrations.chatwoot import fetch_chatwoot_messages
+
     sb = get_supabase_client()
-    row_res = sb.table("threads").select("input_items").eq("thread_id", thread_id).limit(1).execute()
+    row_res = sb.table("threads").select("input_items,context").eq("thread_id", thread_id).limit(1).execute()
     if not row_res.data:
         raise HTTPException(status_code=404, detail="Thread not found")
-    input_items = row_res.data[0].get("input_items") or []
+
+    row = row_res.data[0]
+    stored_context = row.get("context") or {}
+    conversation_id = stored_context.get("conversation_id")
+
+    # ── Chatwoot path (WhatsApp threads) ─────────────────────────────────────
+    if conversation_id:
+        try:
+            chatwoot_msgs = await fetch_chatwoot_messages(str(conversation_id))
+            if chatwoot_msgs:
+                return [
+                    {"index": msg["id"], "role": msg["role"], "content": msg["content"]}
+                    for msg in chatwoot_msgs
+                ]
+        except Exception as exc:
+            logger.warning(
+                "[conversation_messages] Chatwoot fetch failed for conv %s, falling back to input_items: %s",
+                conversation_id, exc,
+            )
+
+    # ── Fallback: read from stored input_items ────────────────────────────────
+    input_items = row.get("input_items") or []
     messages = []
     for idx, item in enumerate(input_items):
         role = item.get("role")

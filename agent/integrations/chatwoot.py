@@ -97,3 +97,58 @@ async def trigger_human_handoff(conversation_id: str) -> dict:
             logger.error("[handoff] Private note failed: %s %s", note_res.status_code, note_res.text)
 
     return {"ok": True}
+
+
+async def fetch_chatwoot_messages(conversation_id: str) -> list[dict]:
+    """
+    Fetch the actual messages from a Chatwoot conversation.
+
+    Returns a list of dicts with keys: id, role ("user"|"assistant"), content, created_at.
+    Skips activity messages (type 2/3) and private notes.
+    """
+    chatwoot_token = os.getenv("CHATWOOT_API_TOKEN", "")
+    if not chatwoot_token:
+        logger.warning("[chatwoot] CHATWOOT_API_TOKEN not set — cannot fetch messages")
+        return []
+
+    async with httpx.AsyncClient() as client:
+        headers = {"api_access_token": chatwoot_token}
+        res = await client.get(
+            f"{_CHATWOOT_BASE}/conversations/{conversation_id}/messages",
+            headers=headers,
+            timeout=10.0,
+        )
+        if res.status_code != 200:
+            logger.warning("[chatwoot] Messages fetch failed: %s %s", res.status_code, res.text[:200])
+            return []
+
+        data = res.json()
+        # Chatwoot returns either {"payload": [...]} or {"payload": {"messages": [...]}}
+        payload = data.get("payload", [])
+        if isinstance(payload, dict):
+            raw_msgs = payload.get("messages", [])
+        elif isinstance(payload, list):
+            raw_msgs = payload
+        else:
+            raw_msgs = []
+
+        result = []
+        for msg in raw_msgs:
+            msg_type = msg.get("message_type")
+            private = msg.get("private", False)
+            content = (msg.get("content") or "").strip()
+
+            # 0 = incoming (user), 1 = outgoing (bot/agent)
+            # Skip activity (2), template (3), and private notes
+            if msg_type not in (0, 1) or private or not content:
+                continue
+
+            result.append({
+                "id": msg.get("id"),
+                "role": "user" if msg_type == 0 else "assistant",
+                "content": content,
+                "created_at": msg.get("created_at") or 0,
+            })
+
+        result.sort(key=lambda x: x["created_at"])
+        return result

@@ -180,6 +180,21 @@ from integrations.chatwoot import _CHATWOOT_BASE  # single source of truth
 _N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
 
 
+def _is_multi_reply_enabled() -> bool:
+    return os.getenv("ENABLE_MULTI_REPLY", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _build_chat_reply_payload(messages: list[str]) -> Dict[str, Any]:
+    cleaned = [m.strip() for m in messages if isinstance(m, str) and m.strip()]
+    if not cleaned:
+        cleaned = [""]
+
+    # Keep default behavior as single-message unless explicitly enabled.
+    max_replies = 2 if _is_multi_reply_enabled() else 1
+    replies = cleaned[:max_replies]
+    return {"reply": replies[0], "replies": replies}
+
+
 
 
 async def _handle_reset(phone_number: str, sb, server: LucentiveServer) -> Dict[str, Any]:
@@ -333,12 +348,12 @@ async def api_chat(
     # Human handoff command (dev only — kept as manual override)
     if body.message.strip().lower() == "/human":
         await trigger_human_handoff(body.conversation_id)
-        return {"reply": "Please hold on one sec while I check something for you."}
+        return _build_chat_reply_payload(["Please hold on one sec while I check something for you."])
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
     lead_res = sb.table("leads").select("thread_id,full_name,email,country,phone_number,new_lead").eq("phone_number", body.phone_number).limit(1).execute()
     if not lead_res.data:
-        return {"reply": "Sorry, I could not find your account."}
+        return _build_chat_reply_payload(["Sorry, I could not find your account."])
     lead_row = lead_res.data[0]
     thread_id: str | None = lead_row.get("thread_id")
     lead_info = {
@@ -397,7 +412,7 @@ async def api_chat(
         server._state[thread_id].context.conversation_id = body.conversation_id
 
     # 3. Run the agent
-    reply, new_thread_id = await server.process_plaintext_message(
+    replies, new_thread_id = await server.process_plaintext_message(
         thread_id=thread_id,
         user_text=body.message,
         request_context={"request": None},
@@ -425,7 +440,7 @@ async def api_chat(
     if not thread_id:
         sb.table("leads").update({"thread_id": new_thread_id}).eq("phone_number", body.phone_number).execute()
 
-    return {"reply": reply}
+    return _build_chat_reply_payload(replies)
 
 
 

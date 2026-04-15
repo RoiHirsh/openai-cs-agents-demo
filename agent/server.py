@@ -287,12 +287,12 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
         user_text: str,
         request_context: dict[str, Any] | None = None,
         lead_info: dict[str, Any] | None = None,
-    ) -> tuple[str, str]:
+    ) -> tuple[list[str], str]:
         """
         Process a plain inbound text message (e.g. WhatsApp) using the same
         runner/server state as ChatKit.
 
-        Returns: (assistant_text, thread_id)
+        Returns: (assistant_messages, thread_id)
         """
         ctx: dict[str, Any] = {"request": None}
         if request_context:
@@ -303,9 +303,9 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
         # Ensure thread exists (create if missing).
         thread = await self._ensure_thread(thread_id, ctx)
 
-        # Run the normal `respond()` streaming loop but capture the final assistant text.
+        # Run the normal `respond()` streaming loop and capture assistant messages.
         input_user_message = _PlainTextUserMessage(user_text)
-        last_assistant_text = ""
+        assistant_messages: list[str] = []
         async for event in self.respond(thread, input_user_message, ctx):
             try:
                 item = getattr(event, "item", None)
@@ -316,12 +316,14 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                         if isinstance(t, str) and t:
                             parts.append(t)
                     if parts:
-                        last_assistant_text = "".join(parts).strip()
+                        message_text = "".join(parts).strip()
+                        if message_text and (not assistant_messages or assistant_messages[-1] != message_text):
+                            assistant_messages.append(message_text)
             except Exception:
                 # Never break message processing because of capture logic.
                 continue
 
-        return last_assistant_text, thread.id
+        return assistant_messages, thread.id
 
     async def _ensure_thread(
         self, thread_id: Optional[str], context: dict[str, Any]

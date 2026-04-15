@@ -27,6 +27,19 @@ async function apiFetch(path, options = {}) {
   return res.json()
 }
 
+function downloadJsonFile(filename, payload) {
+  const json = JSON.stringify(payload, null, 2)
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
+}
+
 // ─── Auth gate ────────────────────────────────────────────────────────────────
 
 function AuthGate({ onAuth }) {
@@ -1395,6 +1408,18 @@ function ThreadsTab() {
 
   function openThread(t) { setSelected(t); loadThread(t) }
   function refreshThread() { if (selected) loadThread(selected) }
+  function exportSelectedThread() {
+    if (!selected || !events) return
+    downloadJsonFile(
+      `thread-${selected.thread_id || 'unknown'}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
+      {
+        exported_at: new Date().toISOString(),
+        source: 'threads_tab',
+        thread: selected,
+        events,
+      },
+    )
+  }
 
   const filteredThreads = (threads || []).filter(t => {
     if (filter === 'correction') return t.has_corrections
@@ -1414,6 +1439,9 @@ function ThreadsTab() {
           </span>
           <button className="btn-secondary" style={{ marginLeft: 'auto' }} onClick={refreshThread}>
             ↺ Refresh
+          </button>
+          <button className="btn-primary" style={{ marginLeft: 8 }} onClick={exportSelectedThread} disabled={!events}>
+            Export as JSON
           </button>
         </div>
 
@@ -1573,6 +1601,19 @@ function ConversationsTab() {
 
   function openThread(t) { setSelected(t); loadThread(t) }
   function refreshThread() { loadThread(selected) }
+  function exportSelectedConversation() {
+    if (!selected || !messages) return
+    downloadJsonFile(
+      `conversation-${selected.thread_id || 'unknown'}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
+      {
+        exported_at: new Date().toISOString(),
+        source: 'conversations_tab',
+        thread: selected,
+        messages,
+        corrections: Object.values(corrections),
+      },
+    )
+  }
 
   function startCorrection(e, msg) {
     e.stopPropagation()
@@ -1644,6 +1685,9 @@ function ConversationsTab() {
           </span>
           <button className="btn-outline" style={{ marginLeft: 'auto', fontSize: 13 }} onClick={refreshThread} title="Reload messages">
             ↻ Refresh
+          </button>
+          <button className="btn-primary" style={{ marginLeft: 8 }} onClick={exportSelectedConversation} disabled={!messages}>
+            Export as JSON
           </button>
         </div>
 

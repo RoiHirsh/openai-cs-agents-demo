@@ -1,0 +1,109 @@
+thr_9b9e0135 - is this a mistake? should check with shay
+thr_704ffe1d - is this a mistake? should check with shay
+thr_168c4406 - same
+thr_642dd33e - same
+thr_3ea74e35 - no issue
+thr_29c75f31 - no issue
+thr_6d67c70a - no issue
+thr_2f622e71 - no issue
+thr_a892e19d - no issue
+thr_4b52d51b - It's pushing too hard to proceed - we need to fix
+thr_6f28e59b - check why it tried to handoff instead of answering
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

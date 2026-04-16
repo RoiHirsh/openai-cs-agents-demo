@@ -3,6 +3,7 @@ from __future__ import annotations as _annotations
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -566,7 +567,11 @@ async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -
 
     # Load corrections for this thread
     corr_res = sb.table("corrections").select("*").eq("thread_id", thread_id).execute()
-    corr_by_index = {c["message_index"]: c for c in (corr_res.data or [])}
+    all_corrs = corr_res.data or []
+    corr_by_index = {c["message_index"]: c for c in all_corrs}
+    # Secondary lookup by original_message content — fixes corrections saved with
+    # stale Chatwoot IDs instead of input_items positions.
+    corr_by_content = {c["original_message"].strip(): c for c in all_corrs if c.get("original_message")}
 
     # Build content → message_index map from input_items (assistant messages only)
     def _normalize(content: Any) -> str:
@@ -606,6 +611,12 @@ async def admin_thread_events(thread_id: str, _: None = Depends(_require_key)) -
                             break
                 if msg_idx is not None and msg_idx in corr_by_index:
                     formatted["correction"] = corr_by_index[msg_idx]
+                elif ev_content in corr_by_content:
+                    # Fallback: match by original_message content for corrections
+                    # stored with stale indices (e.g. Chatwoot IDs).
+                    formatted["correction"] = corr_by_content[ev_content]
+                elif ev_core and ev_core in corr_by_content:
+                    formatted["correction"] = corr_by_content[ev_core]
         result.append(formatted)
     return result
 
@@ -633,14 +644,40 @@ async def admin_conversation_messages(thread_id: str, _: None = Depends(_require
     conversation_id = stored_context.get("conversation_id")
 
     # ── Chatwoot path (WhatsApp threads) ─────────────────────────────────────
+    _CITATION_RE = re.compile(r"【[^】]*†source】")
+
+    def _strip_citations(text: str) -> str:
+        return re.sub(r"\s{2,}", " ", _CITATION_RE.sub("", text)).strip()
+
     if conversation_id:
         try:
             chatwoot_msgs = await fetch_chatwoot_messages(str(conversation_id))
             if chatwoot_msgs:
-                return [
-                    {"index": msg["id"], "role": msg["role"], "content": msg["content"]}
-                    for msg in chatwoot_msgs
-                ]
+                # Build content → input_items index map so corrections (keyed by
+                # input_items position) still match when messages come from Chatwoot.
+                # input_items may contain raw OpenAI output with citation markers
+                # (e.g. 【4:0†source】) while Chatwoot stores the stripped version,
+                # so we strip both sides before comparing.
+                input_items_for_idx = row.get("input_items") or []
+                content_to_input_idx: dict = {}
+                for i_idx, item in enumerate(input_items_for_idx):
+                    if not isinstance(item, dict):
+                        continue
+                    raw = item.get("content", "")
+                    if isinstance(raw, list):
+                        raw = " ".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in raw)
+                    raw = _strip_citations(str(raw))
+                    if raw:
+                        content_to_input_idx[raw] = i_idx
+
+                result = []
+                for msg in chatwoot_msgs:
+                    content = _strip_citations(msg.get("content") or "")
+                    # Use the input_items position as index so corrections map correctly;
+                    # fall back to the Chatwoot message id when no match is found.
+                    idx = content_to_input_idx.get(content, msg["id"])
+                    result.append({"index": idx, "role": msg["role"], "content": msg["content"]})
+                return result
         except Exception as exc:
             logger.warning(
                 "[conversation_messages] Chatwoot fetch failed for conv %s, falling back to input_items: %s",

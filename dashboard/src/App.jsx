@@ -1592,8 +1592,17 @@ function ConversationsTab() {
         apiFetch(`/admin/corrections?thread_id=${t.thread_id}`),
       ])
       setMessages(msgs || [])
+      // Build content → current message index map so corrections saved with
+      // stale Chatwoot IDs (before the input_items index fix) still match.
+      const contentToIdx = {}
+      for (const msg of (msgs || [])) {
+        if (msg.role === 'assistant' && msg.content) contentToIdx[msg.content.trim()] = msg.index
+      }
       const map = {}
-      for (const c of (corrs || [])) map[c.message_index] = c
+      for (const c of (corrs || [])) {
+        const remapped = c.original_message ? contentToIdx[c.original_message.trim()] : undefined
+        map[remapped !== undefined ? remapped : c.message_index] = c
+      }
       setCorrections(map)
     } catch { setMessages([]) }
     finally { setLoadingMsgs(false) }

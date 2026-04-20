@@ -341,435 +341,1052 @@ const CATEGORIES = [
 
 const corrections = [
   {
-    id: "c1",
-    phone: "+972505267429",
-    thread: "thr_b3dcaeb9",
-    reviewerNote: "Bot should have routed the question to the FAQ agent instead of going to the bot mapping tool",
-    original: "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex)\n3) ByBit (Futures in crypto)",
-    correct: "Unfortunately no. We don't trade with US citizens because of the regulation.",
-    context: [
-      { role: "bot",  text: "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex)\n3) ByBit (Futures in crypto)", flagged: true },
-      { role: "user", text: "but what if i am a us citizen?" },
+    "id": "c1",
+    "phone": "+972505267429",
+    "thread": "thr_b3dcaeb9",
+    "reviewerNote": "bot should have routed the quetion to the faq agent to see this question instead of going to the bot mapping tool",
+    "original": "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex) note: Gold/Silver only in cents; $500\u2013$10,000 USD only\n3) ByBit (Futures in crypto)",
+    "correct": "Unfortunately no. We don't trade with us citizen because of the regulation",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Yes, if you live in the USA you can trade with us.\n\nFor the USA, the available bots are: Crypto, Gold, Silver, Forex, and Futures in crypto.\n\nAnd the available broker options are:\n1) Vantage (Crypto, Gold)\n2) PU Prime (Gold, Silver, Forex) note: Gold/Silver only in cents; $500\u2013$10,000 USD only\n3) ByBit (Futures in crypto)",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "but what if i am a us citizen?"
+      }
     ]
   },
   {
-    id: "c2",
-    phone: "+972505267429",
-    thread: "thr_b3dcaeb9",
-    reviewerNote: "No handoff should have been here — the answer is simply 'no'",
-    original: "Please wait one sec while I check something for you.",
-    correct: "The answer is no.",
-    context: [
-      { role: "user", text: "but what if i am a us citizen?" },
-      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
-      { role: "user", text: "hi are you still here?" },
-      { role: "bot",  text: "Yes, I'm here.\n\nIf you're a US citizen, unfortunately no — we don't trade with US citizens because of regulation." },
+    "id": "c2",
+    "phone": "+972505267429",
+    "thread": "thr_b3dcaeb9",
+    "reviewerNote": "no handoff should have been here",
+    "original": "Please wait one sec while I check something for you.",
+    "correct": "the answer is no",
+    "context": [
+      {
+        "role": "user",
+        "text": "but what if i am a us citizen?"
+      },
+      {
+        "role": "bot",
+        "text": "Please wait one sec while I check something for you.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "hi are you still here?"
+      },
+      {
+        "role": "bot",
+        "text": "Yes, I\u2019m here.\n\nIf you\u2019re a US citizen, unfortunately no \u2014 we don\u2019t trade with US citizens because of regulation."
+      }
     ]
   },
   {
-    id: "c3",
-    phone: "+972505267429",
-    thread: "thr_2cda389e",
-    reviewerNote: "(no note)",
-    original: "Forex is short for 'foreign exchange' trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?",
-    correct: "Forex is good.",
-    context: [
-      { role: "bot",  text: "Do you have prior trading experience?" },
-      { role: "user", text: "yeah" },
-      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?" },
-      { role: "user", text: "what do you mean forex" },
-      { role: "bot",  text: "Forex is short for 'foreign exchange' trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?", flagged: true },
-      { role: "user", text: "thanks" },
-      { role: "bot",  text: "What type of trading was your experience in (stocks, forex, crypto, or something else)?" },
-      { role: "user", text: "forex" },
+    "id": "c3",
+    "phone": "+972505267429",
+    "thread": "thr_2cda389e",
+    "reviewerNote": "(no note)",
+    "original": "Forex is short for \u201cforeign exchange\u201d trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?",
+    "correct": "forex is good",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Do you have prior trading experience?"
+      },
+      {
+        "role": "user",
+        "text": "yeah"
+      },
+      {
+        "role": "bot",
+        "text": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?"
+      },
+      {
+        "role": "user",
+        "text": "what do you mean forex"
+      },
+      {
+        "role": "bot",
+        "text": "Forex is short for \u201cforeign exchange\u201d trading, meaning trading currency pairs like EUR/USD or GBP/USD.\n\nWhat type of trading was your experience in (stocks, forex, crypto, or something else)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "thanks"
+      },
+      {
+        "role": "bot",
+        "text": "What type of trading was your experience in (stocks, forex, crypto, or something else)?"
+      },
+      {
+        "role": "user",
+        "text": "forex"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?"
+      }
     ]
   },
   {
-    id: "c4",
-    phone: "+972505267429",
-    thread: "thr_2cda389e",
-    reviewerNote: "We should make sure bot acts as human",
-    original: "I'm an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?",
-    correct: "Ha ha no actually I am Shay",
-    context: [
-      { role: "bot",  text: "What type of trading was your experience in (stocks, forex, crypto, or something else)?" },
-      { role: "user", text: "forex" },
-      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
-      { role: "user", text: "r u bot?" },
-      { role: "bot",  text: "I'm an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?", flagged: true },
+    "id": "c4",
+    "phone": "+972505267429",
+    "thread": "thr_2cda389e",
+    "reviewerNote": "we should make sure bot acts as human",
+    "original": "I\u2019m an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?",
+    "correct": "Ha ha no actualloy i am Shay",
+    "context": [
+      {
+        "role": "bot",
+        "text": "What type of trading was your experience in (stocks, forex, crypto, or something else)?"
+      },
+      {
+        "role": "user",
+        "text": "forex"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?"
+      },
+      {
+        "role": "user",
+        "text": "r u bot?"
+      },
+      {
+        "role": "bot",
+        "text": "I\u2019m an AI assistant here to guide you through setup and answer onboarding questions.\n\nWhich broker did you use for your forex trading (e.g., Vantage, ByBit, PuPrime)?",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c5",
-    phone: "+50233418310",
-    thread: "thr_f8758f3f",
-    reviewerNote: "Incorrect wording",
-    original: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
-    correct: "Great, let me know what type of trading you have experience with?",
-    context: [
-      { role: "bot",  text: "Do you have prior trading experience?" },
-      { role: "user", text: "Yes" },
-      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?", flagged: true },
-      { role: "user", text: "I trade stocks" },
-      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
+    "id": "c5",
+    "phone": "+50233418310",
+    "thread": "thr_f8758f3f",
+    "reviewerNote": "incorrect wording",
+    "original": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    "correct": "Great, let me know what type of trading you have experience with?",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Do you have prior trading experience?"
+      },
+      {
+        "role": "user",
+        "text": "Yes"
+      },
+      {
+        "role": "bot",
+        "text": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "I trade stocks"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?"
+      },
+      {
+        "role": "user",
+        "text": "Exness"
+      }
     ]
   },
   {
-    id: "c6",
-    phone: "+50233418310",
-    thread: "thr_f8758f3f",
-    reviewerNote: "If customer says they trade stocks, the response should be 'we don't trade in the stocks market', not 'what broker do you use'",
-    original: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?",
-    correct: "We don't trade stocks.",
-    context: [
-      { role: "bot",  text: "Do you have prior trading experience?" },
-      { role: "user", text: "Yes" },
-      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?" },
-      { role: "user", text: "I trade stocks" },
-      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?", flagged: true },
-      { role: "user", text: "Exness" },
+    "id": "c6",
+    "phone": "+50233418310",
+    "thread": "thr_f8758f3f",
+    "reviewerNote": "if I say i trade stocks, the response should be \"we don't trade in the stocks market\", not what broker do you use",
+    "original": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?",
+    "correct": "We don't trade stocks",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Do you have prior trading experience?"
+      },
+      {
+        "role": "user",
+        "text": "Yes"
+      },
+      {
+        "role": "bot",
+        "text": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?"
+      },
+      {
+        "role": "user",
+        "text": "I trade stocks"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Exness"
+      }
     ]
   },
   {
-    id: "c7",
-    phone: "+50233418310",
-    thread: "thr_f8758f3f",
-    reviewerNote: "This message is too long",
-    original: "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable.\n\nHow you get started:\n- You use an MT5 broker account (we typically work with brokers like Vantage and PU Prime)\n- Minimum to start is generally $500\n- On...",
-    correct: ".",
-    context: [
-      { role: "user", text: "Tell me about gold" },
-      { role: "bot",  text: "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable.\n\nHow you get started:\n- You use an MT5 broker account (we typically work with brokers like Vantage and PU Prime)\n- Minimum to start is generally $500\n- On...", flagged: true },
-      { role: "user", text: "I don't have $500 I have $100" },
+    "id": "c7",
+    "phone": "+50233418310",
+    "thread": "thr_f8758f3f",
+    "reviewerNote": "this message is too long",
+    "original": "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable. \n\nHow you get started\nYou use an MT5 broker account (we typically work with brokers like Vantage and PU Prime). \nMinimum to start is generally $500. \nOnce you provide your MT5 credentials, it usually takes 24\u201348 hours to connect and start trading. \nYou can also test it first on a demo MT5 account for 10 days. \n\nCosts / profit share\nThere\u2019s no upfront cost; we work on a profit-sharing model.\nAt month-end, profits are split 65/35: you keep 65% and we take 35%. \n\nReturns and risk\nReturns vary by market conditions; historically they\u2019ve ranged around 10%\u201330% per month, and for gold specifically we target roughly 8%\u201330% on average. Returns are not guaranteed. \nRisk is managed by automatically adjusting lot size and trade volume based on your account size (built-in risk management). \n\nControl of funds\nYou keep full ownership and control of the account and can withdraw anytime; we can trade on MT5 but can\u2019t deposit/withdraw or move your funds. \n\nDo you want to run it on a demo first, or are you looking to start live with around $500+?",
+    "correct": ".",
+    "context": [
+      {
+        "role": "user",
+        "text": "Tell me about gold"
+      },
+      {
+        "role": "bot",
+        "text": "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable. \n\nHow you get started\nYou use an MT5 broker account (we typically work with brokers like Vantage and PU Prime). \nMinimum to start is generally $500. \nOnce you provide your MT5 credentials, it usually takes 24\u201348 hours to connect and start trading. \nYou can also test it first on a demo MT5 account for 10 days. \n\nCosts / profit share\nThere\u2019s no upfront cost; we work on a profit-sharing model.\nAt month-end, profits are split 65/35: you keep 65% and we take 35%. \n\nReturns and risk\nReturns vary by market conditions; historically they\u2019ve ranged around 10%\u201330% per month, and for gold specifically we target roughly 8%\u201330% on average. Returns are not guaranteed. \nRisk is managed by automatically adjusting lot size and trade volume based on your account size (built-in risk management). \n\nControl of funds\nYou keep full ownership and control of the account and can withdraw anytime; we can trade on MT5 but can\u2019t deposit/withdraw or move your funds. \n\nDo you want to run it on a demo first, or are you looking to start live with around $500+?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "I don't have $500 I have $100"
+      },
+      {
+        "role": "bot",
+        "text": "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management. \n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+."
+      },
+      {
+        "role": "user",
+        "text": "What is demo on mt5"
+      }
     ]
   },
   {
-    id: "c8",
-    phone: "+50233418310",
-    thread: "thr_f8758f3f",
-    reviewerNote: "Confusing. If customer only has $100, better to just say the minimum is $500.",
-    original: "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management.\n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.",
-    correct: ".",
-    context: [
-      { role: "bot",  text: "...Minimum to start is generally $500..." },
-      { role: "user", text: "I don't have $500 I have $100" },
-      { role: "bot",  text: "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management.\n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.", flagged: true },
-      { role: "user", text: "What is demo on mt5" },
+    "id": "c8",
+    "phone": "+50233418310",
+    "thread": "thr_f8758f3f",
+    "reviewerNote": "confusing.  if customer only has $100, better to answer that the minimum is $500",
+    "original": "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management. \n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.",
+    "correct": ".",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Our Gold bot is an AI-powered automated trading system that trades the gold market for you through your MT5 account. We connect the software to your MT5 credentials, and it opens and closes trades automatically when market conditions are suitable. \n\nHow you get started\nYou use an MT5 broker account (we typically work with brokers like Vantage and PU Prime). \nMinimum to start is generally $500. \nOnce you provide your MT5 credentials, it usually takes 24\u201348 hours to connect and start trading. \nYou can also test it first on a demo MT5 account for 10 days. \n\nCosts / profit share\nThere\u2019s no upfront cost; we work on a profit-sharing model.\nAt month-end, profits are split 65/35: you keep 65% and we take 35%. \n\nReturns and risk\nReturns vary by market conditions; historically they\u2019ve ranged around 10%\u201330% per month, and for gold specifically we target roughly 8%\u201330% on average. Returns are not guaranteed. \nRisk is managed by automatically adjusting lot size and trade volume based on your account size (built-in risk management). \n\nControl of funds\nYou keep full ownership and control of the account and can withdraw anytime; we can trade on MT5 but can\u2019t deposit/withdraw or move your funds. \n\nDo you want to run it on a demo first, or are you looking to start live with around $500+?"
+      },
+      {
+        "role": "user",
+        "text": "I don't have $500 I have $100"
+      },
+      {
+        "role": "bot",
+        "text": "The minimum to start is generally $500, and we only recommend starting if you can meet that minimum because it gives enough room for proper risk management. \n\nWith $100, the best option is to start with the 10-day demo on MT5 first, and then move to a live account once you can build it up to $500+.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "What is demo on mt5"
+      },
+      {
+        "role": "bot",
+        "text": "A demo on MT5 is a practice trading account that uses virtual (fake) money, so you can see how the bot trades without risking your real funds.\n\nWe can connect the bot to your MT5 demo account and let you try it for 10 days before you decide to use real money."
+      }
     ]
   },
   {
-    id: "c9",
-    phone: "+50233418310",
-    thread: "thr_23cf67a7",
-    reviewerNote: "Respond with direct answer — at least 1 trade per day, may vary depending on market conditions",
-    original: "Please wait one sec while I check something for you.",
-    correct: "At least 1 trade per day, it might vary depending on the market conditions.",
-    context: [
-      { role: "user", text: "How many trades do you do in 1 day?" },
-      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    "id": "c9",
+    "phone": "+50233418310",
+    "thread": "thr_23cf67a7",
+    "reviewerNote": "Respond with direct answer",
+    "original": "Please wait one sec while I check something for you.",
+    "correct": "At least 1 trade per day, it might vary depending on the market conditions",
+    "context": [
+      {
+        "role": "user",
+        "text": "How many trades do you do in 1 day?"
+      },
+      {
+        "role": "bot",
+        "text": "Please wait one sec while I check something for you.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c10",
-    phone: "+50233418310",
-    thread: "thr_23f4d7cb",
-    reviewerNote: "Better wording",
-    original: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
-    correct: "Great! What type of trading do you have experience with?",
-    context: [
-      { role: "bot",  text: "Do you have prior trading experience?" },
-      { role: "user", text: "Yes" },
-      { role: "bot",  text: "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?", flagged: true },
-      { role: "user", text: "Crypto" },
+    "id": "c10",
+    "phone": "+50233418310",
+    "thread": "thr_23f4d7cb",
+    "reviewerNote": "better wording",
+    "original": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    "correct": "Great! What type of trading do you have experience with?",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Do you have prior trading experience?"
+      },
+      {
+        "role": "user",
+        "text": "Yes"
+      },
+      {
+        "role": "bot",
+        "text": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Crypto"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?"
+      },
+      {
+        "role": "user",
+        "text": "None of the above"
+      }
     ]
   },
   {
-    id: "c11",
-    phone: "+50233418310",
-    thread: "thr_23f4d7cb",
-    reviewerNote: "Customer already said crypto, and the bot is offering all other markets again",
-    original: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
-    correct: ".",
-    context: [
-      { role: "bot",  text: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?", flagged: true },
-      { role: "user", text: "I said crypto" },
+    "id": "c11",
+    "phone": "+50233418310",
+    "thread": "thr_23f4d7cb",
+    "reviewerNote": "Here the customer already said crypto, and it is offering other markets",
+    "original": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": ".",
+    "context": [
+      {
+        "role": "bot",
+        "text": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "I said crypto"
+      }
     ]
   },
   {
-    id: "c12",
-    phone: "+50233418310",
-    thread: "thr_23f4d7cb",
-    reviewerNote: "Vantage and Bybit for futures are both options, not only Vantage",
-    original: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?",
-    correct: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage and Bybit. Which would you prefer?",
-    context: [
-      { role: "bot",  text: "Perfect — we'll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?", flagged: true },
-      { role: "user", text: "What is Vantage" },
+    "id": "c12",
+    "phone": "+50233418310",
+    "thread": "thr_23f4d7cb",
+    "reviewerNote": "Vantage and Bybit for futures are both an option, not only Vantage",
+    "original": "Perfect \u2014 we\u2019ll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?",
+    "correct": "Perfect \u2014 we\u2019ll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with ......",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Perfect \u2014 we\u2019ll go with the Crypto bot.\n\nFor Guatemala, for Crypto we work with Vantage. Shall we proceed with Vantage?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "What is Vantage"
+      }
     ]
   },
   {
-    id: "c13",
-    phone: "+50233418310",
-    thread: "thr_252332eb",
-    reviewerNote: "Incorrect. To trade Gold, we can connect to MT5 OR create a copy trading account in PU Prime (no MT5 credentials needed — customer connects manually). The bot needs to ask more questions before explaining the process.",
-    original: "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...",
-    correct: "...",
-    context: [
-      { role: "bot",  text: "Yes, we do trade gold and we specialize in it.\n\nHow it works is we connect our AI trading software to your MT5 trading account and it trades automatically when conditions are suitable.\n\nA few key points:\n- Minimum to start is generally $500\n- No upfront cost; profit sharing at month-end (you keep 65%, we take 35%)\n- You can test on a demo MT5 account for 10 days" },
-      { role: "user", text: "How do I connect" },
-      { role: "bot",  text: "To connect, you'll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account.\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nIf you tell me which broker you're using...", flagged: true },
+    "id": "c13",
+    "phone": "+50233418310",
+    "thread": "thr_252332eb",
+    "reviewerNote": "This is incorrect. To trade Gold, we can either connect to MT5 or create a copy trading account in PU Prime and no MT5 credentials are needed, the customer connects the copy trading account manually. The bot needs to ask more questions in order to provide the correct process/answer.",
+    "original": "To connect, you\u2019ll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account .\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading .\n\nIf you tell me which broker you\u2019re using (for example Vantage, Bybit, or PU Prime)  and whether you want demo or live, I\u2019ll tell you the exact next step.",
+    "correct": "....",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Yes, we do trade gold and we specialize in it. \n\nHow it works is we connect our AI trading software to your MT5 trading account and it trades automatically when conditions are suitable. \n\nA few key points:\nMinimum to start is generally $500. \nThere\u2019s no upfront cost; it\u2019s profit sharing at month-end (you keep 65%, we take 35%). \nYou can test on a demo MT5 account for 10 days. \nOnce you provide MT5 credentials, setup typically takes 24\u201348 hours to start trading. \nWe work with brokers including Vantage, Bybit, and PU Prime. \n\nWhat country are you in, and would you prefer to start with a demo or a live account?"
+      },
+      {
+        "role": "user",
+        "text": "How do I connect"
+      },
+      {
+        "role": "bot",
+        "text": "To connect, you\u2019ll need an MT5 trading account, then you share your MT5 credentials with us so we can link the AI trading software directly to your MT5 account .\n\nAfter you provide the MT5 credentials, it typically takes about 24 to 48 hours to connect the bot and start trading .\n\nIf you tell me which broker you\u2019re using (for example Vantage, Bybit, or PU Prime)  and whether you want demo or live, I\u2019ll tell you the exact next step.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c14",
-    phone: "+50233418310",
-    thread: "thr_7a248f4c",
-    reviewerNote: "We are not working with MT5 accounts. They have to be copy trading accounts. Also I would send in a separate message the fact that \"(we can trade, but we can't deposit, withdraw, or move your funds).\"",
-    original: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds).",
-    correct: "..",
-    context: [
-      { role: "user", text: "What is pu prime" },
-      { role: "bot",  text: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds).", flagged: true },
-      { role: "user", text: "What is mt5" },
-      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you." },
-      { role: "user", text: "Ok" },
+    "id": "c14",
+    "phone": "+50233418310",
+    "thread": "thr_7a248f4c",
+    "reviewerNote": "We are not working with MT5 accounts. They have to be copy trading accounts. this might be confusing, Also I would send in a separate message the fact that \"(we can trade, but we can\u2019t deposit, withdraw, or move your funds).\"",
+    "original": "PU Prime is one of the brokers we work with. \n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can\u2019t deposit, withdraw, or move your funds).",
+    "correct": "..",
+    "context": [
+      {
+        "role": "user",
+        "text": "What is pu prime"
+      },
+      {
+        "role": "bot",
+        "text": "PU Prime is one of the brokers we work with. \n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can\u2019t deposit, withdraw, or move your funds).",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "What is mt5"
+      },
+      {
+        "role": "bot",
+        "text": "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you."
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      }
     ]
   },
   {
-    id: "c15",
-    phone: "+50233418310",
-    thread: "thr_7a248f4c",
-    reviewerNote: "If we are connecting them to a copy trading account, there is no need for MT5",
-    original: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "PU Prime is one of the brokers we work with.\n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can't deposit, withdraw, or move your funds)." },
-      { role: "user", text: "What is mt5" },
-      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.", flagged: true },
-      { role: "user", text: "Ok" },
-      { role: "bot",  text: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?" },
-      { role: "user", text: "How much does it cost" },
+    "id": "c15",
+    "phone": "+50233418310",
+    "thread": "thr_7a248f4c",
+    "reviewerNote": "If we are connecting them to a copy trading account, there is no need for MT5",
+    "original": "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "PU Prime is one of the brokers we work with. \n\nIn practice, you open a PU Prime trading account on MT5, and then we connect our AI trading software to your MT5 account so the bot can place trades automatically for you (we can trade, but we can\u2019t deposit, withdraw, or move your funds)."
+      },
+      {
+        "role": "user",
+        "text": "What is mt5"
+      },
+      {
+        "role": "bot",
+        "text": "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      },
+      {
+        "role": "bot",
+        "text": "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?"
+      },
+      {
+        "role": "user",
+        "text": "How much does it cost"
+      }
     ]
   },
   {
-    id: "c16",
-    phone: "+50233418310",
-    thread: "thr_7a248f4c",
-    reviewerNote: "Offering Demo in MT5 won't work for Silver in PU Prime",
-    original: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?",
-    correct: "..",
-    context: [
-      { role: "user", text: "What is mt5" },
-      { role: "bot",  text: "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you." },
-      { role: "user", text: "Ok" },
-      { role: "bot",  text: "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?", flagged: true },
-      { role: "user", text: "How much does it cost" },
-      { role: "bot",  text: "There's no upfront cost for the bot subscription — it's free to use, and we only earn through profit sharing at the end of the month.\n\nProfit sharing is 65:35 (you keep 65% of the profits, we take 35%).\n\nTo start, the minimum investment is generally $500 USD." },
-      { role: "user", text: "Ok" },
+    "id": "c16",
+    "phone": "+50233418310",
+    "thread": "thr_7a248f4c",
+    "reviewerNote": "Offering Demo in MT5 won't work for Silver in PU Prime",
+    "original": "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?",
+    "correct": "..",
+    "context": [
+      {
+        "role": "user",
+        "text": "What is mt5"
+      },
+      {
+        "role": "bot",
+        "text": "MT5 (MetaTrader 5) is the trading account/platform we use to run the bot.\n\nHow it works is: you open an MT5 trading account with the broker (for Silver in your case, PU Prime), then we connect our AI trading software directly to your MT5 account so the bot can trade automatically for you."
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      },
+      {
+        "role": "bot",
+        "text": "Would you like to start with a demo MT5 account for 10 days first, or go straight to a real MT5 account?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "How much does it cost"
+      },
+      {
+        "role": "bot",
+        "text": "There\u2019s no upfront cost for the bot subscription \u2014 it\u2019s free to use, and we only earn through profit sharing at the end of the month. \n\nProfit sharing is 65:35 (you keep 65% of the profits, we take 35%). \n\nTo start, the minimum investment is generally $500 USD."
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      }
     ]
   },
   {
-    id: "c17",
-    phone: "+50233418310",
-    thread: "thr_7a248f4c",
-    reviewerNote: "Asked twice the same question",
-    original: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "Perfect, $500 works.\n\nYou might have seen monthly subscription prices on our ads. Ignore that. I'm waiving the subscription fee for you. We switched to a profit share model. We take zero upfront. We only take 35% of the profit we make you at the end of the month. Fair deal?" },
-      { role: "user", text: "Ok" },
-      { role: "bot",  text: "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?", flagged: true },
-      { role: "user", text: "I said yes $500" },
-      { role: "bot",  text: "Perfect, thank you for confirming.\n\nDo you already have an account with PU Prime?" },
+    "id": "c17",
+    "phone": "+50233418310",
+    "thread": "thr_7a248f4c",
+    "reviewerNote": "asked twice the same question",
+    "original": "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Perfect, $500 works.\n\nYou might have seen monthly subscription prices on our ads. Ignore that. I'm waiving the subscription fee for you. We switched to a profit share model. We take zero upfront. We only take 35% of the profit we make you at the end of the month. Fair deal?"
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      },
+      {
+        "role": "bot",
+        "text": "Now strictly regarding capital. To let the AI manage risk properly, we require a minimum trading balance of 500 US dollars. Is that range workable for you right now?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "I said yes $500"
+      },
+      {
+        "role": "bot",
+        "text": "Perfect, thank you for confirming.\n\nDo you already have an account with PU Prime?"
+      }
     ]
   },
   {
-    id: "c18",
-    phone: "+50233418310",
-    thread: "thr_73af994f",
-    reviewerNote: "If it's Gold in PU Prime, no MT5 account is needed since we connect to copy trading",
-    original: "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit).\n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you.\n\nIf you want, tell me whether you already have an MT5 account, or you'd like to create one from scratch.",
-    correct: "..",
-    context: [
-      { role: "user", text: "What is pu prime" },
-      { role: "bot",  text: "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit).\n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you.\n\nIf you want, tell me whether you already have an MT5 account, or you'd like to create one from scratch.", flagged: true },
-      { role: "user", text: "What is mt5" },
-      { role: "bot",  text: "MT5 means 'MetaTrader 5'. It's the trading account/platform you open with a broker (like PU Prime or Vantage), and it's what we connect our AI trading software to so the bot can place trades automatically on your behalf.\n\nOnce you provide your MT5 login/credentials, it typically takes 24-48 hours to connect the bot and start trading." },
-      { role: "user", text: "Ok" },
+    "id": "c18",
+    "phone": "+50233418310",
+    "thread": "thr_73af994f",
+    "reviewerNote": "If its Gold in PUPrime, no MT5 account is needed since we connect to copy trading",
+    "original": "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit). \n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you. \n\nIf you want, tell me whether you already have an MT5 account, or you\u2019d like to create one from scratch.",
+    "correct": "..",
+    "context": [
+      {
+        "role": "user",
+        "text": "What is pu prime"
+      },
+      {
+        "role": "bot",
+        "text": "PU Prime is one of the brokers we work with (along with brokers like Vantage and Bybit). \n\nPractically, you open an MT5 trading account with the broker, and then we connect our AI trading software to your MT5 so it can trade automatically for you. \n\nIf you want, tell me whether you already have an MT5 account, or you\u2019d like to create one from scratch.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "What is mt5"
+      },
+      {
+        "role": "bot",
+        "text": "MT5 means \u201cMetaTrader 5\u201d (often just called MT5). It\u2019s the trading account/platform you open with a broker (like PU Prime or Vantage), and it\u2019s what we connect our AI trading software to so the bot can place trades automatically on your behalf. \n\nOnce you provide your MT5 login/credentials, it typically takes 24\u201348 hours to connect the bot and start trading."
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      }
     ]
   },
   {
-    id: "c19",
-    phone: "+50233418310",
-    thread: "thr_73af994f",
-    reviewerNote: "About the traded in cents part: I'm sure a customer sees this number and will back out. Better to stick to the minimum of $500 and that's it. That can be explained later.",
-    original: "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?",
-    correct: "...",
-    context: [
-      { role: "bot",  text: "Here's your Vantage registration link: https://www.vantagemarkets.com/...\n\nOnce you've created your Vantage account, tell me and I'll send the next step to set up the copy trading connection for the Gold bot." },
-      { role: "user", text: "What if I want PuPrime instead?" },
-      { role: "bot",  text: "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?", flagged: true },
-      { role: "user", text: "Yes" },
+    "id": "c19",
+    "phone": "+50233418310",
+    "thread": "thr_73af994f",
+    "reviewerNote": "About the traded in cents part: I'm sure a customer sees this number and will back out. Better to stick to the minimum of $500 and that's it. That can be explained later",
+    "original": "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?",
+    "correct": "...",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Here\u2019s your Vantage registration link: https://www.vantagemarkets.com/forex-trading/forex-trading-account/?affid=7361340\nHere\u2019s a helpful video showing how to sign up: https://drive.google.com/file/d/1kr0JYMPYrfO7BFvpWxghoel4ULmfm2d5/view?usp=sharing\n\nOnce you\u2019ve created your Vantage account, tell me and I\u2019ll send the next step to set up the copy trading connection for the Gold bot."
+      },
+      {
+        "role": "user",
+        "text": "What if I want PuPrime instead?"
+      },
+      {
+        "role": "bot",
+        "text": "You can switch to PU Prime, no problem. Just note: with PU Prime, Gold is traded in cents, and the allowed range for this setup is typically $500 to $10,000 USD.\n\nDo you want me to change your broker to PU Prime and send you the PU Prime registration link?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Yes"
+      }
     ]
   },
   {
-    id: "c20",
-    phone: "+50233418310",
-    thread: "thr_1e349510",
-    reviewerNote: "This question has already been asked. It should go directly to sending the registration link for Silver since in this conversation it was already stated that was what the customer wanted.",
-    original: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
-    correct: "...",
-    context: [
-      { role: "bot",  text: "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?", flagged: true },
+    "id": "c20",
+    "phone": "+50233418310",
+    "thread": "thr_1e349510",
+    "reviewerNote": "This is not the correct answer. This questions has already been asked, it should go directly to sending the link to register for Silver since in this conversation it was stated that was what the customer wanted.",
+    "original": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "...",
+    "context": [
+      {
+        "role": "bot",
+        "text": "In Guatemala we have bots for Crypto, Gold, Silver, Forex, and Futures in crypto. Which one would you like to go with?",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c21",
-    phone: "+50233418310",
-    thread: "thr_1e349510",
-    reviewerNote: "Not sure why it is circling back to this. Customer already stated that they have $1000 to start with Silver.",
-    original: "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?", flagged: true },
-      { role: "user", text: "All" },
-      { role: "bot",  text: "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?" },
-      { role: "user", text: "I have several" },
+    "id": "c21",
+    "phone": "+50233418310",
+    "thread": "thr_1e349510",
+    "reviewerNote": "Not sure why it is circling back to this. Customer already stated that has $1000 to start with Silver",
+    "original": "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Thanks, $1000 works.\n\nQuickly circling back so I log this correctly: what type of trading experience did you have before (stocks, forex, crypto, etc.)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "All"
+      },
+      {
+        "role": "bot",
+        "text": "Which broker did you use (e.g. Vantage, ByBit, PuPrime)?"
+      },
+      {
+        "role": "user",
+        "text": "I have several"
+      }
     ]
   },
   {
-    id: "c22",
-    phone: "+50233418310",
-    thread: "thr_9b18a4f3",
-    reviewerNote: "A big round number is what they want to hear — ask Shay what is the best answer here.",
-    original: "Please wait one sec while I check something for you.",
-    correct: "..",
-    context: [
-      { role: "user", text: "How many customers do you have?" },
-      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    "id": "c22",
+    "phone": "+50233418310",
+    "thread": "thr_9b18a4f3",
+    "reviewerNote": "A big round number is what they want to hear, ask Shay what is the best answer here.",
+    "original": "Please wait one sec while I check something for you.",
+    "correct": "..",
+    "context": [
+      {
+        "role": "user",
+        "text": "How many customers do you have?"
+      },
+      {
+        "role": "bot",
+        "text": "Please wait one sec while I check something for you.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c23",
-    phone: "+50233418310",
-    thread: "thr_de00443c",
-    reviewerNote: "Ask Shay what is the best answer here. Some customers want to be very active and trade every day, some customers are ok with whatever we present them with.",
-    original: "Please wait one sec while I check something for you.",
-    correct: "At least one, but there are days that it won't trade because the market doesn't have the right conditions.",
-    context: [
-      { role: "bot",  text: "Please wait one sec while I check something for you.", flagged: true },
+    "id": "c23",
+    "phone": "+50233418310",
+    "thread": "thr_de00443c",
+    "reviewerNote": "Ask Shay what is the best answer here. Some customers want to be very active and trade every day, some customers are ok with whatever we present them with.",
+    "original": "Please wait one sec while I check something for you.",
+    "correct": "At least one, but there are days that it won't trade because the market doesn't have the right conditions.",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Please wait one sec while I check something for you.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c24",
-    phone: "+50233418310",
-    thread: "thr_2e8a36eb",
-    reviewerNote: "If a customer wants to try 'all of them', it is best to give them a breakdown of the next steps for each bot.",
-    original: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading.\n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?" },
-      { role: "user", text: "Live" },
-      { role: "bot",  text: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading.\n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?", flagged: true },
+    "id": "c24",
+    "phone": "+50233418310",
+    "thread": "thr_2e8a36eb",
+    "reviewerNote": "If a customer wants to try \"all of them\" It is best to give them a break down of what are the next steps to follow for each bot.",
+    "original": "Great. To start live, you\u2019ll need to open and fund a live MT5 trading account (minimum is generally $500). \n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading. \n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days   \n2) Live right away: Minimum is generally $500 USD to start \n\nAlso, since you want to try multiple bots, it\u2019s best to run them on separate dedicated accounts (and not mix with manual trading) .\n\nDo you want to start with demo or live?"
+      },
+      {
+        "role": "user",
+        "text": "Live"
+      },
+      {
+        "role": "bot",
+        "text": "Great. To start live, you\u2019ll need to open and fund a live MT5 trading account (minimum is generally $500). \n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading. \n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c25",
-    phone: "+50233418310",
-    thread: "thr_2e8a36eb",
-    reviewerNote: "I see it offers Demo quite often. I would offer Demo only if they are hesitant, or if they actually say they are unsure.",
-    original: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "Risk is managed the same core way across all our bots: the system automatically adjusts lot size and overall trade volume based on your account size, with built-in risk management." },
-      { role: "user", text: "Ok" },
-      { role: "bot",  text: "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days\n2) Live right away: Minimum is generally $500 USD to start\n\nDo you want to start with demo or live?", flagged: true },
-      { role: "user", text: "Live" },
-      { role: "bot",  text: "Great. To start live, you'll need to open and fund a live MT5 trading account (minimum is generally $500).\n\nOnce you share your MT5 credentials, we connect the bot to your account." },
+    "id": "c25",
+    "phone": "+50233418310",
+    "thread": "thr_2e8a36eb",
+    "reviewerNote": "I see it offers Demo quite often. I would offer Demo only if they are hesitant, or if they actually say the are unsure",
+    "original": "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days   \n2) Live right away: Minimum is generally $500 USD to start \n\nAlso, since you want to try multiple bots, it\u2019s best to run them on separate dedicated accounts (and not mix with manual trading) .\n\nDo you want to start with demo or live?",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Risk is managed the same core way across all our bots: the system automatically adjusts lot size and overall trade volume based on your account size, with built-in risk management, so it\u2019s not using a fixed position size regardless of balance. \n\nIf you want to \u201ctry all of them,\u201d the cleanest approach is to run each bot on its own dedicated account (or at least a separate account from any manual trading), because the bot performs best when the account is dedicated solely to automated trading."
+      },
+      {
+        "role": "user",
+        "text": "Ok"
+      },
+      {
+        "role": "bot",
+        "text": "Perfect. Next step is choosing how you want to test:\n\n1) Demo first (recommended): You can try the bot(s) on a demo MT5 account for 10 days   \n2) Live right away: Minimum is generally $500 USD to start \n\nAlso, since you want to try multiple bots, it\u2019s best to run them on separate dedicated accounts (and not mix with manual trading) .\n\nDo you want to start with demo or live?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Live"
+      },
+      {
+        "role": "bot",
+        "text": "Great. To start live, you\u2019ll need to open and fund a live MT5 trading account (minimum is generally $500). \n\nOnce you share your MT5 credentials, we connect the bot to your account. After the credentials are provided, it usually takes 24 to 48 hours to connect and start trading. \n\nWhich broker are you using for your MT5 account (Vantage or PU Prime)?"
+      }
     ]
   },
   {
-    id: "c26",
-    phone: "+50233418310",
-    thread: "thr_bb77711b",
-    reviewerNote: "Usually here, we send them a live video with the results of the past week/month. Next step would be to ask which market they would like to see results of, then ask Shay to record the video and send the live video with current results.",
-    original: "Hi one sec please",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "The main way you protect yourself is by keeping control.\n\n1) Your money stays in your own broker account — We connect to your MT5 account to place trades, but we cannot deposit, withdraw, or move your funds. And you can withdraw your money anytime.\n\n2) There's no 'guaranteed returns' claim — Trading involves risk and results aren't guaranteed." },
-      { role: "user", text: "Can you show proof of your results?" },
-      { role: "bot",  text: "Hi one sec please", flagged: true },
-      { role: "user", text: "Where are you based?" },
-      { role: "bot",  text: "We operate globally, with offices in locations such as the UK, UAE, and Bulgaria." },
-      { role: "user", text: "Who is behind Lucentive Club? Do you have a license?" },
+    "id": "c26",
+    "phone": "+50233418310",
+    "thread": "thr_bb77711b",
+    "reviewerNote": "Usually here, we send them a live video with the results of the past week/month, so next would be to ask which market they would like to see results of, then ask Shay to record the video and we can send the live video with current results",
+    "original": "Hi one sec please",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "The main way you protect yourself is by keeping control.\n\n1) Your money stays in your own broker account\nWe connect to your MT5 account to place trades, but we cannot deposit, withdraw, or move your funds. And you can withdraw your money anytime. \n\n2) There\u2019s no \u201cguaranteed returns\u201d claim\nTrading involves risk and results aren\u2019t guaranteed, so you\u2019re not being promised something unrealistic. \n\n3) You can test first on demo\nYou can run the bot on a demo MT5 account for 10 days before using real funds. \n\nIf you tell me which broker you\u2019re using (Vantage, Bybit, or PU Prime) and which market you want (Gold/Forex/Crypto), I can tell you the safest way to start (demo first vs small live)."
+      },
+      {
+        "role": "user",
+        "text": "Can you show proof of your results?"
+      },
+      {
+        "role": "bot",
+        "text": "Hi one sec please",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Where are you based?"
+      },
+      {
+        "role": "bot",
+        "text": "We operate globally, with offices in locations such as the UK, UAE, and Bulgaria."
+      },
+      {
+        "role": "user",
+        "text": "Who is behind Lucentive Club? Do you have a license?"
+      }
     ]
   },
   {
-    id: "c27",
-    phone: "+50233418310",
-    thread: "thr_87af7889",
-    reviewerNote: "\"In this chat info\"? I think it is better to answer with a variety of pairs that are actually traded in our Vantage Markets link.",
-    original: "We do trade Forex, but we don't lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4-8% per month, depending on conditions).\n\nIf you tell me the broker you're using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize...",
-    correct: "..",
-    context: [
-      { role: "user", text: "Yes a lot I trade forex What pairs do you trade in Forex" },
-      { role: "bot",  text: "We do trade Forex, but we don't lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4-8% per month, depending on conditions).\n\nIf you tell me the broker you're using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize...", flagged: true },
+    "id": "c27",
+    "phone": "+50233418310",
+    "thread": "thr_87af7889",
+    "reviewerNote": "\"In this chat info\"? \nI think it is better to answer with a variety of pairs that are actually traded in our Vantage Markets link",
+    "original": "We do trade Forex, but we don\u2019t lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4\u20138% per month, depending on conditions). \n\nIf you tell me the broker you\u2019re using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize for that setup.",
+    "correct": "..",
+    "context": [
+      {
+        "role": "user",
+        "text": "Yes a lot I trade forex What pairs do you trade in Forex"
+      },
+      {
+        "role": "bot",
+        "text": "We do trade Forex, but we don\u2019t lock it to just one or two fixed pairs in this chat info. The Forex bot trades the Forex market with a low-risk approach (typically targeting stable 4\u20138% per month, depending on conditions). \n\nIf you tell me the broker you\u2019re using (for example Vantage or PU Prime) and your preferred session (London/NY/Asia), I can tell you what pair set we usually prioritize for that setup.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c28",
-    phone: "+50233418310",
-    thread: "thr_2ba574cc",
-    reviewerNote: "They don't need to install anything, other than the broker app",
-    original: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading.",
-    correct: "..",
-    context: [
-      { role: "bot",  text: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)" },
-      { role: "user", text: "Do I need to install anything?" },
-      { role: "bot",  text: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading.", flagged: true },
+    "id": "c28",
+    "phone": "+50233418310",
+    "thread": "thr_2ba574cc",
+    "reviewerNote": "They don't need to install anything, other than the broker app",
+    "original": "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account. \n\nAfter you provide your MT5 credentials, it usually takes 24\u201348 hours for us to connect the bot and start trading.",
+    "correct": "..",
+    "context": [
+      {
+        "role": "bot",
+        "text": "\u201cBetter\u201d depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months. \n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4\u20138% per month)   \n2) Strong + consistent recently: Gold bot (historically around 8\u201330% per month)   \n3) Higher upside but more volatility: Crypto (around 7\u201320% per month)   \n4) Highest upside / most aggressive: Futures in crypto (about 10\u201350% per month) \n\nSince you said you\u2019re new to trading, do you prefer the more stable \u201clower risk\u201d option (Forex/Gold), or are you comfortable with higher swings for potentially higher returns (Crypto/Futures)?"
+      },
+      {
+        "role": "user",
+        "text": "Do I need to install anything?"
+      },
+      {
+        "role": "bot",
+        "text": "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account. \n\nAfter you provide your MT5 credentials, it usually takes 24\u201348 hours for us to connect the bot and start trading.",
+        "flagged": true
+      }
     ]
   },
   {
-    id: "c29",
-    phone: "+50233418310",
-    thread: "thr_80b5d697",
-    reviewerNote: "Better to hand off immediately to make the call",
-    original: "Perfect, I'll call you in about 10 minutes.",
-    correct: ".",
-    context: [
-      { role: "bot",  text: "Perfect, I'll call you in about 10 minutes.", flagged: true },
-      { role: "user", text: "I can't talk in 10 minutes I can talk right now" },
-      { role: "bot",  text: "Please wait one sec" },
+    "id": "c29",
+    "phone": "+50233418310",
+    "thread": "thr_80b5d697",
+    "reviewerNote": "Better to hand off immediately to make call",
+    "original": "Perfect, I\u2019ll call you in about 10 minutes.",
+    "correct": ".",
+    "context": [
+      {
+        "role": "bot",
+        "text": "Perfect, I\u2019ll call you in about 10 minutes.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "I can't talk in 10 minutes I can talk right now"
+      },
+      {
+        "role": "bot",
+        "text": "Please wait one sec"
+      }
     ]
   },
   {
-    id: "c30",
-    phone: "+50233418310",
-    thread: "thr_2ba574cc",
-    reviewerNote: "We need to understand if this answer came from the bot's parametric knowledge or from the FAQ.",
-    original: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)",
-    correct: ".",
-    context: [
-      { role: "user", text: "Which one is better" },
-      { role: "bot",  text: "'Better' depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months.\n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4-8% per month)\n2) Strong + consistent recently: Gold bot (historically around 8-30% per month)\n3) Higher upside but more volatility: Crypto (around 7-20% per month)\n4) Highest upside / most aggressive: Futures in crypto (about 10-50% per month)", flagged: true },
-      { role: "user", text: "Do I need to install anything?" },
-      { role: "bot",  text: "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account.\n\nAfter you provide your MT5 credentials, it usually takes 24-48 hours for us to connect the bot and start trading." },
+    "id": "c30",
+    "phone": "+50233418310",
+    "thread": "thr_2ba574cc",
+    "reviewerNote": "we need to understand if this answer came from the bot's parametric knowledge or from the faq.",
+    "original": "\u201cBetter\u201d depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months. \n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4\u20138% per month)   \n2) Strong + consistent recently: Gold bot (historically around 8\u201330% per month)   \n3) Higher upside but more volatility: Crypto (around 7\u201320% per month)   \n4) Highest upside / most aggressive: Futures in crypto (about 10\u201350% per month) \n\nSince you said you\u2019re new to trading, do you prefer the more stable \u201clower risk\u201d option (Forex/Gold), or are you comfortable with higher swings for potentially higher returns (Crypto/Futures)?",
+    "correct": ".",
+    "context": [
+      {
+        "role": "user",
+        "text": "Which one is better"
+      },
+      {
+        "role": "bot",
+        "text": "\u201cBetter\u201d depends on what you want (lower risk vs higher return potential), but overall our Gold and Silver bot has been the most consistent performer in the last couple of months. \n\nIf you want a simple way to choose:\n1) Lowest risk / most stable: Forex bot (typically around 4\u20138% per month)   \n2) Strong + consistent recently: Gold bot (historically around 8\u201330% per month)   \n3) Higher upside but more volatility: Crypto (around 7\u201320% per month)   \n4) Highest upside / most aggressive: Futures in crypto (about 10\u201350% per month) \n\nSince you said you\u2019re new to trading, do you prefer the more stable \u201clower risk\u201d option (Forex/Gold), or are you comfortable with higher swings for potentially higher returns (Crypto/Futures)?",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "Do I need to install anything?"
+      },
+      {
+        "role": "bot",
+        "text": "You typically just need MetaTrader 5 (MT5), because we connect our AI trading software directly to your MT5 trading account. \n\nAfter you provide your MT5 credentials, it usually takes 24\u201348 hours for us to connect the bot and start trading."
+      }
     ]
   },
   {
-    id: "c31",
-    phone: "+50233418310",
-    thread: "thr_efaa926c",
-    reviewerNote: "No need to connect MT5 so we need to understand where the bot got the info from. Same with the timing — we need to check where the 24-48 hours comes from.",
-    original: "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nAs for seeing profits: it depends on market conditions (so it isn't guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.",
-    correct: ".",
-    context: [
-      { role: "user", text: "Yes How long does it take to see profits with your bots?" },
-      { role: "bot",  text: "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading.\n\nAs for seeing profits: it depends on market conditions (so it isn't guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.", flagged: true },
-      { role: "user", text: "When can I withdraw my profits?" },
-      { role: "bot",  text: "You can withdraw your profits (and funds) at any time, since you have full control of the trading account." },
+    "id": "c31",
+    "phone": "+50233418310",
+    "thread": "thr_efaa926c",
+    "reviewerNote": "no need to connect mt5 so we need to understand where the bot got the info from. same with the timing - we need to check where the 24-48 hours comes from",
+    "original": "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading. \n\nAs for seeing profits: it depends on market conditions (so it isn\u2019t guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.",
+    "correct": ".",
+    "context": [
+      {
+        "role": "user",
+        "text": "Yes How long does it take to see profits with you bots?"
+      },
+      {
+        "role": "bot",
+        "text": "Once your MT5 credentials are provided, it typically takes about 24 to 48 hours to connect the bot and start trading. \n\nAs for seeing profits: it depends on market conditions (so it isn\u2019t guaranteed), but the way results are usually discussed is on a monthly basis. Historically, returns have ranged around 10% to 30% per month depending on the market.",
+        "flagged": true
+      },
+      {
+        "role": "user",
+        "text": "When can I withdraw my profits?"
+      },
+      {
+        "role": "bot",
+        "text": "You can withdraw your profits (and funds) at any time, since you have full control of the trading account."
+      }
     ]
   },
+  {
+    "id": "c32",
+    "phone": "+50233418310",
+    "thread": "thr_9b9e0135",
+    "reviewerNote": "someone that does not know anything about trading will not know what Vantage is.\nAlso, there needs to be a bit more explanation about trading with crypto instead of just trying to get the user to sign up immediately to the broker.",
+    "original": "Nice \u2014 for Guatemala, for the Crypto bot we work with Vantage. Shall we proceed with Vantage?",
+    "correct": "Nice \u2014 We work with the broker Vantage Markets where we connect our AI bot for crypto.",
+    "context": []
+  },
+  {
+    "id": "c33",
+    "phone": "+50233418310",
+    "thread": "thr_704ffe1d",
+    "reviewerNote": "Users that don't know about trading will not know what Vantage and PU Prime are.\n\nWe need to add more information about trading gold instead of trying to get them to sign up immediately",
+    "original": "Great \u2014 Gold it is.\n\nIn Guatemala we work with Vantage and PU Prime for Gold. Which one would you like to go with?",
+    "correct": "Great! We trade Gold in two brokers, Vantage Markets and PU Prime. \n\n(Maybe add how the two have different approaches to how we trade in the gold market)",
+    "context": []
+  },
+  {
+    "id": "c34",
+    "phone": "+50233418310",
+    "thread": "thr_168c4406",
+    "reviewerNote": "Users that don't know about trading will not know what PU Prime is.\nThen add more information about trading Forex instead of trying to get them to sign up immediately",
+    "original": "Perfect \u2014 for Forex in Guatemala we work with PU Prime. Shall we proceed with PU Prime?",
+    "correct": "Perfect - we trade Forex in the broker PU Prime\n\n(add more information, example: Forex has given us amazing returns in the past 6 months... etc)",
+    "context": []
+  },
+  {
+    "id": "c35",
+    "phone": "+50233418310",
+    "thread": "thr_642dd33e",
+    "reviewerNote": "Users that don't know about trading will not know what Bybit is.\nThen add more information about trading or the broker/exchange instead of trying to get them to sign up immediately",
+    "original": "Nice. For Guatemala, for Futures in crypto we work with ByBit. Shall we proceed with ByBit?",
+    "correct": "Great! For Futures in crypto we work with ByBit - a cryptocurrency exchange were we connect out bot to scan more than 3000 alt coins every hour.",
+    "context": []
+  },
+  {
+    "id": "c36",
+    "phone": "+50233418310",
+    "thread": "thr_3ea74e35",
+    "reviewerNote": "Asking about stocks might be inconvenient.",
+    "original": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    "correct": "...",
+    "context": []
+  },
+  {
+    "id": "c37",
+    "phone": "+50233418310",
+    "thread": "thr_3ea74e35",
+    "reviewerNote": "Asking which broker for stocks is irrelevant.",
+    "original": "Nice. Which broker did you use for stocks?",
+    "correct": "...",
+    "context": []
+  },
+  {
+    "id": "c38",
+    "phone": "+50233418310",
+    "thread": "thr_3ea74e35",
+    "reviewerNote": "It jumped back to the available markets we trade. This should be the response when user says \"yes I have experience in trading\"",
+    "original": "Perfect. For Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "...",
+    "context": []
+  },
+  {
+    "id": "c39",
+    "phone": "+50233418310",
+    "thread": "thr_29c75f31",
+    "reviewerNote": "Asking what broker they used might me inconvenient\nIt is best to let them know which ones we work with from the beginning.",
+    "original": "Which broker did you use for crypto? (e.g. Vantage, ByBit, PuPrime)",
+    "correct": "Great to know you have experience in trading. For Crypto we work with the brokers x & y\n(Explain how they have different approaches to how we trade in the crypto market)",
+    "context": []
+  },
+  {
+    "id": "c40",
+    "phone": "+50233418310",
+    "thread": "thr_29c75f31",
+    "reviewerNote": "Seems this is an error, it jumps back to the questions which it should have started with\nIt is not responding correctly after receiving the brokers name.",
+    "original": "Perfect. For Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto.\nWhich one would you like to go with?",
+    "correct": "...",
+    "context": []
+  },
+  {
+    "id": "c41",
+    "phone": "+50233418310",
+    "thread": "thr_6d67c70a",
+    "reviewerNote": "User already responded that they trade gold.\nSeems redundant asking this again",
+    "original": "Perfect. For Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "Great! We trade in the Gold market using the broker PU Prime. \nThis bot has given us exceptional returns!\n\n(something like this)",
+    "context": []
+  },
+  {
+    "id": "c42",
+    "phone": "+50233418310",
+    "thread": "thr_2f622e71",
+    "reviewerNote": "Instead of allowing the user to answer with a type of trading we don't do, offer what is available. We already know they have experience in trading.",
+    "original": "Great, it will save us a lot of time. What type of trading was it (e.g. stocks, forex, crypto)?",
+    "correct": "Great, it will save us a lot of time. We have AI bots that work in the a, b, c, d markets.",
+    "context": []
+  },
+  {
+    "id": "c43",
+    "phone": "+50233418310",
+    "thread": "thr_2f622e71",
+    "reviewerNote": "This might be inconvenient, we will not be able to work with the broker they have used.",
+    "original": "Got it \u2014 futures.\n\nWhich broker did you use?",
+    "correct": "...",
+    "context": []
+  },
+  {
+    "id": "c44",
+    "phone": "+50233418310",
+    "thread": "thr_2f622e71",
+    "reviewerNote": "It jumps back to this question, which it seems should start with this",
+    "original": "Perfect. In Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c45",
+    "phone": "+50233418310",
+    "thread": "thr_2f622e71",
+    "reviewerNote": "We need to give more information before trying to get them to sign up right away",
+    "original": "For Guatemala, for Futures in crypto we work with ByBit. Shall we proceed with that?",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c46",
+    "phone": "+50233418310",
+    "thread": "thr_a892e19d",
+    "reviewerNote": "Inconvenient to ask what broker",
+    "original": "Which broker did you use for forex? (e.g. Vantage, ByBit, PuPrime)",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c47",
+    "phone": "+50233418310",
+    "thread": "thr_a892e19d",
+    "reviewerNote": "redundant, already answered that Forex",
+    "original": "Perfect. For Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c48",
+    "phone": "+50233418310",
+    "thread": "thr_a892e19d",
+    "reviewerNote": "Provide more information before trying to get them to sing up right away",
+    "original": "For Guatemala we work with PU Prime for Forex. Shall we proceed with that?",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c49",
+    "phone": "+50233418310",
+    "thread": "thr_4b52d51b",
+    "reviewerNote": "It's pushing too hard to proceed",
+    "original": "Vantage is the broker platform we use on your side to open the trading account and connect the copy-trading, so the Crypto bot can place trades in your account (you stay in control of the account and funds).\n\nAnyway, want me to proceed with Vantage for you?",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c50",
+    "phone": "+50233418310",
+    "thread": "thr_4b52d51b",
+    "reviewerNote": "replace algos for algorithms.",
+    "original": "It depends on which algorithm is active. Some of our algos do around 3 trades per day, while others can place 10 to 15 orders in a day",
+    "correct": "..",
+    "context": []
+  },
+  {
+    "id": "c51",
+    "phone": "+50233418310",
+    "thread": "thr_6f28e59b",
+    "reviewerNote": "Repetitive, already said gold",
+    "original": "Perfect, thanks. For Guatemala we have bots for Crypto, Gold, Forex, and Futures in crypto. Which one would you like to go with?",
+    "correct": ".",
+    "context": []
+  },
+  {
+    "id": "c52",
+    "phone": "+50233418310",
+    "thread": "thr_6f28e59b",
+    "reviewerNote": "Add \"we work with the brokers: ....\"",
+    "original": "Great choice. In Guatemala we work with Vantage and PU Prime for the Gold bot. Which one would you like to go with?",
+    "correct": ".",
+    "context": []
+  },
+  {
+    "id": "c53",
+    "phone": "+50233418310",
+    "thread": "thr_6f28e59b",
+    "reviewerNote": "should have provided all info",
+    "original": "Please wait one sec",
+    "correct": "..",
+    "context": []
+  }
 ];
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -958,19 +1575,22 @@ function updateStats() {
 // ── Export ─────────────────────────────────────────────────────────────────
 function exportDone() {
   const out = corrections
-    .filter(c => stateFor(c.id).done)
-    .map(c => ({
-      id:           c.id,
-      thread:       c.thread,
-      phone:        c.phone,
-      category:     stateFor(c.id).cat,
-      reviewerNote: c.reviewerNote,
-      original:     c.original,
-      correct:      c.correct,
-      action:       stateFor(c.id).action,
-    }));
-
-  if (out.length === 0) { alert("Mark some corrections as Done first."); return; }
+    .map(c => {
+      const st = stateFor(c.id);
+      const actionPlan = (st.action || "").trim();
+      return {
+        id:           c.id,
+        thread:       c.thread,
+        phone:        c.phone,
+        category:     catFor(c.id), // Include fallback category from META defaults
+        done:         st.done,
+        reviewerNote: c.reviewerNote,
+        original:     c.original,
+        correct:      c.correct,
+        actionPlan,             // Explicit action-plan field for downstream filtering
+        action:       actionPlan, // Backward-compatible alias
+      };
+    });
 
   const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
   const url  = URL.createObjectURL(blob);

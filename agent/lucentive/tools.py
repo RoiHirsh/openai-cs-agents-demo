@@ -227,8 +227,8 @@ async def update_onboarding_state(
     Args:
         step_name: Name of the step to add to completed_steps (e.g., "trading_experience", "bot_recommendation", "broker_selection", "budget_check", "profit_share_clarification", "has_broker_account", "instructions")
         trading_experience: User's trading experience level (e.g., "yes", "no", "beginner", "experienced")
-        previous_broker: Name of the broker the user previously used (if any)
-        trading_type: Type of trading the user did (e.g., "stocks", "forex", "crypto", "futures")
+        previous_broker: Optional prior broker the user mentions naturally (if any)
+        trading_type: Optional prior trading type the user mentions naturally (e.g., "stocks", "forex", "crypto", "futures")
         bot_preference: User's chosen bot type from step 2a (e.g., "Gold", "Forex", "Crypto")
         broker_preference: User's chosen broker from step 2b (e.g., "Vantage", "PU Prime")
         budget_confirmed: Whether the user confirmed they have the minimum budget (True/False)

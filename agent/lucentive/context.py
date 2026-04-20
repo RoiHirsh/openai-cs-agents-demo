@@ -20,8 +20,8 @@ class LucentiveAgentContext(BaseModel):
     # Structure: {
     #   "completed_steps": list[str],
     #   "trading_experience": str | None,
-    #   "previous_broker": str | None,
-    #   "trading_type": str | None,
+    #   "previous_broker": str | None, # Optional prior broker mentioned by the user
+    #   "trading_type": str | None,     # Optional prior trading type mentioned by the user
     #   "bot_preference": str | None,   # User's chosen bot type (e.g. Gold, Forex, Crypto) from step 2a
     #   "broker_preference": str | None, # User's chosen broker (e.g. Vantage, PU Prime) from step 2b
     #   "budget_confirmed": bool | None,

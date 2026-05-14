@@ -178,7 +178,7 @@ async def health_check() -> Dict[str, str]:
 
 from integrations.chatwoot import _CHATWOOT_BASE  # single source of truth
 
-_N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/facebook-lead"
+_N8N_WEBHOOK_URL = "https://wlog.app.n8n.cloud/webhook/lucentiveclub-production-welcome-lead"
 
 
 

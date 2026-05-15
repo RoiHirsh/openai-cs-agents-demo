@@ -49,6 +49,8 @@ Set the following in `agent/.env`:
 - `OPENAI_API_KEY`
 - `OPENAI_VECTOR_STORE_ID` — vector store for FAQ agent
 - `CHATWOOT_API_TOKEN` — required for human handoff
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_TEAM_CHAT_ID`, `TELEGRAM_NOTIFICATIONS_ENABLED` — team alerts channel
+- `CHATWOOT_APP_BASE_URL` — optional deep links in Telegram alerts
 - `DASHBOARD_API_KEY` — protects `/admin/*` endpoints
 - `DASHBOARD_ORIGIN` — CORS allowlist for production dashboard
 - `RESET_ENABLED=true` — enables `/reset` dev command
@@ -111,6 +113,7 @@ Agent prompts load Markdown skill guides from `agent/lucentive/skills/` at runti
 ### Integrations (`agent/integrations/`)
 
 - `chatwoot.py` — human handoff logic (sets conversation open, assigns agent, applies label, posts private note)
+- `telegram.py` / `team_notifications.py` — non-blocking Telegram alerts (`conversation_started`, `human_handoff`); deduped in `team_notification_events`
 - `supabase_client.py` — shared Supabase client; persists leads, threads, corrections
 
 ### Knowledge Base (`agent/knowledge/`)

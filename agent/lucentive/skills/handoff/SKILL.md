@@ -12,7 +12,9 @@ Hand off immediately when the user's message matches one of the **specific scena
 
 ## How to execute the handoff
 
-1. Call `request_human_handoff` — no arguments needed.
+1. Call `request_human_handoff` with:
+   - `reason` — short label for the matched scenario (e.g. "Withdrawal request").
+   - `summary` — one line describing what the user needs.
 2. Respond to the user with the message specified for the matched scenario. If no specific message is listed, say: "Please wait one sec."
 3. Do not attempt to answer the question further.
 

@@ -1,5 +1,6 @@
 from __future__ import annotations as _annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -38,6 +39,7 @@ from lucentive.context import (
 from server import LucentiveServer
 from lucentive.context_cache import clear_thread_cache
 from integrations.chatwoot import trigger_human_handoff
+from integrations.team_notifications import notify_team
 from knowledge.knowledge import router as knowledge_router
 from auth_utils import require_dashboard_key as _require_key
 
@@ -334,6 +336,21 @@ async def api_chat(
     # Human handoff command (dev only — kept as manual override)
     if body.message.strip().lower() == "/human":
         await trigger_human_handoff(body.conversation_id)
+        lead_res_human = sb.table("leads").select("full_name,phone_number").eq("phone_number", body.phone_number).limit(1).execute()
+        human_row = lead_res_human.data[0] if lead_res_human.data else {}
+        asyncio.create_task(
+            notify_team(
+                {
+                    "type": "human_handoff",
+                    "conversation_id": body.conversation_id,
+                    "contact_name": human_row.get("full_name") or "Unknown",
+                    "phone": human_row.get("phone_number") or body.phone_number,
+                    "inbox_name": "WhatsApp",
+                    "reason": "Manual /human command",
+                    "summary": "Dev or manual handoff override",
+                }
+            )
+        )
         return {"reply": "Please hold on one sec while I check something for you."}
 
     # 1. Look up phone_number in leads table → get thread_id + lead profile
@@ -348,7 +365,11 @@ async def api_chat(
         "phone": lead_row.get("phone_number"),
         "country": lead_row.get("country"),
         "new_lead": lead_row.get("new_lead") or False,
+        "conversation_id": body.conversation_id,
     }
+
+    prior_items: list = []
+    is_first_user_message_to_agent = not thread_id
 
     # 2. If thread_id exists, restore full state from threads table
     if thread_id:
@@ -362,6 +383,8 @@ async def api_chat(
         thread_res = sb.table("threads").select("input_items,context,current_agent_name,events").eq("thread_id", thread_id).limit(1).execute()
         if thread_res.data:
             row = thread_res.data[0]
+            prior_items = row.get("input_items") or []
+            is_first_user_message_to_agent = len(prior_items) == 0
             stored_context = row.get("context")
             # Restore events from Supabase — all events (including guardrails) go into restored_events
             stored_events_raw = row.get("events") or []
@@ -397,7 +420,7 @@ async def api_chat(
     if thread_id and thread_id in server._state:
         server._state[thread_id].context.conversation_id = body.conversation_id
 
-    # 3. Run the agent
+    # 3. Run the agent (conversation_id also passed via lead_info for new threads)
     reply, new_thread_id = await server.process_plaintext_message(
         thread_id=thread_id,
         user_text=body.message,
@@ -425,6 +448,25 @@ async def api_chat(
     # 5. If thread_id was new, save it back to the lead record
     if not thread_id:
         sb.table("leads").update({"thread_id": new_thread_id}).eq("phone_number", body.phone_number).execute()
+
+    # 6. Team Telegram: first inbound user message to the agent for this Chatwoot conversation
+    if is_first_user_message_to_agent and current_state:
+        contact_name = (
+            lead_row.get("full_name")
+            or current_state.context.first_name
+            or "Unknown"
+        )
+        asyncio.create_task(
+            notify_team(
+                {
+                    "type": "conversation_started",
+                    "conversation_id": body.conversation_id,
+                    "contact_name": contact_name,
+                    "phone": body.phone_number,
+                    "inbox_name": "WhatsApp",
+                }
+            )
+        )
 
     return {"reply": reply}
 

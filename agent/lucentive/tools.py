@@ -1,5 +1,6 @@
 from __future__ import annotations as _annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -18,6 +19,11 @@ try:
     from integrations.chatwoot import trigger_human_handoff as _trigger_human_handoff
 except ImportError:
     _trigger_human_handoff = None
+
+try:
+    from integrations.team_notifications import notify_team as _notify_team
+except ImportError:
+    _notify_team = None
 
 logger = logging.getLogger(__name__)
 
@@ -530,10 +536,15 @@ async def get_results_video(market: str) -> str:
     name_override="request_human_handoff",
     description_override=(
         "Hand off this conversation to a human agent. "
-        "Triggers the human escalation sequence in Chatwoot."
+        "Triggers the human escalation sequence in Chatwoot. "
+        "Provide reason (matched scenario) and summary (one-line user issue)."
     ),
 )
-async def request_human_handoff(context: RunContextWrapper[Any]) -> str:
+async def request_human_handoff(
+    context: RunContextWrapper[Any],
+    reason: str | None = None,
+    summary: str | None = None,
+) -> str:
     """
     Triggers a full human handoff sequence in Chatwoot:
     - Sets conversation status to open
@@ -543,8 +554,10 @@ async def request_human_handoff(context: RunContextWrapper[Any]) -> str:
     - Posts a private note for the human agent
     """
     conversation_id: str | None = None
+    state = None
     try:
-        conversation_id = context.context.state.conversation_id
+        state = context.context.state
+        conversation_id = state.conversation_id
     except AttributeError:
         pass
 
@@ -557,4 +570,20 @@ async def request_human_handoff(context: RunContextWrapper[Any]) -> str:
         return "handoff_failed: chatwoot module unavailable"
 
     await _trigger_human_handoff(conversation_id)
+
+    if _notify_team is not None and state is not None:
+        asyncio.create_task(
+            _notify_team(
+                {
+                    "type": "human_handoff",
+                    "conversation_id": conversation_id,
+                    "contact_name": state.first_name or "Unknown",
+                    "phone": state.phone or "",
+                    "inbox_name": "WhatsApp",
+                    "reason": reason or "AI requested human handoff",
+                    "summary": summary or "See Chatwoot conversation",
+                }
+            )
+        )
+
     return "handoff_complete"

@@ -344,6 +344,8 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                         state.context.country = lead_info.get("country")
                     if lead_info.get("new_lead") is not None:
                         state.context.new_lead = lead_info.get("new_lead", False)
+                    if lead_info.get("conversation_id"):
+                        state.context.conversation_id = lead_info.get("conversation_id")
                     # Cache lead info for this thread to restore if context is reset
                     lead_info_dict = {
                         "first_name": state.context.first_name,
@@ -378,6 +380,8 @@ class LucentiveServer(ChatKitServer[dict[str, Any]]):
                 state.context.country = lead_info.get("country")
             if lead_info.get("new_lead") is not None:
                 state.context.new_lead = lead_info.get("new_lead", False)
+            if lead_info.get("conversation_id"):
+                state.context.conversation_id = lead_info.get("conversation_id")
             # Cache lead info for this thread to restore if context is reset
             lead_info_dict = {
                 "first_name": state.context.first_name,

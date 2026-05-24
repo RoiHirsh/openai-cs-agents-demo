@@ -559,3 +559,20 @@ async def upload_results_video(
 
     logger.info("[results_videos] Uploaded %s → %s", storage_path, public_url)
     return {"market": market, "url": public_url}
+
+
+@router.delete("/results-videos/{market}", status_code=204, response_model=None)
+def delete_results_video(market: str) -> None:
+    sb = get_supabase_client()
+    market = market.lower().strip()
+    rows = sb.table("results_videos").select("url").eq("market", market).execute().data
+    if rows:
+        url = rows[0].get("url", "")
+        # URL pattern: .../results-videos/<market>/<market>.<ext>
+        try:
+            storage_path = "/".join(url.split("/results-videos/", 1)[-1].split("?")[0].split("/"))
+            sb.storage.from_(RESULTS_BUCKET).remove([storage_path])
+        except Exception as exc:
+            logger.warning("[results_videos] Storage delete failed for %s: %s", market, exc)
+    sb.table("results_videos").delete().eq("market", market).execute()
+    logger.info("[results_videos] Deleted market=%s", market)

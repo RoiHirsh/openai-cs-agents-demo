@@ -1882,6 +1882,16 @@ function ResultsVideosTab() {
 
   useEffect(() => { load() }, [load])
 
+  async function handleDelete(row) {
+    if (!window.confirm(`Delete video for market "${row.market}"?`)) return
+    try {
+      await apiFetch(`/knowledge/results-videos/${encodeURIComponent(row.market)}`, { method: 'DELETE' })
+      await load()
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`)
+    }
+  }
+
   async function handleUpload(e) {
     e.preventDefault()
     if (!file) { setUploadError('Please select a video file.'); return }
@@ -1934,7 +1944,7 @@ function ResultsVideosTab() {
       {rows.length > 0 && (
         <table className="data-table">
           <thead>
-            <tr><th>Market</th><th>URL</th><th>Last Updated</th></tr>
+            <tr><th>Market</th><th>URL</th><th>Last Updated</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {rows.map(r => (
@@ -1942,6 +1952,7 @@ function ResultsVideosTab() {
                 <td style={{ textTransform: 'capitalize', fontWeight: 500 }}>{r.market}</td>
                 <td><a href={r.url} target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontSize: 13 }}>{r.url}</a></td>
                 <td style={{ fontSize: 13, color: '#6b7280' }}>{r.updated_at ? new Date(r.updated_at).toLocaleString() : '—'}</td>
+                <td><button className="btn-icon" title="Delete" onClick={() => handleDelete(r)}>🗑️</button></td>
               </tr>
             ))}
           </tbody>

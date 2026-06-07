@@ -470,6 +470,7 @@ async def api_chat(
 
     # 7. Team Telegram: notify on every bot reply
     if reply:
+        logger.warning("DEBUG bot_reply: firing notify_team conversation_id=%s", body.conversation_id)
         asyncio.create_task(
             notify_team(
                 {

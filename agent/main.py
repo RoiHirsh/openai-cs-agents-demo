@@ -450,12 +450,12 @@ async def api_chat(
         sb.table("leads").update({"thread_id": new_thread_id}).eq("phone_number", body.phone_number).execute()
 
     # 6. Team Telegram: first inbound user message to the agent for this Chatwoot conversation
+    contact_name = (
+        lead_row.get("full_name")
+        or (current_state.context.first_name if current_state else None)
+        or "Unknown"
+    )
     if is_first_user_message_to_agent and current_state:
-        contact_name = (
-            lead_row.get("full_name")
-            or current_state.context.first_name
-            or "Unknown"
-        )
         asyncio.create_task(
             notify_team(
                 {
@@ -464,6 +464,20 @@ async def api_chat(
                     "contact_name": contact_name,
                     "phone": body.phone_number,
                     "inbox_name": "WhatsApp",
+                }
+            )
+        )
+
+    # 7. Team Telegram: notify on every bot reply
+    if reply:
+        asyncio.create_task(
+            notify_team(
+                {
+                    "type": "bot_reply",
+                    "conversation_id": body.conversation_id,
+                    "contact_name": contact_name,
+                    "phone": body.phone_number,
+                    "message": reply,
                 }
             )
         )

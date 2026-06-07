@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 NotificationType = Literal[
     "conversation_started",
     "human_handoff",
+    "bot_reply",
     "error",
     "lead_qualified",
     "call_requested",
@@ -93,12 +94,32 @@ def _format_human_handoff(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _format_bot_reply(payload: dict[str, Any]) -> str:
+    name = escape_html(payload.get("contact_name") or "Unknown")
+    phone = escape_html(payload.get("phone") or "—")
+    message = escape_html(payload.get("message") or "")
+    if len(message) > 300:
+        message = message[:297] + "…"
+    lines = [
+        "💬 <b>Bot replied</b>",
+        f"Name: {name}",
+        f"Phone: {phone}",
+        f"Message: {message}",
+    ]
+    url = payload.get("chatwoot_url")
+    if url:
+        lines.append(f'<a href="{escape_html(url)}">Open in Chatwoot</a>')
+    return "\n".join(lines)
+
+
 def _build_message(payload: dict[str, Any]) -> str | None:
     ntype = payload.get("type")
     if ntype == "conversation_started":
         return _format_conversation_started(payload)
     if ntype == "human_handoff":
         return _format_human_handoff(payload)
+    if ntype == "bot_reply":
+        return _format_bot_reply(payload)
     logger.warning("[telegram] unknown notification type: %s", ntype)
     return None
 
@@ -121,13 +142,15 @@ async def notify_team(payload: dict[str, Any]) -> None:
         )
         return
 
-    if not _claim_notification(conversation_id, str(event_type)):
-        logger.info(
-            "telegram_notification_skipped_duplicate conversation_id=%s event_type=%s",
-            conversation_id,
-            event_type,
-        )
-        return
+    # bot_reply fires on every message — no deduplication needed
+    if event_type != "bot_reply":
+        if not _claim_notification(conversation_id, str(event_type)):
+            logger.info(
+                "telegram_notification_skipped_duplicate conversation_id=%s event_type=%s",
+                conversation_id,
+                event_type,
+            )
+            return
 
     if not payload.get("chatwoot_url"):
         url = build_chatwoot_url(conversation_id)
